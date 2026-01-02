@@ -1351,6 +1351,21 @@ export class Resend implements INodeType {
 				description: 'The email address of the contact',
 			},
 			{
+				displayName: 'Contact Identifier',
+				name: 'contactIdentifier',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'e169aa45-1ecf-4183-9955-b1499d5701d3 or contact@example.com',
+				displayOptions: {
+					show: {
+						resource: ['contacts'],
+						operation: ['get', 'delete'],
+					},
+				},
+				description: 'The contact ID or email address',
+			},
+			{
 				displayName: 'Update By',
 				name: 'updateBy',
 				type: 'options',
@@ -1366,21 +1381,6 @@ export class Resend implements INodeType {
 					},
 				},
 				description: 'Choose whether to update the contact by ID or email address',
-			},
-			{
-				displayName: 'Contact ID',
-				name: 'contactId',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: 'con_123456',
-				displayOptions: {
-					show: {
-						resource: ['contacts'],
-						operation: ['get', 'delete'],
-					},
-				},
-				description: 'The ID of the contact',
 			},
 			{
 				displayName: 'Contact ID',
@@ -1415,30 +1415,15 @@ export class Resend implements INodeType {
 				description: 'The email address of the contact to update',
 			},
 			{
-				displayName: 'Audience ID',
-				name: 'audienceId',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: 'aud_123456',
-				displayOptions: {
-					show: {
-						resource: ['contacts'],
-						operation: ['create', 'list', 'update', 'get', 'delete'],
-					},
-				},
-				description: 'The ID of the audience',
-			},
-			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
+				displayName: 'Create Fields',
+				name: 'contactCreateFields',
 				type: 'collection',
 				placeholder: 'Add Field',
 				default: {},
 				displayOptions: {
 					show: {
 						resource: ['contacts'],
-						operation: ['create', 'update'],
+						operation: ['create'],
 					},
 				},
 				options: [
@@ -1462,6 +1447,160 @@ export class Resend implements INodeType {
 						type: 'boolean',
 						default: false,
 						description: 'Whether the contact is unsubscribed from emails',
+					},
+					{
+						displayName: 'Properties',
+						name: 'properties',
+						type: 'fixedCollection',
+						default: { properties: [] },
+						typeOptions: {
+							multipleValues: true,
+						},
+						options: [
+							{
+								name: 'properties',
+								displayName: 'Property',
+								values: [
+									{
+										displayName: 'Key',
+										name: 'key',
+										type: 'string',
+										required: true,
+										default: '',
+									},
+									{
+										displayName: 'Value',
+										name: 'value',
+										type: 'string',
+										default: '',
+									},
+								],
+							},
+						],
+					},
+					{
+						displayName: 'Segments',
+						name: 'segments',
+						type: 'fixedCollection',
+						default: { segments: [] },
+						typeOptions: {
+							multipleValues: true,
+						},
+						options: [
+							{
+								name: 'segments',
+								displayName: 'Segment',
+								values: [
+									{
+										displayName: 'Segment ID',
+										name: 'id',
+										type: 'string',
+										required: true,
+										default: '',
+									},
+								],
+							},
+						],
+					},
+					{
+						displayName: 'Topics',
+						name: 'topics',
+						type: 'fixedCollection',
+						default: { topics: [] },
+						typeOptions: {
+							multipleValues: true,
+						},
+						options: [
+							{
+								name: 'topics',
+								displayName: 'Topic',
+								values: [
+									{
+										displayName: 'Topic ID',
+										name: 'id',
+										type: 'string',
+										required: true,
+										default: '',
+									},
+									{
+										displayName: 'Subscription',
+										name: 'subscription',
+										type: 'options',
+										default: 'opt_in',
+										options: [
+											{ name: 'Opt In', value: 'opt_in' },
+											{ name: 'Opt Out', value: 'opt_out' },
+										],
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Update Fields',
+				name: 'contactUpdateFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['contacts'],
+						operation: ['update'],
+					},
+				},
+				options: [
+					{
+						displayName: 'First Name',
+						name: 'first_name',
+						type: 'string',
+						default: '',
+						description: 'The first name of the contact',
+					},
+					{
+						displayName: 'Last Name',
+						name: 'last_name',
+						type: 'string',
+						default: '',
+						description: 'The last name of the contact',
+					},
+					{
+						displayName: 'Unsubscribed',
+						name: 'unsubscribed',
+						type: 'boolean',
+						default: false,
+						description: 'Whether the contact is unsubscribed from emails',
+					},
+					{
+						displayName: 'Properties',
+						name: 'properties',
+						type: 'fixedCollection',
+						default: { properties: [] },
+						typeOptions: {
+							multipleValues: true,
+						},
+						options: [
+							{
+								name: 'properties',
+								displayName: 'Property',
+								values: [
+									{
+										displayName: 'Key',
+										name: 'key',
+										type: 'string',
+										required: true,
+										default: '',
+									},
+									{
+										displayName: 'Value',
+										name: 'value',
+										type: 'string',
+										default: '',
+									},
+								],
+							},
+						],
 					},
 				],
 			},
@@ -2641,19 +2780,47 @@ export class Resend implements INodeType {
 					}
 
 					// CONTACT OPERATIONS
-					} else if (resource === 'contacts') {					if (operation === 'create') {
+				} else if (resource === 'contacts') {
+					if (operation === 'create') {
 						const email = this.getNodeParameter('email', i) as string;
-						const audienceId = this.getNodeParameter('audienceId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i, {}) as any;						const requestBody: any = {
+						const createFields = this.getNodeParameter('contactCreateFields', i, {}) as any;
+						const requestBody: any = {
 							email,
 						};
 
-						if (additionalFields.first_name) requestBody.first_name = additionalFields.first_name;
-						if (additionalFields.last_name) requestBody.last_name = additionalFields.last_name;
-						if (additionalFields.unsubscribed !== undefined) requestBody.unsubscribed = additionalFields.unsubscribed;
+						if (createFields.first_name) requestBody.first_name = createFields.first_name;
+						if (createFields.last_name) requestBody.last_name = createFields.last_name;
+						if (createFields.unsubscribed !== undefined) requestBody.unsubscribed = createFields.unsubscribed;
+
+						if (createFields.properties?.properties?.length) {
+							const properties: Record<string, string> = {};
+							for (const property of createFields.properties.properties) {
+								if (property.key) {
+									properties[property.key] = property.value ?? '';
+								}
+							}
+							if (Object.keys(properties).length) {
+								requestBody.properties = properties;
+							}
+						}
+
+						if (createFields.segments?.segments?.length) {
+							requestBody.segments = createFields.segments.segments
+								.filter((segment: { id?: string }) => segment.id)
+								.map((segment: { id: string }) => ({ id: segment.id }));
+						}
+
+						if (createFields.topics?.topics?.length) {
+							requestBody.topics = createFields.topics.topics
+								.filter((topic: { id?: string }) => topic.id)
+								.map((topic: { id: string; subscription?: string }) => ({
+									id: topic.id,
+									subscription: topic.subscription || 'opt_in',
+								}));
+						}
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts`,
+							url: 'https://api.resend.com/contacts',
 							method: 'POST',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
@@ -2664,12 +2831,11 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'get') {
-						const audienceId = this.getNodeParameter('audienceId', i) as string;
-						const contactId = this.getNodeParameter('contactId', i) as string;
-						const encodedContactId = encodeURIComponent(contactId);
+						const contactIdentifier = this.getNodeParameter('contactIdentifier', i) as string;
+						const encodedIdentifier = encodeURIComponent(contactIdentifier);
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedContactId}`,
+							url: `https://api.resend.com/contacts/${encodedIdentifier}`,
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
@@ -2677,26 +2843,36 @@ export class Resend implements INodeType {
 							json: true,
 						});
 					} else if (operation === 'update') {
-						const audienceId = this.getNodeParameter('audienceId', i) as string;
 						const updateBy = this.getNodeParameter('updateBy', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i, {}) as any;
+						const updateFields = this.getNodeParameter('contactUpdateFields', i, {}) as any;
 
 						const requestBody: any = {};
-						if (additionalFields.first_name) requestBody.first_name = additionalFields.first_name;
-						if (additionalFields.last_name) requestBody.last_name = additionalFields.last_name;
-						if (additionalFields.unsubscribed !== undefined) requestBody.unsubscribed = additionalFields.unsubscribed;
 
-						let contactIdentifier: string;
 						if (updateBy === 'id') {
-							contactIdentifier = this.getNodeParameter('contactId', i) as string;
+							requestBody.id = this.getNodeParameter('contactId', i) as string;
 						} else {
-							contactIdentifier = this.getNodeParameter('contactEmail', i) as string;
+							requestBody.email = this.getNodeParameter('contactEmail', i) as string;
 						}
-						const encodedIdentifier = encodeURIComponent(contactIdentifier);
+
+						if (updateFields.first_name) requestBody.first_name = updateFields.first_name;
+						if (updateFields.last_name) requestBody.last_name = updateFields.last_name;
+						if (updateFields.unsubscribed !== undefined) requestBody.unsubscribed = updateFields.unsubscribed;
+
+						if (updateFields.properties?.properties?.length) {
+							const properties: Record<string, string> = {};
+							for (const property of updateFields.properties.properties) {
+								if (property.key) {
+									properties[property.key] = property.value ?? '';
+								}
+							}
+							if (Object.keys(properties).length) {
+								requestBody.properties = properties;
+							}
+						}
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedIdentifier}`,
-							method: 'PATCH',
+							url: 'https://api.resend.com/contacts',
+							method: 'PUT',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 								'Content-Type': 'application/json',
@@ -2706,10 +2882,8 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const audienceId = this.getNodeParameter('audienceId', i) as string;
-
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts`,
+							url: 'https://api.resend.com/contacts',
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
@@ -2718,12 +2892,11 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'delete') {
-						const audienceId = this.getNodeParameter('audienceId', i) as string;
-						const contactId = this.getNodeParameter('contactId', i) as string;
-						const encodedContactId = encodeURIComponent(contactId);
+						const contactIdentifier = this.getNodeParameter('contactIdentifier', i) as string;
+						const encodedIdentifier = encodeURIComponent(contactIdentifier);
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedContactId}`,
+							url: `https://api.resend.com/contacts/${encodedIdentifier}`,
 							method: 'DELETE',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
