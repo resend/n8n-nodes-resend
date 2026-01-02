@@ -1,6 +1,8 @@
 import {
 	IExecuteFunctions,
+	ILoadOptionsFunctions,
 	INodeExecutionData,
+	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 	NodeOperationError,
@@ -568,17 +570,20 @@ export class Resend implements INodeType {
 			{
 				displayName: 'Template ID',
 				name: 'templateId',
-				type: 'string',
+				type: 'options',
 				required: true,
 				default: '',
 				placeholder: '34a080c9-b17d-4187-ad80-5af20266e535',
+				typeOptions: {
+					loadOptionsMethod: 'getTemplates',
+				},
 				displayOptions: {
 					show: {
 						resource: ['templates'],
 						operation: ['get', 'update', 'delete', 'send'],
 					},
 				},
-				description: 'The ID or alias of the template',
+				description: 'Select a template or enter an ID/alias using an expression',
 			},
 			{
 				displayName: 'Update Fields',
@@ -1498,6 +1503,58 @@ export class Resend implements INodeType {
 				default: 'list',
 			},
 		],
+	};
+	methods = {
+		loadOptions: {
+			async getTemplates(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const credentials = await this.getCredentials('resendApi');
+				const apiKey = credentials.apiKey as string;
+				const returnData: INodePropertyOptions[] = [];
+				const limit = 100;
+				let after: string | undefined;
+				let hasMore = true;
+				let pageCount = 0;
+				const maxPages = 10;
+
+				while (hasMore) {
+					const qs: Record<string, string | number> = { limit };
+					if (after) {
+						qs.after = after;
+					}
+
+					const response = await this.helpers.httpRequest({
+						url: 'https://api.resend.com/templates',
+						method: 'GET',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						qs,
+						json: true,
+					});
+
+					const templates = response?.data ?? [];
+					for (const template of templates) {
+						if (!template?.id) {
+							continue;
+						}
+						const name = template.name ? `${template.name} (${template.id})` : template.id;
+						returnData.push({
+							name,
+							value: template.id,
+						});
+					}
+
+					hasMore = Boolean(response?.has_more);
+					after = templates.length ? templates[templates.length - 1].id : undefined;
+					pageCount += 1;
+					if (!after || pageCount >= maxPages) {
+						break;
+					}
+				}
+
+				return returnData;
+			},
+		},
 	};
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
