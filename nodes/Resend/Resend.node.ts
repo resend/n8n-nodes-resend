@@ -97,6 +97,12 @@ export class Resend implements INodeType {
 						action: 'Cancel an email',
 					},
 					{
+						name: 'List',
+						value: 'list',
+						description: 'List sent emails',
+						action: 'List emails',
+					},
+					{
 						name: 'Retrieve',
 						value: 'retrieve',
 						description: 'Retrieve an email by ID',
@@ -530,6 +536,42 @@ export class Resend implements INodeType {
 					},
 				},
 				description: 'Schedule email to be sent later. The date should be in ISO 8601 format (e.g., 2024-08-05T11:52:01.858Z).',
+			},
+			{
+				displayName: 'List Options',
+				name: 'emailListOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['email'],
+						operation: ['list'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						default: 20,
+						description: 'Max number of emails to return (1-100)',
+					},
+					{
+						displayName: 'After',
+						name: 'after',
+						type: 'string',
+						default: '',
+						description: 'Return results after this email ID',
+					},
+					{
+						displayName: 'Before',
+						name: 'before',
+						type: 'string',
+						default: '',
+						description: 'Return results before this email ID',
+					},
+				],
 			},
 
 			// TEMPLATE PROPERTIES
@@ -2521,6 +2563,38 @@ export class Resend implements INodeType {
 								'Content-Type': 'application/json',
 							},
 							body: emails,
+							json: true,
+						});
+
+					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('emailListOptions', i, {}) as any;
+						const qs: Record<string, string | number> = {};
+
+						if (listOptions.after && listOptions.before) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'You can only use either "After" or "Before", not both.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (listOptions.limit !== undefined) {
+							qs.limit = listOptions.limit;
+						}
+						if (listOptions.after) {
+							qs.after = listOptions.after;
+						}
+						if (listOptions.before) {
+							qs.before = listOptions.before;
+						}
+
+						response = await this.helpers.httpRequest({
+							url: 'https://api.resend.com/emails',
+							method: 'GET',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							qs,
 							json: true,
 						});
 
