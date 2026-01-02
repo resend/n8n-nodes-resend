@@ -867,7 +867,7 @@ export class Resend implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['contacts'],
-						operation: ['create', 'list', 'update'],
+						operation: ['create', 'list', 'update', 'get', 'delete'],
 					},
 				},
 				description: 'The ID of the audience',
@@ -1591,16 +1591,15 @@ export class Resend implements INodeType {
 					}
 
 					// CONTACT OPERATIONS
-				} else if (resource === 'contacts') {					if (operation === 'create') {
+					} else if (resource === 'contacts') {					if (operation === 'create') {
 						const email = this.getNodeParameter('email', i) as string;
 						const audienceId = this.getNodeParameter('audienceId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i, {}) as any;						const requestBody: any = {
 							email,
-							audienceId,
 						};
 
-						if (additionalFields.first_name) requestBody.firstName = additionalFields.first_name;
-						if (additionalFields.last_name) requestBody.lastName = additionalFields.last_name;
+						if (additionalFields.first_name) requestBody.first_name = additionalFields.first_name;
+						if (additionalFields.last_name) requestBody.last_name = additionalFields.last_name;
 						if (additionalFields.unsubscribed !== undefined) requestBody.unsubscribed = additionalFields.unsubscribed;
 
 						response = await this.helpers.httpRequest({
@@ -1615,10 +1614,12 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'get') {
+						const audienceId = this.getNodeParameter('audienceId', i) as string;
 						const contactId = this.getNodeParameter('contactId', i) as string;
+						const encodedContactId = encodeURIComponent(contactId);
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/contacts/${contactId}`,
+							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedContactId}`,
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
@@ -1641,9 +1642,10 @@ export class Resend implements INodeType {
 						} else {
 							contactIdentifier = this.getNodeParameter('contactEmail', i) as string;
 						}
+						const encodedIdentifier = encodeURIComponent(contactIdentifier);
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/audiences/${audienceId}/contacts/${contactIdentifier}`,
+							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedIdentifier}`,
 							method: 'PATCH',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
@@ -1666,10 +1668,12 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'delete') {
+						const audienceId = this.getNodeParameter('audienceId', i) as string;
 						const contactId = this.getNodeParameter('contactId', i) as string;
+						const encodedContactId = encodeURIComponent(contactId);
 
 						response = await this.helpers.httpRequest({
-							url: `https://api.resend.com/contacts/${contactId}`,
+							url: `https://api.resend.com/audiences/${audienceId}/contacts/${encodedContactId}`,
 							method: 'DELETE',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
