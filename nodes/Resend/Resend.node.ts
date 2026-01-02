@@ -16,7 +16,7 @@ export class Resend implements INodeType {
 		icon: 'file:resend-icon-white.svg',
 		group: ['output'],
 		version: 1,
-		description: 'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, and contacts',
+		description: 'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, topics, and contacts',
 		defaults: {
 			name: 'Resend',
 		},
@@ -64,6 +64,11 @@ export class Resend implements INodeType {
 						name: 'Segment',
 						value: 'segments',
 						description: 'Manage contact segments',
+					},
+					{
+						name: 'Topic',
+						value: 'topics',
+						description: 'Manage subscription topics',
 					},
 					{
 						name: 'Template',
@@ -1206,6 +1211,129 @@ export class Resend implements INodeType {
 				description: 'The ID of the segment',
 			},
 
+			// TOPIC PROPERTIES
+			{
+				displayName: 'Topic Name',
+				name: 'topicName',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'Weekly Newsletter',
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['create'],
+					},
+				},
+				description: 'The name of the topic',
+			},
+			{
+				displayName: 'Default Subscription',
+				name: 'topicDefaultSubscription',
+				type: 'options',
+				required: true,
+				default: 'opt_in',
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['create'],
+					},
+				},
+				options: [
+					{ name: 'Opt In', value: 'opt_in' },
+					{ name: 'Opt Out', value: 'opt_out' },
+				],
+				description: 'Default subscription preference for new contacts',
+			},
+			{
+				displayName: 'Create Options',
+				name: 'topicCreateOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['create'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Description',
+						name: 'description',
+						type: 'string',
+						default: '',
+						description: 'Short description of the topic',
+					},
+					{
+						displayName: 'Visibility',
+						name: 'visibility',
+						type: 'options',
+						default: 'private',
+						options: [
+							{ name: 'Private', value: 'private' },
+							{ name: 'Public', value: 'public' },
+						],
+						description: 'Visibility on the unsubscribe page',
+					},
+				],
+			},
+			{
+				displayName: 'Topic ID',
+				name: 'topicId',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'topic_123456',
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['get', 'update', 'delete'],
+					},
+				},
+				description: 'The ID of the topic',
+			},
+			{
+				displayName: 'Update Fields',
+				name: 'topicUpdateFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['update'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Name',
+						name: 'name',
+						type: 'string',
+						default: '',
+						description: 'New name for the topic',
+					},
+					{
+						displayName: 'Description',
+						name: 'description',
+						type: 'string',
+						default: '',
+						description: 'New description for the topic',
+					},
+					{
+						displayName: 'Visibility',
+						name: 'visibility',
+						type: 'options',
+						default: 'private',
+						options: [
+							{ name: 'Private', value: 'private' },
+							{ name: 'Public', value: 'public' },
+						],
+						description: 'Visibility on the unsubscribe page',
+					},
+				],
+			},
+
 			// CONTACT PROPERTIES
 			{
 				displayName: 'Email',
@@ -1563,6 +1691,52 @@ export class Resend implements INodeType {
 						value: 'list',
 						description: 'List all segments',
 						action: 'List segments',
+					},
+				],
+				default: 'list',
+			},
+
+			// TOPIC OPERATIONS
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+					},
+				},
+				options: [
+					{
+						name: 'Create',
+						value: 'create',
+						description: 'Create a new topic',
+						action: 'Create a topic',
+					},
+					{
+						name: 'Delete',
+						value: 'delete',
+						description: 'Delete a topic',
+						action: 'Delete a topic',
+					},
+					{
+						name: 'Get',
+						value: 'get',
+						description: 'Get a topic by ID',
+						action: 'Get a topic',
+					},
+					{
+						name: 'List',
+						value: 'list',
+						description: 'List all topics',
+						action: 'List topics',
+					},
+					{
+						name: 'Update',
+						value: 'update',
+						description: 'Update a topic',
+						action: 'Update a topic',
 					},
 				],
 				default: 'list',
@@ -2372,6 +2546,92 @@ export class Resend implements INodeType {
 
 						response = await this.helpers.httpRequest({
 							url: `https://api.resend.com/segments/${segmentId}`,
+							method: 'DELETE',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+					}
+
+					// TOPIC OPERATIONS
+				} else if (resource === 'topics') {
+					if (operation === 'create') {
+						const topicName = this.getNodeParameter('topicName', i) as string;
+						const defaultSubscription = this.getNodeParameter('topicDefaultSubscription', i) as string;
+						const createOptions = this.getNodeParameter('topicCreateOptions', i, {}) as any;
+
+						const requestBody: any = {
+							name: topicName,
+							default_subscription: defaultSubscription,
+						};
+
+						if (Object.prototype.hasOwnProperty.call(createOptions, 'description')) {
+							requestBody.description = createOptions.description;
+						}
+						if (createOptions.visibility) requestBody.visibility = createOptions.visibility;
+
+						response = await this.helpers.httpRequest({
+							url: 'https://api.resend.com/topics',
+							method: 'POST',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+								'Content-Type': 'application/json',
+							},
+							body: requestBody,
+							json: true,
+						});
+
+					} else if (operation === 'get') {
+						const topicId = this.getNodeParameter('topicId', i) as string;
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/topics/${topicId}`,
+							method: 'GET',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+
+					} else if (operation === 'list') {
+						response = await this.helpers.httpRequest({
+							url: 'https://api.resend.com/topics',
+							method: 'GET',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+
+					} else if (operation === 'update') {
+						const topicId = this.getNodeParameter('topicId', i) as string;
+						const updateFields = this.getNodeParameter('topicUpdateFields', i, {}) as any;
+
+						const requestBody: any = {};
+
+						if (updateFields.name) requestBody.name = updateFields.name;
+						if (Object.prototype.hasOwnProperty.call(updateFields, 'description')) {
+							requestBody.description = updateFields.description;
+						}
+						if (updateFields.visibility) requestBody.visibility = updateFields.visibility;
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/topics/${topicId}`,
+							method: 'PATCH',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+								'Content-Type': 'application/json',
+							},
+							body: requestBody,
+							json: true,
+						});
+
+					} else if (operation === 'delete') {
+						const topicId = this.getNodeParameter('topicId', i) as string;
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/topics/${topicId}`,
 							method: 'DELETE',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
