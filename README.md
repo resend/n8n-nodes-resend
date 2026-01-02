@@ -6,7 +6,7 @@
 
 # 📧 Resend Node for n8n
 
-[![npm version](https://badge.fury.io/js/n8n-nodes-resend.svg)](https://badge.fury.io/js/n8n-nodes-resend)
+[![npm version](https://badge.fury.io/js/n8n-nodes-resend-revived.svg)](https://badge.fury.io/js/n8n-nodes-resend-revived)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **Powerful email automation for n8n using the Resend API** 🚀
@@ -34,14 +34,14 @@ Transform your email workflows with comprehensive Resend integration for n8n. Se
 
 ### Method 1: Via n8n Community Nodes (Recommended)
 
-[Detailed Instructions (with images)](https://dubble.so/guides/how-to-install-n8n-nodes-resend-cq9ccjeuuudykbuomw1a)
+[Detailed Instructions (with images)](https://docs.n8n.io/integrations/community-nodes/installation/)
 
 1. **Open n8n Settings**
    - Navigate to **Settings** → **Community Nodes**
 
 2. **Install the Package**
    - Click **Install a community node**
-   - Enter: `n8n-nodes-resend`
+   - Enter: `n8n-nodes-resend-revived`
    - Click **Install**
 
 3. **Restart n8n**
@@ -58,7 +58,7 @@ Transform your email workflows with comprehensive Resend integration for n8n. Se
 cd ~/.n8n
 
 # Install the package
-npm install n8n-nodes-resend
+npm install n8n-nodes-resend-revived
 
 # Restart n8n
 # If using PM2: pm2 restart n8n
@@ -77,7 +77,7 @@ services:
   n8n:
     image: n8nio/n8n
     environment:
-      - N8N_NODES_INCLUDE=n8n-nodes-resend
+      - N8N_NODES_INCLUDE=n8n-nodes-resend-revived
     # ... other configuration
 ```
 
@@ -85,7 +85,7 @@ Or use environment variable:
 ```bash
 docker run -it --rm \
   -p 5678:5678 \
-  -e N8N_NODES_INCLUDE=n8n-nodes-resend \
+  -e N8N_NODES_INCLUDE=n8n-nodes-resend-revived \
   n8nio/n8n
 ```
 
@@ -327,7 +327,7 @@ Actions:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/n8n-nodes-resend.git
+git clone https://github.com/jannispkz/n8n-nodes-resend.git
 
 # Install dependencies
 npm install
@@ -364,7 +364,7 @@ npm test
 <summary>❓ Getting Help</summary>
 
 - **Documentation**: [Resend API Docs](https://resend.com/docs)
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+- **Issues**: [GitHub Issues](https://github.com/jannispkz/n8n-nodes-resend/issues)
 - **n8n Community**: [n8n Community Forum](https://community.n8n.io)
 - **Discord**: [n8n Discord Server](https://discord.gg/n8n)
 
@@ -390,6 +390,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 **Made with ❤️ for the n8n community**
 
-[⭐ Star this repo](https://github.com/your-repo/n8n-nodes-resend) | [🐛 Report Issues](https://github.com/your-repo/issues) | [💡 Request Features](https://github.com/your-repo/issues/new)
+[⭐ Star this repo](https://github.com/jannispkz/n8n-nodes-resend) | [🐛 Report Issues](https://github.com/jannispkz/n8n-nodes-resend/issues) | [💡 Request Features](https://github.com/jannispkz/n8n-nodes-resend/issues/new)
 
 </div>

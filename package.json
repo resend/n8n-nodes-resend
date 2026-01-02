@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-resend",
+  "name": "n8n-nodes-resend-revived",
   "version": "1.2.3",
   "description": "Resend n8n node",
   "keywords": [
@@ -12,14 +12,14 @@
     "integration"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/SilkePilon/n8n-nodes-resend/",
+  "homepage": "https://github.com/jannispkz/n8n-nodes-resend/",
   "author": {
     "name": "SilkePilon",
     "email": "silkepilon@users.noreply.github.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SilkePilon/n8n-nodes-resend/"
+    "url": "https://github.com/jannispkz/n8n-nodes-resend.git"
   },
   "engines": {
     "node": ">=20.15"
