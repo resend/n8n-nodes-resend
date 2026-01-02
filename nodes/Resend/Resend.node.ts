@@ -1253,6 +1253,42 @@ export class Resend implements INodeType {
 					},
 				],
 			},
+			{
+				displayName: 'List Options',
+				name: 'broadcastListOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['broadcasts'],
+						operation: ['list'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						default: 20,
+						description: 'Max number of broadcasts to return (1-100)',
+					},
+					{
+						displayName: 'After',
+						name: 'after',
+						type: 'string',
+						default: '',
+						description: 'Return results after this broadcast ID',
+					},
+					{
+						displayName: 'Before',
+						name: 'before',
+						type: 'string',
+						default: '',
+						description: 'Return results before this broadcast ID',
+					},
+				],
+			},
 
 			// SEGMENT PROPERTIES
 			{
@@ -1284,6 +1320,42 @@ export class Resend implements INodeType {
 					},
 				},
 				description: 'The ID of the segment',
+			},
+			{
+				displayName: 'List Options',
+				name: 'segmentListOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['segments'],
+						operation: ['list'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						default: 20,
+						description: 'Max number of segments to return (1-100)',
+					},
+					{
+						displayName: 'After',
+						name: 'after',
+						type: 'string',
+						default: '',
+						description: 'Return results after this segment ID',
+					},
+					{
+						displayName: 'Before',
+						name: 'before',
+						type: 'string',
+						default: '',
+						description: 'Return results before this segment ID',
+					},
+				],
 			},
 
 			// TOPIC PROPERTIES
@@ -1405,6 +1477,42 @@ export class Resend implements INodeType {
 							{ name: 'Public', value: 'public' },
 						],
 						description: 'Visibility on the unsubscribe page',
+					},
+				],
+			},
+			{
+				displayName: 'List Options',
+				name: 'topicListOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['topics'],
+						operation: ['list'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						default: 20,
+						description: 'Max number of topics to return (1-100)',
+					},
+					{
+						displayName: 'After',
+						name: 'after',
+						type: 'string',
+						default: '',
+						description: 'Return results after this topic ID',
+					},
+					{
+						displayName: 'Before',
+						name: 'before',
+						type: 'string',
+						default: '',
+						description: 'Return results before this topic ID',
 					},
 				],
 			},
@@ -1676,6 +1784,42 @@ export class Resend implements INodeType {
 								],
 							},
 						],
+					},
+				],
+			},
+			{
+				displayName: 'List Options',
+				name: 'contactListOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['contacts'],
+						operation: ['list'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						default: 20,
+						description: 'Max number of contacts to return (1-100)',
+					},
+					{
+						displayName: 'After',
+						name: 'after',
+						type: 'string',
+						default: '',
+						description: 'Return results after this contact ID',
+					},
+					{
+						displayName: 'Before',
+						name: 'before',
+						type: 'string',
+						default: '',
+						description: 'Return results before this contact ID',
 					},
 				],
 			},
@@ -2748,12 +2892,34 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('broadcastListOptions', i, {}) as any;
+						const qs: Record<string, string | number> = {};
+
+						if (listOptions.after && listOptions.before) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'You can only use either "After" or "Before", not both.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (listOptions.limit !== undefined) {
+							qs.limit = listOptions.limit;
+						}
+						if (listOptions.after) {
+							qs.after = listOptions.after;
+						}
+						if (listOptions.before) {
+							qs.before = listOptions.before;
+						}
+
 						response = await this.helpers.httpRequest({
 							url: 'https://api.resend.com/broadcasts',
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 							},
+							qs,
 							json: true,
 						});
 
@@ -2801,12 +2967,34 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('segmentListOptions', i, {}) as any;
+						const qs: Record<string, string | number> = {};
+
+						if (listOptions.after && listOptions.before) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'You can only use either "After" or "Before", not both.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (listOptions.limit !== undefined) {
+							qs.limit = listOptions.limit;
+						}
+						if (listOptions.after) {
+							qs.after = listOptions.after;
+						}
+						if (listOptions.before) {
+							qs.before = listOptions.before;
+						}
+
 						response = await this.helpers.httpRequest({
 							url: 'https://api.resend.com/segments',
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 							},
+							qs,
 							json: true,
 						});
 
@@ -2864,12 +3052,34 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('topicListOptions', i, {}) as any;
+						const qs: Record<string, string | number> = {};
+
+						if (listOptions.after && listOptions.before) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'You can only use either "After" or "Before", not both.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (listOptions.limit !== undefined) {
+							qs.limit = listOptions.limit;
+						}
+						if (listOptions.after) {
+							qs.after = listOptions.after;
+						}
+						if (listOptions.before) {
+							qs.before = listOptions.before;
+						}
+
 						response = await this.helpers.httpRequest({
 							url: 'https://api.resend.com/topics',
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 							},
+							qs,
 							json: true,
 						});
 
@@ -3012,12 +3222,34 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('contactListOptions', i, {}) as any;
+						const qs: Record<string, string | number> = {};
+
+						if (listOptions.after && listOptions.before) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'You can only use either "After" or "Before", not both.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (listOptions.limit !== undefined) {
+							qs.limit = listOptions.limit;
+						}
+						if (listOptions.after) {
+							qs.after = listOptions.after;
+						}
+						if (listOptions.before) {
+							qs.before = listOptions.before;
+						}
+
 						response = await this.helpers.httpRequest({
 							url: 'https://api.resend.com/contacts',
 							method: 'GET',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 							},
+							qs,
 							json: true,
 						});
 
