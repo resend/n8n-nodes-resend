@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const domainOperations: INodeProperties[] = [
 	// DOMAIN OPERATIONS
@@ -162,5 +161,4 @@ export const domainFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('domains', 'domain'),
 ];

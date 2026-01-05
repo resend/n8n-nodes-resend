@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const apiKeyOperations: INodeProperties[] = [
 	// API KEY OPERATIONS
@@ -101,5 +100,4 @@ export const apiKeyFields: INodeProperties[] = [
 		},
 		description: 'Restrict an API key to send emails only from a specific domain. This is only used when the permission is set to sending access.',
 	},
-	createListOptions('apiKeys', 'API key'),
 ];

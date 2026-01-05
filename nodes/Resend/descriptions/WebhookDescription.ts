@@ -1,5 +1,4 @@
 import { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 const webhookEventOptions: INodePropertyOptions[] = [
 	{ name: 'Contact Created', value: 'contact.created' },
@@ -154,5 +153,4 @@ export const webhookFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('webhooks', 'webhook'),
 ];

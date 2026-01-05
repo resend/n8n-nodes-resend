@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const topicOperations: INodeProperties[] = [
 	// TOPIC OPERATIONS
@@ -175,5 +174,4 @@ export const topicFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('topics', 'topic'),
 ];

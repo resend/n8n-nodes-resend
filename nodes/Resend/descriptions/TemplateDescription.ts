@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const templateOperations: INodeProperties[] = [
 	// TEMPLATE OPERATIONS
@@ -255,5 +254,4 @@ export const templateFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('templates', 'template'),
 ];

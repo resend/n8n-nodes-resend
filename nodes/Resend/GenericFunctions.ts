@@ -2,54 +2,11 @@ import {
 	IExecuteFunctions,
 	IHttpRequestMethods,
 	ILoadOptionsFunctions,
-	INodeProperties,
 	INodePropertyOptions,
 	NodeOperationError,
 } from 'n8n-workflow';
 
 const RESEND_API_BASE = 'https://api.resend.com';
-
-export type ListOptions = {
-	after?: string;
-	before?: string;
-};
-
-/**
- * Factory function to create list options field for any resource.
- * Eliminates duplication of After/Before pagination fields across description files.
- */
-export const createListOptions = (
-	resource: string,
-	resourceLabel: string,
-): INodeProperties => ({
-	displayName: 'List Options',
-	name: `${resource}ListOptions`,
-	type: 'collection',
-	placeholder: 'Add Option',
-	default: {},
-	displayOptions: {
-		show: {
-			resource: [resource],
-			operation: ['list'],
-		},
-	},
-	options: [
-		{
-			displayName: 'After',
-			name: 'after',
-			type: 'string',
-			default: '',
-			description: `Return results after this ${resourceLabel} ID`,
-		},
-		{
-			displayName: 'Before',
-			name: 'before',
-			type: 'string',
-			default: '',
-			description: `Return results before this ${resourceLabel} ID`,
-		},
-	],
-});
 
 /**
  * Helper to make authenticated requests to the Resend API.
@@ -181,30 +138,13 @@ export const buildTemplateSendVariables = (
 export const requestList = async (
 	executeFunctions: IExecuteFunctions,
 	url: string,
-	listOptions: ListOptions,
 	apiKey: string,
-	itemIndex: number,
 	returnAll: boolean,
 	limit?: number,
 ): Promise<unknown[]> => {
-	if (listOptions.after && listOptions.before) {
-		throw new NodeOperationError(
-			executeFunctions.getNode(),
-			'You can only use either "After" or "Before", not both.',
-			{ itemIndex },
-		);
-	}
-
 	const targetLimit = returnAll ? 1000 : (limit ?? 50);
 	const pageSize = Math.min(targetLimit, 100); // Resend API max is 100
 	const qs: Record<string, string | number> = { limit: pageSize };
-
-	if (listOptions.after) {
-		qs.after = listOptions.after;
-	}
-	if (listOptions.before) {
-		qs.before = listOptions.before;
-	}
 
 	const requestPage = () =>
 		executeFunctions.helpers.httpRequest({
@@ -222,7 +162,6 @@ export const requestList = async (
 	const allItems: unknown[] = [];
 	let hasMore = true;
 	let isFirstRequest = true;
-	let paginationMode: 'after' | 'before' | undefined = listOptions.before ? 'before' : undefined;
 
 	while (hasMore) {
 		// Rate limiting: wait 1 second between requests (Resend allows 2 req/sec)
@@ -252,14 +191,7 @@ export const requestList = async (
 			break;
 		}
 
-		if (paginationMode === 'before') {
-			qs.before = lastItem.id;
-			delete qs.after;
-		} else {
-			qs.after = lastItem.id;
-			delete qs.before;
-			paginationMode = 'after';
-		}
+		qs.after = lastItem.id;
 	}
 
 	// Return just the items array, sliced to exact limit

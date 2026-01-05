@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const emailOperations: INodeProperties[] = [
 	// EMAIL OPERATIONS
@@ -885,5 +884,4 @@ export const emailFields: INodeProperties[] = [
 		},
 		description: 'Max number of results to return',
 	},
-	createListOptions('email', 'email'),
 ];

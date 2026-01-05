@@ -35,7 +35,6 @@ import {
 	getTemplateVariables,
 	getTemplates,
 	getTopics,
-	ListOptions,
 	normalizeEmailList,
 	parseTemplateVariables,
 	requestList,
@@ -528,10 +527,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('emailListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/emails', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/emails', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -624,18 +622,9 @@ export class Resend implements INodeType {
 							json: true,
 						});
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('templateListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(
-							this,
-							'https://api.resend.com/templates',
-							listOptions,
-							apiKey,
-							i,
-							returnAll,
-							limit,
-						);
+						const items = await requestList(this, 'https://api.resend.com/templates', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -766,10 +755,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('domainListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/domains', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/domains', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -816,10 +804,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('apiKeyListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/api-keys', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/api-keys', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -959,18 +946,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('broadcastListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(
-							this,
-							'https://api.resend.com/broadcasts',
-							listOptions,
-							apiKey,
-							i,
-							returnAll,
-							limit,
-						);
+						const items = await requestList(this, 'https://api.resend.com/broadcasts', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1020,10 +998,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('segmentListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/segments', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/segments', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1083,10 +1060,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('topicListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/topics', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/topics', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1231,10 +1207,9 @@ export class Resend implements INodeType {
 						});
 
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('contactListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/contacts', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/contacts', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1304,10 +1279,9 @@ export class Resend implements INodeType {
 							json: true,
 						});
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('contactPropertyListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/contact-properties', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/contact-properties', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1412,10 +1386,9 @@ export class Resend implements INodeType {
 							json: true,
 						});
 					} else if (operation === 'list') {
-						const listOptions = this.getNodeParameter('webhookListOptions', i, {}) as ListOptions;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/webhooks', listOptions, apiKey, i, returnAll, limit);
+						const items = await requestList(this, 'https://api.resend.com/webhooks', apiKey, returnAll, limit);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}

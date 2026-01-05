@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const broadcastOperations: INodeProperties[] = [
 	// BROADCAST OPERATIONS
@@ -293,5 +292,4 @@ export const broadcastFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('broadcasts', 'broadcast'),
 ];

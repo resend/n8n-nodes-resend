@@ -1,5 +1,4 @@
 import { INodeProperties } from 'n8n-workflow';
-import { createListOptions } from '../GenericFunctions';
 
 export const contactOperations: INodeProperties[] = [
 	// CONTACT OPERATIONS
@@ -320,5 +319,4 @@ export const contactFields: INodeProperties[] = [
 			},
 		],
 	},
-	createListOptions('contacts', 'contact'),
 ];
