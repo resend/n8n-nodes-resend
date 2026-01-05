@@ -474,35 +474,6 @@ export const emailFields: INodeProperties[] = [
 				displayName: 'Email',
 				values: [
 					{
-						displayName: 'Content Type',
-						name: 'contentType',
-						type: 'options',
-						default: 'html',
-						options: [
-							{
-								name: 'HTML',
-								value: 'html',
-								description: 'Send email with HTML content',
-							},
-							{
-								name: 'HTML and Text',
-								value: 'both',
-								description: 'Send email with both HTML and text content',
-							},
-							{
-								name: 'Text',
-								value: 'text',
-								description: 'Send email with plain text content',
-							},
-							{
-								name: 'Template',
-								value: 'template',
-								description: 'Send email using a template',
-							},
-						],
-						description: 'Choose how to provide content for this email',
-					},
-					{
 						displayName: 'From',
 						name: 'from',
 						type: 'string',
@@ -530,6 +501,42 @@ export const emailFields: INodeProperties[] = [
 						description: 'Email subject',
 					},
 					{
+						displayName: 'Use Template',
+						name: 'useTemplate',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to send using a published template instead of HTML/Text content',
+					},
+					{
+						displayName: 'Email Format',
+						name: 'emailFormat',
+						type: 'options',
+						options: [
+							{
+								name: 'HTML',
+								value: 'html',
+								description: 'Send email with HTML content',
+							},
+							{
+								name: 'HTML and Text',
+								value: 'both',
+								description: 'Send email with both HTML and text content',
+							},
+							{
+								name: 'Text',
+								value: 'text',
+								description: 'Send email with plain text content',
+							},
+						],
+						default: 'html',
+						displayOptions: {
+							show: {
+								useTemplate: [false],
+							},
+						},
+						description: 'Choose the format for your email content. HTML allows rich formatting, text is simple and universally compatible.',
+					},
+					{
 						displayName: 'HTML Content',
 						name: 'html',
 						type: 'string',
@@ -541,7 +548,8 @@ export const emailFields: INodeProperties[] = [
 						},
 						displayOptions: {
 							show: {
-								contentType: ['html', 'both'],
+								emailFormat: ['html', 'both'],
+								useTemplate: [false],
 							},
 						},
 					},
@@ -557,7 +565,8 @@ export const emailFields: INodeProperties[] = [
 						placeholder: 'Your plain text content here',
 						displayOptions: {
 							show: {
-								contentType: ['text', 'both'],
+								emailFormat: ['text', 'both'],
+								useTemplate: [false],
 							},
 						},
 					},
@@ -573,7 +582,7 @@ export const emailFields: INodeProperties[] = [
 						},
 						displayOptions: {
 							show: {
-								contentType: ['template'],
+								useTemplate: [true],
 							},
 						},
 						description: 'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
@@ -588,7 +597,7 @@ export const emailFields: INodeProperties[] = [
 						},
 						displayOptions: {
 							show: {
-								contentType: ['template'],
+								useTemplate: [true],
 							},
 						},
 						description: 'Variables to render the template with',

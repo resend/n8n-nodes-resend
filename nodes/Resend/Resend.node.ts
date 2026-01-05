@@ -365,7 +365,10 @@ export class Resend implements INodeType {
 						const batchOptions = this.getNodeParameter('batchOptions', i, {}) as any;
 
 						const emails = emailsData.emails.map((email: any) => {
-							const contentType = email.contentType ?? 'html';
+							const legacyContentType = email.contentType;
+							const useTemplate = email.useTemplate ?? false;
+							const emailFormat = email.emailFormat ?? 'html';
+							const contentType = legacyContentType ?? (useTemplate ? 'template' : emailFormat);
 							const additionalOptions = email.additionalOptions ?? {};
 							const emailObj: any = {
 								from: email.from,
