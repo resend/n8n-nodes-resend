@@ -1077,7 +1077,7 @@ export class Resend implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['templates'],
-						operation: ['get', 'update', 'delete', 'send'],
+						operation: ['get', 'update', 'delete'],
 					},
 				},
 				description: 'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
@@ -1190,80 +1190,6 @@ export class Resend implements INodeType {
 						type: 'string',
 						default: '',
 						description: 'Return results before this template ID',
-					},
-				],
-			},
-			{
-				displayName: 'From',
-				name: 'templateSendFrom',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: 'Acme <onboarding@resend.dev>',
-				displayOptions: {
-					show: {
-						resource: ['templates'],
-						operation: ['send'],
-					},
-				},
-				description: 'Sender email address',
-			},
-			{
-				displayName: 'To',
-				name: 'templateSendTo',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: 'delivered@resend.dev',
-				displayOptions: {
-					show: {
-						resource: ['templates'],
-						operation: ['send'],
-					},
-				},
-				description: 'Recipient email address. For multiple addresses, separate with commas.',
-			},
-			{
-				displayName: 'Template Variables',
-				name: 'templateSendVariables',
-				type: 'fixedCollection',
-				default: { variables: [] },
-				typeOptions: {
-					multipleValues: true,
-				},
-				displayOptions: {
-					show: {
-						resource: ['templates'],
-						operation: ['send'],
-					},
-				},
-				description: 'Variables to render the template with',
-				options: [
-					{
-						name: 'variables',
-						displayName: 'Variable',
-						values: [
-							{
-								displayName: 'Key',
-								name: 'key',
-								type: 'options',
-								required: true,
-								default: '',
-								typeOptions: {
-									loadOptionsMethod: 'getTemplateVariables',
-									loadOptionsDependsOn: ['templateId'],
-									allowCustomValues: true,
-								},
-								description: 'Template variable name',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								default: '',
-								description: 'Value for the template variable',
-							},
-						],
 					},
 				],
 			},
@@ -2302,12 +2228,6 @@ export class Resend implements INodeType {
 						value: 'list',
 						description: 'List all templates',
 						action: 'List templates',
-					},
-					{
-						name: 'Send',
-						value: 'send',
-						description: 'Send an email using a template',
-						action: 'Send a template email',
 					},
 					{
 						name: 'Update',
@@ -3426,35 +3346,6 @@ export class Resend implements INodeType {
 							headers: {
 								Authorization: `Bearer ${apiKey}`,
 							},
-							json: true,
-						});
-					} else if (operation === 'send') {
-						const templateId = this.getNodeParameter('templateId', i) as string;
-						const templateFrom = this.getNodeParameter('templateSendFrom', i) as string;
-						const templateTo = this.getNodeParameter('templateSendTo', i) as string | string[];
-						const templateSendVariables = this.getNodeParameter('templateSendVariables', i, {}) as any;
-
-						const requestBody: any = {
-							from: templateFrom,
-							to: normalizeEmailList(templateTo),
-							template: {
-								id: templateId,
-							},
-						};
-
-						const variables = buildTemplateSendVariables(templateSendVariables);
-						if (variables && Object.keys(variables).length) {
-							requestBody.template.variables = variables;
-						}
-
-						response = await this.helpers.httpRequest({
-							url: 'https://api.resend.com/emails',
-							method: 'POST',
-							headers: {
-								Authorization: `Bearer ${apiKey}`,
-								'Content-Type': 'application/json',
-							},
-							body: requestBody,
 							json: true,
 						});
 					}
