@@ -145,6 +145,16 @@ docker run -it --rm \
 | Delete | Revoke an API key |
 | List | List all API keys |
 
+### Webhook
+
+| Operation | Description |
+|-----------|-------------|
+| Create | Create a webhook endpoint |
+| Get | Retrieve webhook details |
+| Update | Modify webhook settings |
+| Delete | Remove a webhook |
+| List | List all webhooks |
+
 ## Trigger Events
 
 The **Resend Trigger** node receives webhooks for real-time email events. Signatures are automatically verified using Svix.
