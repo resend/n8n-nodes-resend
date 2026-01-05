@@ -13,6 +13,8 @@ import {
 	broadcastOperations,
 	contactFields,
 	contactOperations,
+	contactPropertyFields,
+	contactPropertyOperations,
 	domainFields,
 	domainOperations,
 	emailFields,
@@ -45,8 +47,8 @@ export class Resend implements INodeType {
 		icon: 'file:resend-icon-white.svg',
 		group: ['output'],
 		version: 1,
-		description: 'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, topics, contacts, and webhooks',
-		subtitle: '={{(() => { const resourceLabels = { apiKeys: "api key", broadcasts: "broadcast", contacts: "contact", domains: "domain", email: "email", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+		description: 'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, topics, contacts, contact properties, and webhooks',
+		subtitle: '={{(() => { const resourceLabels = { apiKeys: "api key", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
 		defaults: {
 			name: 'Resend',
 		},
@@ -79,6 +81,11 @@ export class Resend implements INodeType {
 						name: 'Contact',
 						value: 'contacts',
 						description: 'Manage contacts',
+					},
+					{
+						name: 'Contact Property',
+						value: 'contactProperties',
+						description: 'Manage contact properties',
 					},
 					{
 						name: 'Webhook',
@@ -122,6 +129,7 @@ export class Resend implements INodeType {
 			...segmentOperations,
 			...topicOperations,
 			...contactOperations,
+			...contactPropertyOperations,
 			...webhookOperations,
 
 			...emailFields,
@@ -132,6 +140,7 @@ export class Resend implements INodeType {
 			...segmentFields,
 			...topicFields,
 			...contactFields,
+			...contactPropertyFields,
 			...webhookFields,
 		],
 	};
@@ -1193,6 +1202,126 @@ export class Resend implements INodeType {
 
 						response = await this.helpers.httpRequest({
 							url: `https://api.resend.com/contacts/${encodedIdentifier}`,
+							method: 'DELETE',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+					}
+					// CONTACT PROPERTY OPERATIONS
+				} else if (resource === 'contactProperties') {
+					if (operation === 'create') {
+						const key = this.getNodeParameter('contactPropertyKey', i) as string;
+						const type = this.getNodeParameter('contactPropertyType', i) as string;
+						const fallbackValue = this.getNodeParameter('contactPropertyFallbackValue', i, '') as string;
+
+						const requestBody: Record<string, unknown> = {
+							key,
+							type,
+						};
+
+						if (fallbackValue !== '') {
+							if (type === 'number') {
+								const parsedFallback = Number(fallbackValue);
+								if (Number.isNaN(parsedFallback)) {
+									throw new NodeOperationError(
+										this.getNode(),
+										'Fallback value must be a number.',
+										{ itemIndex: i },
+									);
+								}
+								requestBody.fallback_value = parsedFallback;
+							} else {
+								requestBody.fallback_value = fallbackValue;
+							}
+						}
+
+						response = await this.helpers.httpRequest({
+							url: 'https://api.resend.com/contact-properties',
+							method: 'POST',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+								'Content-Type': 'application/json',
+							},
+							body: requestBody,
+							json: true,
+						});
+					} else if (operation === 'get') {
+						const contactPropertyId = this.getNodeParameter('contactPropertyId', i) as string;
+						const encodedContactPropertyId = encodeURIComponent(contactPropertyId);
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/contact-properties/${encodedContactPropertyId}`,
+							method: 'GET',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+					} else if (operation === 'list') {
+						const listOptions = this.getNodeParameter('contactPropertyListOptions', i, {}) as ListOptions;
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = this.getNodeParameter('limit', i, 50) as number;
+						response = await requestList(this, 'https://api.resend.com/contact-properties', listOptions, apiKey, i, returnAll, limit);
+					} else if (operation === 'update') {
+						const contactPropertyId = this.getNodeParameter('contactPropertyId', i) as string;
+						const encodedContactPropertyId = encodeURIComponent(contactPropertyId);
+						const updateFields = this.getNodeParameter('contactPropertyUpdateFields', i, {}) as {
+							fallback_value?: string;
+						};
+
+						if (!Object.keys(updateFields).length) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Add at least one field to update.',
+								{ itemIndex: i },
+							);
+						}
+
+						const fallbackValue = updateFields.fallback_value ?? '';
+						const currentProperty = await this.helpers.httpRequest({
+							url: `https://api.resend.com/contact-properties/${encodedContactPropertyId}`,
+							method: 'GET',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+							},
+							json: true,
+						});
+
+						const propertyType = currentProperty?.type;
+						const requestBody: Record<string, unknown> = {};
+
+						if (propertyType === 'number') {
+							const parsedFallback = Number(fallbackValue);
+							if (Number.isNaN(parsedFallback)) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Fallback value must be a number.',
+									{ itemIndex: i },
+								);
+							}
+							requestBody.fallback_value = parsedFallback;
+						} else {
+							requestBody.fallback_value = fallbackValue;
+						}
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/contact-properties/${encodedContactPropertyId}`,
+							method: 'PATCH',
+							headers: {
+								Authorization: `Bearer ${apiKey}`,
+								'Content-Type': 'application/json',
+							},
+							body: requestBody,
+							json: true,
+						});
+					} else if (operation === 'delete') {
+						const contactPropertyId = this.getNodeParameter('contactPropertyId', i) as string;
+						const encodedContactPropertyId = encodeURIComponent(contactPropertyId);
+
+						response = await this.helpers.httpRequest({
+							url: `https://api.resend.com/contact-properties/${encodedContactPropertyId}`,
 							method: 'DELETE',
 							headers: {
 								Authorization: `Bearer ${apiKey}`,

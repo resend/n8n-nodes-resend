@@ -7,3 +7,4 @@ export * from './SegmentDescription';
 export * from './TopicDescription';
 export * from './ContactDescription';
 export * from './WebhookDescription';
+export * from './ContactPropertyDescription';

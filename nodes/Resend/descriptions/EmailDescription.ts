@@ -843,7 +843,7 @@ export const emailFields: INodeProperties[] = [
 		default: false,
 		displayOptions: {
 				show: {
-					resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks'],
+					resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks', 'contactProperties'],
 					operation: ['list'],
 				},
 			},
@@ -859,7 +859,7 @@ export const emailFields: INodeProperties[] = [
 		default: 50,
 		displayOptions: {
 				show: {
-					resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks'],
+					resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks', 'contactProperties'],
 					operation: ['list'],
 					returnAll: [false],
 				},

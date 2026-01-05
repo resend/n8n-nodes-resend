@@ -77,6 +77,16 @@ docker run -it --rm \
 | Delete | Remove a contact |
 | List | List all contacts in an audience |
 
+### Contact Property
+
+| Operation | Description |
+|-----------|-------------|
+| Create | Create a custom contact property |
+| Get | Retrieve property details |
+| Update | Modify property settings |
+| Delete | Remove a property |
+| List | List all contact properties |
+
 ### Audience
 
 | Operation | Description |
