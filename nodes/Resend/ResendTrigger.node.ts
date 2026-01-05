@@ -2,6 +2,7 @@ import {
 	IHookFunctions,
 	IWebhookFunctions,
 	IWebhookResponseData,
+	INode,
 	INodeType,
 	INodeTypeDescription,
 	NodeConnectionType,
@@ -25,10 +26,11 @@ async function verifySvixSignature(
 	svixTimestamp: string,
 	svixSignature: string,
 	webhookSigningSecret: string,
+	node: INode,
 ): Promise<void> {
 	const timestampMs = parseSvixTimestamp(svixTimestamp);
 	if (!timestampMs || Math.abs(Date.now() - timestampMs) > WEBHOOK_TOLERANCE_MS) {
-		throw new NodeOperationError({} as any, 'Webhook signature timestamp is outside the allowed tolerance');
+		throw new NodeOperationError(node, 'Webhook signature timestamp is outside the allowed tolerance');
 	}
 
 	// Remove the "whsec_" prefix from the secret
@@ -54,10 +56,7 @@ async function verifySvixSignature(
 			}
 		}
 	}
-	throw new NodeOperationError(
-		{} as any,
-		'Invalid webhook signature'
-	);
+	throw new NodeOperationError(node, 'Invalid webhook signature');
 }
 
 export class ResendTrigger implements INodeType {
@@ -164,8 +163,8 @@ export class ResendTrigger implements INodeType {
 					};
 				}
 
-				// Verify the webhook signature using Web Crypto API
-				await verifySvixSignature(payload, svixId, svixTimestamp, svixSignature, webhookSigningSecret);
+				// Verify the webhook signature
+				await verifySvixSignature(payload, svixId, svixTimestamp, svixSignature, webhookSigningSecret, this.getNode());
 			} catch (error) {
 				// Signature verification failed
 				console.error('Resend webhook signature verification failed:', error);
