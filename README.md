@@ -75,7 +75,7 @@ docker run -it --rm \
 | Get | Retrieve contact details |
 | Update | Modify contact information |
 | Delete | Remove a contact |
-| List | List all contacts in an audience |
+| List | List all contacts |
 
 ### Contact Property
 
@@ -86,15 +86,6 @@ docker run -it --rm \
 | Update | Modify property settings |
 | Delete | Remove a property |
 | List | List all contact properties |
-
-### Audience
-
-| Operation | Description |
-|-----------|-------------|
-| Create | Create a new audience |
-| Get | Retrieve audience details |
-| Delete | Remove an audience |
-| List | List all audiences |
 
 ### Segment
 
@@ -173,6 +164,7 @@ The **Resend Trigger** node receives webhooks for real-time email events. Signat
 |-------|-------------|
 | `email.sent` | Email sent to recipient |
 | `email.delivered` | Email delivered successfully |
+| `email.delivery_delayed` | Email delivery delayed |
 | `email.opened` | Recipient opened the email |
 | `email.clicked` | Link clicked in email |
 | `email.bounced` | Email bounced |
@@ -180,12 +172,14 @@ The **Resend Trigger** node receives webhooks for real-time email events. Signat
 | `contact.created` | New contact added |
 | `contact.updated` | Contact modified |
 | `contact.deleted` | Contact removed |
+| `domain.created` | New domain added |
+| `domain.updated` | Domain modified |
+| `domain.deleted` | Domain removed |
 
 ## Limitations
 
 - Maximum email size: 40MB (including attachments)
 - Attachments not supported with scheduled emails
-- Batch emails require base64 attachments (no URL attachments)
 
 ## Development
 

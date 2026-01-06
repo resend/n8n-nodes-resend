@@ -197,7 +197,7 @@ jobs:
             ## ✨ Features
             - 📧 Complete email operations (send, retrieve, update, cancel)
             - 📎 File attachment support (binary data + remote URLs)
-            - 👥 Contact and audience management
+            - 👥 Contact and segment management
             - 🌐 Domain management and verification
             - 🔑 API key management
             - 📢 Broadcast campaigns
