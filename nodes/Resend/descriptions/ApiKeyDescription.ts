@@ -100,6 +100,7 @@ export const apiKeyFields: INodeProperties[] = [
 				permission: ['sending_access'],
 			},
 		},
-		description: 'Restrict an API key to send emails only from a specific domain. This is only used when the permission is set to sending access.',
+		description:
+			'Restrict an API key to send emails only from a specific domain. This is only used when the permission is set to sending access.',
 	},
 ];

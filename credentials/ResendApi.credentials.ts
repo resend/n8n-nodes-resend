@@ -18,7 +18,8 @@ export class ResendApi implements ICredentialType {
 			default: '',
 			required: true,
 		},
-	];	authenticate: IAuthenticateGeneric = {
+	];
+	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
 			headers: {

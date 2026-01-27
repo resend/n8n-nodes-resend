@@ -1,10 +1,12 @@
 # AGENTS.md
 
 ## Package Identity
+
 - Resend action node and webhook trigger for n8n
 - Tech: TypeScript + n8n-workflow node APIs
 
 ## Setup & Run
+
 - Install deps: `npm install`
 - Build: `npm run build`
 - Dev watch: `npm run dev`
@@ -14,6 +16,7 @@
 - Tests: not configured
 
 ## Patterns & Conventions
+
 - DO: Keep the main node description and properties in `nodes/Resend/Resend.node.ts`.
 - DO: Ensure `description` includes core fields (`displayName`, `name`, `icon`, `group`, `version`, `description`, `defaults`, `inputs`, `outputs`, `credentials`) as shown in `nodes/Resend/Resend.node.ts`.
 - DO: Implement resource/operation logic in the `execute` flow in `nodes/Resend/Resend.node.ts`.
@@ -27,6 +30,7 @@
 - DON'T: Revive `_audit/actuallyzefe-n8n-nodes-resend/nodes/Resend/Resend.node.json`; it is archived only.
 
 ## Touch Points / Key Files
+
 - Action node: `nodes/Resend/Resend.node.ts`
 - Trigger node: `nodes/Resend/ResendTrigger.node.ts`
 - Icons: `nodes/Resend/resend-icon-white.svg`
@@ -35,6 +39,7 @@
 - n8n node registration: `package.json`
 
 ## JIT Index Hints
+
 - Find resources/options: `rg -n "resource" nodes/Resend/Resend.node.ts`
 - Find operations: `rg -n "operation" nodes/Resend/Resend.node.ts`
 - Find API requests: `rg -n "helpers.httpRequest" nodes/Resend/Resend.node.ts`
@@ -43,9 +48,11 @@
 - Find signature verification: `rg -n "verifySvixSignature" nodes/Resend/ResendTrigger.node.ts`
 
 ## Common Gotchas
+
 - Attachments cannot be used with scheduled emails (guarded in `nodes/Resend/Resend.node.ts`).
 - Webhook verification expects `svix-*` headers; missing headers are ignored.
 - The `path` parameter is full path (`isFullPath: true`), so it replaces the UUID segment.
 
 ## Pre-PR Checks
+
 - `npm run lint && npm run build`

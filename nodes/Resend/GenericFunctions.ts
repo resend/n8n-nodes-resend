@@ -64,9 +64,7 @@ const loadDropdownOptions = async (
 
 export const normalizeEmailList = (value: string | string[] | undefined) => {
 	if (Array.isArray(value)) {
-		return value
-			.map((email) => String(email).trim())
-			.filter((email) => email);
+		return value.map((email) => String(email).trim()).filter((email) => email);
 	}
 	if (typeof value === 'string') {
 		return value
@@ -79,7 +77,9 @@ export const normalizeEmailList = (value: string | string[] | undefined) => {
 
 export const parseTemplateVariables = (
 	executeFunctions: IExecuteFunctions,
-	variablesInput: { variables?: Array<{ key: string; type: string; fallbackValue?: unknown }> } | undefined,
+	variablesInput:
+		| { variables?: Array<{ key: string; type: string; fallbackValue?: unknown }> }
+		| undefined,
 	fallbackKey: 'fallbackValue' | 'fallback_value',
 	itemIndex: number,
 ) => {
@@ -97,7 +97,8 @@ export const parseTemplateVariables = (
 		if (fallbackValue !== undefined && fallbackValue !== '') {
 			let parsedFallback: string | number = fallbackValue as string;
 			if (variable.type === 'number') {
-				const numericFallback = typeof fallbackValue === 'number' ? fallbackValue : Number(fallbackValue);
+				const numericFallback =
+					typeof fallbackValue === 'number' ? fallbackValue : Number(fallbackValue);
 				if (Number.isNaN(numericFallback)) {
 					throw new NodeOperationError(
 						executeFunctions.getNode(),
@@ -266,20 +267,14 @@ export async function getTemplateVariables(
 		});
 }
 
-export async function getTemplates(
-	this: ILoadOptionsFunctions,
-): Promise<INodePropertyOptions[]> {
+export async function getTemplates(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	return loadDropdownOptions(this, '/templates');
 }
 
-export async function getSegments(
-	this: ILoadOptionsFunctions,
-): Promise<INodePropertyOptions[]> {
+export async function getSegments(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	return loadDropdownOptions(this, '/segments');
 }
 
-export async function getTopics(
-	this: ILoadOptionsFunctions,
-): Promise<INodePropertyOptions[]> {
+export async function getTopics(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	return loadDropdownOptions(this, '/topics');
 }
