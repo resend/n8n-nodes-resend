@@ -47,8 +47,10 @@ export class Resend implements INodeType {
 		icon: 'file:resend-icon-white.svg',
 		group: ['output'],
 		version: 1,
-		description: 'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, topics, contacts, contact properties, and webhooks',
-		subtitle: '={{(() => { const resourceLabels = { apiKeys: "api key", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+		description:
+			'Interact with Resend API for emails, templates, domains, API keys, broadcasts, segments, topics, contacts, contact properties, and webhooks',
+		subtitle:
+			'={{(() => { const resourceLabels = { apiKeys: "api key", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
 		defaults: {
 			name: 'Resend',
 		},
@@ -66,7 +68,8 @@ export class Resend implements INodeType {
 				displayName: 'Resource',
 				name: 'resource',
 				type: 'options',
-				noDataExpression: true, options: [
+				noDataExpression: true,
+				options: [
 					{
 						name: 'API Key',
 						value: 'apiKeys',
@@ -192,7 +195,11 @@ export class Resend implements INodeType {
 
 						if (useTemplate) {
 							const templateId = this.getNodeParameter('emailTemplateId', i) as string;
-							const templateVariables = this.getNodeParameter('emailTemplateVariables', i, {}) as any;
+							const templateVariables = this.getNodeParameter(
+								'emailTemplateVariables',
+								i,
+								{},
+							) as any;
 							if (!templateId) {
 								throw new NodeOperationError(
 									this.getNode(),
@@ -223,14 +230,18 @@ export class Resend implements INodeType {
 							if (emailFormat === 'html' || emailFormat === 'both') {
 								const html = this.getNodeParameter('html', i) as string;
 								if (!html) {
-									throw new NodeOperationError(this.getNode(), 'HTML Content is required.', { itemIndex: i });
+									throw new NodeOperationError(this.getNode(), 'HTML Content is required.', {
+										itemIndex: i,
+									});
 								}
 								requestBody.html = html;
 							}
 							if (emailFormat === 'text' || emailFormat === 'both') {
 								const text = this.getNodeParameter('text', i) as string;
 								if (!text) {
-									throw new NodeOperationError(this.getNode(), 'Text Content is required.', { itemIndex: i });
+									throw new NodeOperationError(this.getNode(), 'Text Content is required.', {
+										itemIndex: i,
+									});
 								}
 								requestBody.text = text;
 							}
@@ -273,7 +284,8 @@ export class Resend implements INodeType {
 								}));
 						}
 						if (additionalOptions.topic_id) requestBody.topic_id = additionalOptions.topic_id;
-						if (additionalOptions.scheduled_at) requestBody.scheduled_at = additionalOptions.scheduled_at;
+						if (additionalOptions.scheduled_at)
+							requestBody.scheduled_at = additionalOptions.scheduled_at;
 
 						// Validate that attachments aren't used with scheduled emails
 						if (
@@ -299,54 +311,58 @@ export class Resend implements INodeType {
 								.map((attachment: any) => {
 									const contentId = attachment.content_id;
 									const contentType = attachment.content_type;
-								if (attachment.attachmentType === 'binaryData') {
-									// Get binary data from the current item
-									const binaryPropertyName = attachment.binaryPropertyName || 'data';
-									const binaryData = items[i].binary?.[binaryPropertyName];
-									if (!binaryData) {
-										throw new NodeOperationError(this.getNode(), `Binary property "${binaryPropertyName}" not found in item ${i}`, { itemIndex: i });
-									}
+									if (attachment.attachmentType === 'binaryData') {
+										// Get binary data from the current item
+										const binaryPropertyName = attachment.binaryPropertyName || 'data';
+										const binaryData = items[i].binary?.[binaryPropertyName];
+										if (!binaryData) {
+											throw new NodeOperationError(
+												this.getNode(),
+												`Binary property "${binaryPropertyName}" not found in item ${i}`,
+												{ itemIndex: i },
+											);
+										}
 
-									const attachmentEntry: Record<string, unknown> = {
-										filename: attachment.filename,
-										content: binaryData.data, // This should be base64 content
-									};
-									if (contentId) {
-										attachmentEntry.content_id = contentId;
+										const attachmentEntry: Record<string, unknown> = {
+											filename: attachment.filename,
+											content: binaryData.data, // This should be base64 content
+										};
+										if (contentId) {
+											attachmentEntry.content_id = contentId;
+										}
+										if (contentType) {
+											attachmentEntry.content_type = contentType;
+										}
+										return attachmentEntry;
+									} else if (attachment.attachmentType === 'url') {
+										if (!attachment.filename) {
+											throw new NodeOperationError(
+												this.getNode(),
+												'File Name is required for URL attachments.',
+												{ itemIndex: i },
+											);
+										}
+										if (!attachment.fileUrl) {
+											throw new NodeOperationError(
+												this.getNode(),
+												'File URL is required for URL attachments.',
+												{ itemIndex: i },
+											);
+										}
+										const attachmentEntry: Record<string, unknown> = {
+											filename: attachment.filename,
+											path: attachment.fileUrl,
+										};
+										if (contentId) {
+											attachmentEntry.content_id = contentId;
+										}
+										if (contentType) {
+											attachmentEntry.content_type = contentType;
+										}
+										return attachmentEntry;
 									}
-									if (contentType) {
-										attachmentEntry.content_type = contentType;
-									}
-									return attachmentEntry;
-								} else if (attachment.attachmentType === 'url') {
-									if (!attachment.filename) {
-										throw new NodeOperationError(
-											this.getNode(),
-											'File Name is required for URL attachments.',
-											{ itemIndex: i },
-										);
-									}
-									if (!attachment.fileUrl) {
-										throw new NodeOperationError(
-											this.getNode(),
-											'File URL is required for URL attachments.',
-											{ itemIndex: i },
-										);
-									}
-									const attachmentEntry: Record<string, unknown> = {
-										filename: attachment.filename,
-										path: attachment.fileUrl,
-									};
-									if (contentId) {
-										attachmentEntry.content_id = contentId;
-									}
-									if (contentType) {
-										attachmentEntry.content_type = contentType;
-									}
-									return attachmentEntry;
-								}
-								return null;
-							})
+									return null;
+								})
 								.filter((attachment: any) => attachment !== null);
 						}
 
@@ -560,16 +576,20 @@ export class Resend implements INodeType {
 							body: emails,
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/emails', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/emails',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'retrieve') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
 
@@ -598,7 +618,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'cancel') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
 
@@ -659,7 +678,13 @@ export class Resend implements INodeType {
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/templates', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/templates',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -731,7 +756,8 @@ export class Resend implements INodeType {
 
 						const requestBody: any = { name: domainName };
 						if (additionalOptions.region) requestBody.region = additionalOptions.region;
-						if (additionalOptions.custom_return_path) requestBody.custom_return_path = additionalOptions.custom_return_path;
+						if (additionalOptions.custom_return_path)
+							requestBody.custom_return_path = additionalOptions.custom_return_path;
 
 						response = await this.helpers.httpRequest({
 							url: 'https://api.resend.com/domains',
@@ -743,7 +769,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'get') {
 						const domainId = this.getNodeParameter('domainId', i) as string;
 
@@ -755,7 +780,6 @@ export class Resend implements INodeType {
 							},
 							json: true,
 						});
-
 					} else if (operation === 'verify') {
 						const domainId = this.getNodeParameter('domainId', i) as string;
 
@@ -774,8 +798,10 @@ export class Resend implements INodeType {
 						const domainUpdateOptions = this.getNodeParameter('domainUpdateOptions', i, {}) as any;
 
 						const requestBody: any = {};
-						if (domainUpdateOptions.click_tracking !== undefined) requestBody.click_tracking = domainUpdateOptions.click_tracking;
-						if (domainUpdateOptions.open_tracking !== undefined) requestBody.open_tracking = domainUpdateOptions.open_tracking;
+						if (domainUpdateOptions.click_tracking !== undefined)
+							requestBody.click_tracking = domainUpdateOptions.click_tracking;
+						if (domainUpdateOptions.open_tracking !== undefined)
+							requestBody.open_tracking = domainUpdateOptions.open_tracking;
 						if (domainUpdateOptions.tls) requestBody.tls = domainUpdateOptions.tls;
 
 						response = await this.helpers.httpRequest({
@@ -788,16 +814,20 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/domains', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/domains',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'delete') {
 						const domainId = this.getNodeParameter('domainId', i) as string;
 
@@ -837,16 +867,20 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/api-keys', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/api-keys',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'delete') {
 						const apiKeyId = this.getNodeParameter('apiKeyId', i) as string;
 
@@ -907,7 +941,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'get') {
 						const broadcastId = this.getNodeParameter('broadcastId', i) as string;
 
@@ -959,7 +992,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'send') {
 						const broadcastId = this.getNodeParameter('broadcastId', i) as string;
 						const sendOptions = this.getNodeParameter('broadcastSendOptions', i, {}) as any;
@@ -979,16 +1011,20 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/broadcasts', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/broadcasts',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'delete') {
 						const broadcastId = this.getNodeParameter('broadcastId', i) as string;
 
@@ -1019,7 +1055,6 @@ export class Resend implements INodeType {
 							},
 							json: true,
 						});
-
 					} else if (operation === 'get') {
 						const segmentId = this.getNodeParameter('segmentId', i) as string;
 
@@ -1031,16 +1066,20 @@ export class Resend implements INodeType {
 							},
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/segments', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/segments',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'delete') {
 						const segmentId = this.getNodeParameter('segmentId', i) as string;
 
@@ -1058,7 +1097,10 @@ export class Resend implements INodeType {
 				} else if (resource === 'topics') {
 					if (operation === 'create') {
 						const topicName = this.getNodeParameter('topicName', i) as string;
-						const defaultSubscription = this.getNodeParameter('topicDefaultSubscription', i) as string;
+						const defaultSubscription = this.getNodeParameter(
+							'topicDefaultSubscription',
+							i,
+						) as string;
 						const createOptions = this.getNodeParameter('topicCreateOptions', i, {}) as any;
 
 						const requestBody: any = {
@@ -1081,7 +1123,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'get') {
 						const topicId = this.getNodeParameter('topicId', i) as string;
 
@@ -1093,16 +1134,20 @@ export class Resend implements INodeType {
 							},
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/topics', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/topics',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'update') {
 						const topicId = this.getNodeParameter('topicId', i) as string;
 						const updateFields = this.getNodeParameter('topicUpdateFields', i, {}) as any;
@@ -1125,7 +1170,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'delete') {
 						const topicId = this.getNodeParameter('topicId', i) as string;
 
@@ -1150,7 +1194,8 @@ export class Resend implements INodeType {
 
 						if (createFields.first_name) requestBody.first_name = createFields.first_name;
 						if (createFields.last_name) requestBody.last_name = createFields.last_name;
-						if (createFields.unsubscribed !== undefined) requestBody.unsubscribed = createFields.unsubscribed;
+						if (createFields.unsubscribed !== undefined)
+							requestBody.unsubscribed = createFields.unsubscribed;
 
 						if (createFields.properties?.properties?.length) {
 							const properties: Record<string, string> = {};
@@ -1189,7 +1234,6 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'get') {
 						const contactIdentifier = this.getNodeParameter('contactIdentifier', i) as string;
 						const encodedIdentifier = encodeURIComponent(contactIdentifier);
@@ -1216,7 +1260,8 @@ export class Resend implements INodeType {
 
 						if (updateFields.first_name) requestBody.first_name = updateFields.first_name;
 						if (updateFields.last_name) requestBody.last_name = updateFields.last_name;
-						if (updateFields.unsubscribed !== undefined) requestBody.unsubscribed = updateFields.unsubscribed;
+						if (updateFields.unsubscribed !== undefined)
+							requestBody.unsubscribed = updateFields.unsubscribed;
 
 						if (updateFields.properties?.properties?.length) {
 							const properties: Record<string, string> = {};
@@ -1240,16 +1285,20 @@ export class Resend implements INodeType {
 							body: requestBody,
 							json: true,
 						});
-
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/contacts', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/contacts',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
 						continue;
-
 					} else if (operation === 'delete') {
 						const contactIdentifier = this.getNodeParameter('contactIdentifier', i) as string;
 						const encodedIdentifier = encodeURIComponent(contactIdentifier);
@@ -1268,7 +1317,11 @@ export class Resend implements INodeType {
 					if (operation === 'create') {
 						const key = this.getNodeParameter('contactPropertyKey', i) as string;
 						const type = this.getNodeParameter('contactPropertyType', i) as string;
-						const fallbackValue = this.getNodeParameter('contactPropertyFallbackValue', i, '') as string;
+						const fallbackValue = this.getNodeParameter(
+							'contactPropertyFallbackValue',
+							i,
+							'',
+						) as string;
 
 						const requestBody: Record<string, unknown> = {
 							key,
@@ -1279,11 +1332,9 @@ export class Resend implements INodeType {
 							if (type === 'number') {
 								const parsedFallback = Number(fallbackValue);
 								if (Number.isNaN(parsedFallback)) {
-									throw new NodeOperationError(
-										this.getNode(),
-										'Fallback value must be a number.',
-										{ itemIndex: i },
-									);
+									throw new NodeOperationError(this.getNode(), 'Fallback value must be a number.', {
+										itemIndex: i,
+									});
 								}
 								requestBody.fallback_value = parsedFallback;
 							} else {
@@ -1316,7 +1367,13 @@ export class Resend implements INodeType {
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/contact-properties', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/contact-properties',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1329,11 +1386,9 @@ export class Resend implements INodeType {
 						};
 
 						if (!Object.keys(updateFields).length) {
-							throw new NodeOperationError(
-								this.getNode(),
-								'Add at least one field to update.',
-								{ itemIndex: i },
-							);
+							throw new NodeOperationError(this.getNode(), 'Add at least one field to update.', {
+								itemIndex: i,
+							});
 						}
 
 						const fallbackValue = updateFields.fallback_value ?? '';
@@ -1352,11 +1407,9 @@ export class Resend implements INodeType {
 						if (propertyType === 'number') {
 							const parsedFallback = Number(fallbackValue);
 							if (Number.isNaN(parsedFallback)) {
-								throw new NodeOperationError(
-									this.getNode(),
-									'Fallback value must be a number.',
-									{ itemIndex: i },
-								);
+								throw new NodeOperationError(this.getNode(), 'Fallback value must be a number.', {
+									itemIndex: i,
+								});
 							}
 							requestBody.fallback_value = parsedFallback;
 						} else {
@@ -1423,7 +1476,13 @@ export class Resend implements INodeType {
 					} else if (operation === 'list') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = this.getNodeParameter('limit', i, 50) as number;
-						const items = await requestList(this, 'https://api.resend.com/webhooks', apiKey, returnAll, limit);
+						const items = await requestList(
+							this,
+							'https://api.resend.com/webhooks',
+							apiKey,
+							returnAll,
+							limit,
+						);
 						for (const item of items) {
 							returnData.push({ json: item as IDataObject, pairedItem: { item: i } });
 						}
@@ -1438,17 +1497,16 @@ export class Resend implements INodeType {
 						};
 
 						if (!Object.keys(updateFields).length) {
-							throw new NodeOperationError(
-								this.getNode(),
-								'Add at least one field to update.',
-								{ itemIndex: i },
-							);
+							throw new NodeOperationError(this.getNode(), 'Add at least one field to update.', {
+								itemIndex: i,
+							});
 						}
 
 						let endpoint = updateFields.endpoint?.trim();
-						let events = Array.isArray(updateFields.events) && updateFields.events.length
-							? updateFields.events
-							: undefined;
+						let events =
+							Array.isArray(updateFields.events) && updateFields.events.length
+								? updateFields.events
+								: undefined;
 						let status = updateFields.status;
 
 						if (endpoint) {

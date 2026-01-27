@@ -99,7 +99,8 @@ export const broadcastFields: INodeProperties[] = [
 				operation: ['create'],
 			},
 		},
-		description: 'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
+		description:
+			'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
 	},
 	{
 		displayName: 'Subject',
@@ -125,14 +126,16 @@ export const broadcastFields: INodeProperties[] = [
 		typeOptions: {
 			multiline: true,
 		},
-		placeholder: '<p>Your HTML content here with {{{FIRST_NAME|there}}} and {{{RESEND_UNSUBSCRIBE_URL}}}</p>',
+		placeholder:
+			'<p>Your HTML content here with {{{FIRST_NAME|there}}} and {{{RESEND_UNSUBSCRIBE_URL}}}</p>',
 		displayOptions: {
 			show: {
 				resource: ['broadcasts'],
 				operation: ['create'],
 			},
 		},
-		description: 'The HTML version of the message. You can use variables like {{{FIRST_NAME|fallback}}} and {{{RESEND_UNSUBSCRIBE_URL}}}.',
+		description:
+			'The HTML version of the message. You can use variables like {{{FIRST_NAME|fallback}}} and {{{RESEND_UNSUBSCRIBE_URL}}}.',
 	},
 	{
 		displayName: 'Create Options',

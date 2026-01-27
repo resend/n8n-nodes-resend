@@ -157,7 +157,8 @@ export const domainFields: INodeProperties[] = [
 					{ name: 'Enforced', value: 'enforced' },
 				],
 				default: 'opportunistic',
-				description: 'TLS setting for email delivery. Opportunistic attempts secure connection but falls back to unencrypted if needed. Enforced requires TLS and will not send if unavailable.',
+				description:
+					'TLS setting for email delivery. Opportunistic attempts secure connection but falls back to unencrypted if needed. Enforced requires TLS and will not send if unavailable.',
 			},
 		],
 	},

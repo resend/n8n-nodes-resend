@@ -132,7 +132,8 @@ export const topicFields: INodeProperties[] = [
 				operation: ['get', 'update', 'delete'],
 			},
 		},
-		description: 'Select a topic or enter an ID using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+		description:
+			'Select a topic or enter an ID using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Update Fields',

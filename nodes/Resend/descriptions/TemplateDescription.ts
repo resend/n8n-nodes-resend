@@ -78,7 +78,8 @@ export const templateFields: INodeProperties[] = [
 				operation: ['create'],
 			},
 		},
-		description: 'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
+		description:
+			'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
 	},
 	{
 		displayName: 'Subject',
@@ -180,7 +181,8 @@ export const templateFields: INodeProperties[] = [
 				operation: ['get', 'update', 'delete'],
 			},
 		},
-		description: 'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+		description:
+			'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Update Fields',
@@ -250,7 +252,8 @@ export const templateFields: INodeProperties[] = [
 					multiline: true,
 					rows: 4,
 				},
-				description: 'Plain text content. Set to an empty string to disable automatic plain text generation.',
+				description:
+					'Plain text content. Set to an empty string to disable automatic plain text generation.',
 			},
 		],
 	},

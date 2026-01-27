@@ -69,7 +69,8 @@ export const emailFields: INodeProperties[] = [
 				operation: ['send'],
 			},
 		},
-		description: 'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
+		description:
+			'Sender email address. To include a friendly name, use the format "Your Name &lt;sender@domain.com&gt;".',
 	},
 	{
 		displayName: 'To',
@@ -143,7 +144,8 @@ export const emailFields: INodeProperties[] = [
 				useTemplate: [false],
 			},
 		},
-		description: 'Choose the format for your email content. HTML allows rich formatting, text is simple and universally compatible.',
+		description:
+			'Choose the format for your email content. HTML allows rich formatting, text is simple and universally compatible.',
 	},
 	{
 		displayName: 'Template Name or ID',
@@ -162,7 +164,8 @@ export const emailFields: INodeProperties[] = [
 				useTemplate: [true],
 			},
 		},
-		description: 'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+		description:
+			'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Template Variables',
@@ -196,7 +199,8 @@ export const emailFields: INodeProperties[] = [
 							loadOptionsDependsOn: ['emailTemplateId'],
 							allowCustomValues: true,
 						},
-						description: 'Template variable name. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						description:
+							'Template variable name. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Value',
@@ -544,7 +548,8 @@ export const emailFields: INodeProperties[] = [
 												type: 'string',
 												default: '',
 												placeholder: 'document.pdf',
-												description: 'Name for the attached file (required for both binary data and URL)',
+												description:
+													'Name for the attached file (required for both binary data and URL)',
 											},
 											{
 												displayName: 'File URL',
@@ -584,26 +589,26 @@ export const emailFields: INodeProperties[] = [
 								type: 'fixedCollection',
 								default: {},
 								options: [
+									{
+										name: 'headers',
+										displayName: 'Header',
+										values: [
 											{
-												name: 'headers',
-												displayName: 'Header',
-													values:	[
-													{
-														displayName: 'Name',
-														name: 'name',
-														type: 'string',
-															required:	true,
-														default: '',
-													},
-													{
-														displayName: 'Value',
-														name: 'value',
-														type: 'string',
-														default: '',
-													},
-													]
+												displayName: 'Name',
+												name: 'name',
+												type: 'string',
+												required: true,
+												default: '',
 											},
-									],
+											{
+												displayName: 'Value',
+												name: 'value',
+												type: 'string',
+												default: '',
+											},
+										],
+									},
+								],
 								description: 'Custom headers to add to the email',
 							},
 							{
@@ -611,7 +616,8 @@ export const emailFields: INodeProperties[] = [
 								name: 'reply_to',
 								type: 'string',
 								default: '',
-								description: 'Reply-to email address. For multiple addresses, use comma-separated values.',
+								description:
+									'Reply-to email address. For multiple addresses, use comma-separated values.',
 							},
 							{
 								displayName: 'Tags',
@@ -619,27 +625,27 @@ export const emailFields: INodeProperties[] = [
 								type: 'fixedCollection',
 								default: {},
 								options: [
+									{
+										name: 'tags',
+										displayName: 'Tag',
+										values: [
 											{
-												name: 'tags',
-												displayName: 'Tag',
-													values:	[
-													{
-														displayName: 'Name',
-														name: 'name',
-														type: 'string',
-															required:	true,
-														default: '',
-													},
-													{
-														displayName: 'Value',
-														name: 'value',
-														type: 'string',
-															required:	true,
-														default: '',
-													},
-													]
+												displayName: 'Name',
+												name: 'name',
+												type: 'string',
+												required: true,
+												default: '',
 											},
-									],
+											{
+												displayName: 'Value',
+												name: 'value',
+												type: 'string',
+												required: true,
+												default: '',
+											},
+										],
+									},
+								],
 								description: 'Tags to attach to the email',
 							},
 							{
@@ -649,7 +655,7 @@ export const emailFields: INodeProperties[] = [
 								default: '',
 								description: 'Topic ID to scope the email to',
 							},
-					]
+						],
 					},
 					{
 						displayName: 'Email Format',
@@ -671,15 +677,16 @@ export const emailFields: INodeProperties[] = [
 								value: 'text',
 								description: 'Send email with plain text content',
 							},
-					],
+						],
 						default: 'html',
-						description: 'Choose the format for your email content. HTML allows rich formatting, text is simple and universally compatible.',
+						description:
+							'Choose the format for your email content. HTML allows rich formatting, text is simple and universally compatible.',
 					},
 					{
 						displayName: 'From',
 						name: 'from',
 						type: 'string',
-							required:	true,
+						required: true,
 						default: '',
 						placeholder: 'you@example.com',
 						description: 'Sender email address',
@@ -696,7 +703,7 @@ export const emailFields: INodeProperties[] = [
 						displayName: 'Subject',
 						name: 'subject',
 						type: 'string',
-							required:	true,
+						required: true,
 						default: '',
 						placeholder: 'Hello from n8n!',
 						description: 'Email subject',
@@ -705,10 +712,11 @@ export const emailFields: INodeProperties[] = [
 						displayName: 'Template Name or ID',
 						name: 'templateId',
 						type: 'options',
-							required:	true,
+						required: true,
 						default: '',
 						placeholder: '34a080c9-b17d-4187-ad80-5af20266e535',
-						description: 'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						description:
+							'Select a template or enter an ID/alias using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Template Variables',
@@ -720,25 +728,25 @@ export const emailFields: INodeProperties[] = [
 							{
 								name: 'variables',
 								displayName: 'Variable',
-									values:	[
-											{
-												displayName: 'Key',
-												name: 'key',
-												type: 'options',
-													required:	true,
-												default: '',
-												description: 'Template variable name',
-											},
-											{
-												displayName: 'Value',
-												name: 'value',
-												type: 'string',
-												default: '',
-												description: 'Value for the template variable',
-											},
-									]
+								values: [
+									{
+										displayName: 'Key',
+										name: 'key',
+										type: 'options',
+										required: true,
+										default: '',
+										description: 'Template variable name',
+									},
+									{
+										displayName: 'Value',
+										name: 'value',
+										type: 'string',
+										default: '',
+										description: 'Value for the template variable',
+									},
+								],
 							},
-					]
+						],
 					},
 					{
 						displayName: 'Text Content',
@@ -752,7 +760,7 @@ export const emailFields: INodeProperties[] = [
 						displayName: 'To',
 						name: 'to',
 						type: 'string',
-							required:	true,
+						required: true,
 						default: '',
 						placeholder: 'user@example.com',
 						description: 'Recipient email address (comma-separated for multiple)',
@@ -764,7 +772,7 @@ export const emailFields: INodeProperties[] = [
 						default: false,
 						description: 'Whether to send using a published template instead of HTML/Text content',
 					},
-			],
+				],
 			},
 		],
 	},
@@ -838,7 +846,8 @@ export const emailFields: INodeProperties[] = [
 				operation: ['update'],
 			},
 		},
-		description: 'Schedule email to be sent later. The date should be in ISO 8601 format (e.g., 2024-08-05T11:52:01.858Z).',
+		description:
+			'Schedule email to be sent later. The date should be in ISO 8601 format (e.g., 2024-08-05T11:52:01.858Z).',
 	},
 	{
 		displayName: 'Return All',
@@ -847,7 +856,18 @@ export const emailFields: INodeProperties[] = [
 		default: false,
 		displayOptions: {
 			show: {
-				resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks', 'contactProperties'],
+				resource: [
+					'email',
+					'templates',
+					'domains',
+					'apiKeys',
+					'broadcasts',
+					'segments',
+					'topics',
+					'contacts',
+					'webhooks',
+					'contactProperties',
+				],
 				operation: ['list'],
 			},
 		},
@@ -863,7 +883,18 @@ export const emailFields: INodeProperties[] = [
 		default: 50,
 		displayOptions: {
 			show: {
-				resource: ['email', 'templates', 'domains', 'apiKeys', 'broadcasts', 'segments', 'topics', 'contacts', 'webhooks', 'contactProperties'],
+				resource: [
+					'email',
+					'templates',
+					'domains',
+					'apiKeys',
+					'broadcasts',
+					'segments',
+					'topics',
+					'contacts',
+					'webhooks',
+					'contactProperties',
+				],
 				operation: ['list'],
 				returnAll: [false],
 			},
