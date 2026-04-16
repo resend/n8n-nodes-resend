@@ -10,6 +10,7 @@ import * as topics from './topic';
 import * as contacts from './contact';
 import * as contactProperties from './contactProperty';
 import * as webhooks from './webhook';
+import * as logs from './log';
 import * as receivingEmails from './receivingEmail';
 import * as workflows from './workflow';
 import * as events from './event';
@@ -23,6 +24,7 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
 	topics,
 	contacts,
 	contactProperties,
+	logs,
 	webhooks,
 	receivingEmails,
 	workflows,
