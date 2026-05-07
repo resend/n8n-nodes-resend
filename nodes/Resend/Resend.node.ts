@@ -14,6 +14,7 @@ import * as webhooks from './actions/webhook';
 import * as receivingEmails from './actions/receivingEmail';
 import * as workflows from './actions/workflow';
 import * as events from './actions/event';
+import * as logs from './actions/log';
 import {
 	getBroadcasts,
 	getContactProperties,
@@ -58,7 +59,7 @@ export class Resend implements INodeType {
 		description:
 			'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
 		subtitle:
-			'={{(() => { const resourceLabels = { broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+			'={{(() => { const resourceLabels = { broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
 		defaults: {
 			name: 'Resend',
 		},
@@ -117,6 +118,12 @@ export class Resend implements INodeType {
 							'Create, send, retrieve, update, or delete events for triggering workflows (private alpha)',
 					},
 					{
+						name: 'Log',
+						value: 'logs',
+						description:
+							'List and retrieve API request logs including request bodies, response bodies, and status codes',
+					},
+					{
 						name: 'Receiving Email',
 						value: 'receivingEmails',
 						description:
@@ -168,6 +175,7 @@ export class Resend implements INodeType {
 			...receivingEmails.descriptions,
 			...workflows.descriptions,
 			...events.descriptions,
+			...logs.descriptions,
 		],
 	};
 

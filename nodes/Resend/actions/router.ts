@@ -13,6 +13,7 @@ import * as webhooks from './webhook';
 import * as receivingEmails from './receivingEmail';
 import * as workflows from './workflow';
 import * as events from './event';
+import * as logs from './log';
 
 const resourceModules: Record<string, { execute: typeof email.execute }> = {
 	email,
@@ -27,6 +28,7 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
 	receivingEmails,
 	workflows,
 	events,
+	logs,
 };
 
 export async function router(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
