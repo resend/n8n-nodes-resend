@@ -36,18 +36,21 @@ The table below shows which endpoints are currently implemented:
 <details>
 <summary><strong>View all endpoints</strong></summary>
 
-| API Resource           | Endpoint              | Status  | Operations                                                                                                       |
-| ---------------------- | --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, List Attachments, Get Attachment                     |
-| **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                      |
-| **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify                                                                        |
-| **Templates**          | `/templates`          | ✅ Full | Create, List, Get, Update, Delete, Publish, Duplicate                                                            |
-| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics |
-| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send                                                                          |
-| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Delete                                                                                        |
-| **Topics**             | `/topics`             | ✅ Full | Create, List, Get, Update, Delete                                                                                |
-| **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                |
-| **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete                                                                                |
+| API Resource           | Endpoint              | Status  | Operations                                                                                                                                                    |
+| ---------------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, List Attachments, Get Attachment                                                                  |
+| **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                                   |
+| **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Create Tracking Domain, Get Tracking Domain, List Tracking Domains, Delete Tracking Domain, Verify Tracking Domain |
+| **Templates**          | `/templates`          | ✅ Full | Create, List, Get, Update, Delete, Publish, Duplicate                                                                                                         |
+| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics                                              |
+| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
+| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Delete                                                                                                                                     |
+| **Topics**             | `/topics`             | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
+| **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
+| **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
+| **Events**             | `/events`             | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
+| **Workflows**          | `/workflows`          | ✅ Full | Create, List, Get, Update, Delete, List Runs, Get Run, List Run Steps, Get Run Step                                                                           |
+| **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                                |
 
 </details>
 
@@ -109,179 +112,14 @@ The workflow pauses at the email step and resumes automatically once the recipie
 | **Response Form Title**  | Title shown on the response form                         |
 | **Limit Wait Time**      | Set a timeout for the wait period                        |
 
-## Resources
-
-<details>
-<summary><strong>Email</strong></summary>
-
-| Operation        | Description                                       |
-| ---------------- | ------------------------------------------------- |
-| Send             | Send a single email with optional attachments     |
-| Send Batch       | Send up to 100 emails in one request              |
-| Send and Wait    | Send email and wait for recipient response (HITL) |
-| List             | List sent emails                                  |
-| Get              | Retrieve email details and status                 |
-| Cancel           | Cancel a scheduled email                          |
-| Update           | Modify a scheduled email                          |
-| List Attachments | List attachments for a sent email                 |
-| Get Attachment   | Get a specific attachment from a sent email       |
-
-</details>
-
-<details>
-<summary><strong>Receiving Email</strong></summary>
-
-| Operation        | Description                                     |
-| ---------------- | ----------------------------------------------- |
-| List             | List all received emails                        |
-| Get              | Retrieve a received email                       |
-| List Attachments | List attachments for a received email           |
-| Get Attachment   | Get a specific attachment from a received email |
-
-</details>
-
-<details>
-<summary><strong>Contact</strong></summary>
-
-| Operation           | Description                              |
-| ------------------- | ---------------------------------------- |
-| Create              | Add a new contact                        |
-| Get                 | Retrieve contact details                 |
-| Update              | Modify contact information               |
-| Delete              | Remove a contact                         |
-| List                | List all contacts                        |
-| Add to Segment      | Add a contact to a segment               |
-| List Segments       | List segments for a contact              |
-| Remove From Segment | Remove a contact from a segment          |
-| Get Topics          | Get topic subscriptions for a contact    |
-| Update Topics       | Update topic subscriptions for a contact |
-
-</details>
-
-<details>
-<summary><strong>Contact Property</strong></summary>
-
-| Operation | Description                      |
-| --------- | -------------------------------- |
-| Create    | Create a custom contact property |
-| Get       | Retrieve property details        |
-| Update    | Modify property settings         |
-| Delete    | Remove a property                |
-| List      | List all contact properties      |
-
-</details>
-
-<details>
-<summary><strong>Segment</strong></summary>
-
-| Operation | Description                                          |
-| --------- | ---------------------------------------------------- |
-| Create    | Create a new segment with optional filter conditions |
-| Get       | Retrieve segment details                             |
-| Delete    | Remove a segment                                     |
-| List      | List all segments                                    |
-
-</details>
-
-<details>
-<summary><strong>Topic</strong></summary>
-
-| Operation | Description                 |
-| --------- | --------------------------- |
-| Create    | Create a subscription topic |
-| Get       | Retrieve topic details      |
-| Update    | Modify topic settings       |
-| Delete    | Remove a topic              |
-| List      | List all topics             |
-
-</details>
-
-<details>
-<summary><strong>Broadcast</strong></summary>
-
-| Operation | Description                   |
-| --------- | ----------------------------- |
-| Create    | Create an email campaign      |
-| Get       | Retrieve broadcast details    |
-| Send      | Send a broadcast to a segment |
-| Update    | Modify broadcast settings     |
-| Delete    | Remove a broadcast            |
-| List      | List all broadcasts           |
-
-</details>
-
-<details>
-<summary><strong>Template</strong></summary>
-
-| Operation | Description                    |
-| --------- | ------------------------------ |
-| Create    | Create an email template       |
-| Get       | Retrieve template details      |
-| Update    | Modify a template              |
-| Delete    | Remove a template              |
-| List      | List all templates             |
-| Publish   | Publish a template             |
-| Duplicate | Duplicate an existing template |
-
-</details>
-
-<details>
-<summary><strong>Domain</strong></summary>
-
-| Operation | Description                 |
-| --------- | --------------------------- |
-| Create    | Add a sending domain        |
-| Get       | Retrieve domain details     |
-| Verify    | Trigger domain verification |
-| Update    | Modify domain settings      |
-| Delete    | Remove a domain             |
-| List      | List all domains            |
-
-</details>
-
-<details>
-<summary><strong>Webhook</strong></summary>
-
-| Operation | Description               |
-| --------- | ------------------------- |
-| Create    | Create a webhook endpoint |
-| Get       | Retrieve webhook details  |
-| Update    | Modify webhook settings   |
-| Delete    | Remove a webhook          |
-| List      | List all webhooks         |
-
-</details>
-
 ## Trigger Events
 
 The **Resend Trigger** node receives webhooks for real-time email events. Signatures are automatically verified using Svix.
 
-> **Note:** The trigger node requires the **Resend Webhook Signing Secret** credential (separate from the Resend API credential). See the [Credentials](#credentials) section for setup instructions.
+> [!NOTE]
+> The trigger node requires the **Resend Webhook Signing Secret** credential (separate from the Resend API credential). See the [Credentials](#credentials) section for setup instructions.
 
-<details>
-<summary><strong>View all events</strong></summary>
-
-| Event                    | Description                          |
-| ------------------------ | ------------------------------------ |
-| `email.sent`             | Email sent to recipient              |
-| `email.delivered`        | Email delivered successfully         |
-| `email.delivery_delayed` | Email delivery delayed               |
-| `email.opened`           | Recipient opened the email           |
-| `email.clicked`          | Link clicked in email                |
-| `email.bounced`          | Email bounced                        |
-| `email.complained`       | Spam complaint received              |
-| `email.failed`           | Email failed to send due to an error |
-| `email.received`         | Inbound email received by Resend     |
-| `email.scheduled`        | Email scheduled to be sent           |
-| `email.suppressed`       | Email suppressed by Resend           |
-| `contact.created`        | New contact added                    |
-| `contact.updated`        | Contact modified                     |
-| `contact.deleted`        | Contact removed                      |
-| `domain.created`         | New domain added                     |
-| `domain.updated`         | Domain modified                      |
-| `domain.deleted`         | Domain removed                       |
-
-</details>
+For a full list of supported event types, see the [Resend Webhooks documentation](https://resend.com/docs/dashboard/webhooks/event-types).
 
 ## Limitations
 
