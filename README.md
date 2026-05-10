@@ -16,7 +16,6 @@
   <a href="#installation">Installation</a> |
   <a href="#credentials">Credentials</a> |
   <a href="#human-in-the-loop">Human in the Loop</a> |
-  <a href="#resources">Resources</a> |
   <a href="#trigger-events">Trigger Events</a> |
   <a href="#limitations">Limitations</a> |
   <a href="#development">Development</a>

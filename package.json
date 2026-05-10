@@ -57,7 +57,7 @@
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
 		"@types/node": "^25.2.3",
-		"@typescript-eslint/parser": "~8.56.0",
+		"@typescript-eslint/parser": "~8.59.0",
 		"auto-changelog": "^2.5.0",
 		"eslint": "^9.0.0",
 		"eslint-plugin-n8n-nodes-base": "^1.16.6",
