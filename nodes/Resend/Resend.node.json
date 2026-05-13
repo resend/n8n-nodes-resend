@@ -1,14 +1,14 @@
 {
-	"node": "n8n-nodes-resend.resend",
-	"nodeVersion": "1.0",
-	"codexVersion": "1.0",
-	"categories": ["Communication"],
-	"resources": {
-		"primaryDocumentation": [
-			{
-				"url": "https://resend.com/docs"
-			}
-		]
-	},
-	"alias": ["email", "human", "form", "wait", "hitl", "approval", "resend"]
+  "node": "n8n-nodes-resend.resend",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Communication"],
+  "resources": {
+    "primaryDocumentation": [
+      {
+        "url": "https://resend.com/docs"
+      }
+    ]
+  },
+  "alias": ["email", "human", "form", "wait", "hitl", "approval", "resend"]
 }

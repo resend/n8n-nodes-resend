@@ -127,12 +127,14 @@ For a full list of supported event types, see the [Resend Webhooks documentation
 
 ## Development
 
+Requires [Node.js 22.13+](https://nodejs.org/) and [pnpm 11](https://pnpm.io/) (`corepack enable` recommended).
+
 ```bash
 git clone https://github.com/resend/n8n-nodes-resend.git
 cd n8n-nodes-resend
-npm install
-npm run build
-npm run lint
+pnpm install
+pnpm run build
+pnpm run lint
 ```
 
 ## License

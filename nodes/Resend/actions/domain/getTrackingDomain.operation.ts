@@ -1,65 +1,75 @@
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import type {
+  IExecuteFunctions,
+  INodeExecutionData,
+  INodeProperties,
+} from 'n8n-workflow';
 import { apiRequest } from '../../transport';
-import { createDynamicIdField, resolveDynamicIdValue } from '../../utils/dynamicFields';
+import {
+  createDynamicIdField,
+  resolveDynamicIdValue,
+} from '../../utils/dynamicFields';
 
 export const description: INodeProperties[] = [
-	{
-		displayName:
-			'Custom tracking domains are currently in private alpha and only available to a limited number of users. APIs might change before GA. <a href="https://resend.com/contact">Contact us</a> if you\'re interested in testing this feature.',
-		name: 'trackingDomainAlphaNotice',
-		type: 'notice',
-		default: '',
-		displayOptions: {
-			show: {
-				resource: ['domains'],
-				operation: ['getTrackingDomain'],
-			},
-		},
-	},
-	createDynamicIdField({
-		fieldName: 'domainId',
-		resourceName: 'domain',
-		displayName: 'Domain',
-		required: true,
-		placeholder: 'd91cd9bd-1176-453e-8fc1-35364d380206',
-		description:
-			'The parent domain. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-		displayOptions: {
-			show: {
-				resource: ['domains'],
-				operation: ['getTrackingDomain'],
-			},
-		},
-	}),
-	{
-		displayName: 'Tracking Domain ID',
-		name: 'trackingDomainId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-		displayOptions: {
-			show: {
-				resource: ['domains'],
-				operation: ['getTrackingDomain'],
-			},
-		},
-		description: 'The unique identifier of the tracking domain to retrieve',
-	},
+  {
+    displayName:
+      'Custom tracking domains are currently in private alpha and only available to a limited number of users. APIs might change before GA. <a href="https://resend.com/contact">Contact us</a> if you\'re interested in testing this feature.',
+    name: 'trackingDomainAlphaNotice',
+    type: 'notice',
+    default: '',
+    displayOptions: {
+      show: {
+        resource: ['domains'],
+        operation: ['getTrackingDomain'],
+      },
+    },
+  },
+  createDynamicIdField({
+    fieldName: 'domainId',
+    resourceName: 'domain',
+    displayName: 'Domain',
+    required: true,
+    placeholder: 'd91cd9bd-1176-453e-8fc1-35364d380206',
+    description:
+      'The parent domain. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+    displayOptions: {
+      show: {
+        resource: ['domains'],
+        operation: ['getTrackingDomain'],
+      },
+    },
+  }),
+  {
+    displayName: 'Tracking Domain ID',
+    name: 'trackingDomainId',
+    type: 'string',
+    required: true,
+    default: '',
+    placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    displayOptions: {
+      show: {
+        resource: ['domains'],
+        operation: ['getTrackingDomain'],
+      },
+    },
+    description: 'The unique identifier of the tracking domain to retrieve',
+  },
 ];
 
 export async function execute(
-	this: IExecuteFunctions,
-	index: number,
+  this: IExecuteFunctions,
+  index: number,
 ): Promise<INodeExecutionData[]> {
-	const domainId = resolveDynamicIdValue(this, 'domainId', index);
-	const trackingDomainId = this.getNodeParameter('trackingDomainId', index) as string;
+  const domainId = resolveDynamicIdValue(this, 'domainId', index);
+  const trackingDomainId = this.getNodeParameter(
+    'trackingDomainId',
+    index,
+  ) as string;
 
-	const response = await apiRequest.call(
-		this,
-		'GET',
-		`/domains/${encodeURIComponent(domainId)}/tracking-domains/${encodeURIComponent(trackingDomainId)}`,
-	);
+  const response = await apiRequest.call(
+    this,
+    'GET',
+    `/domains/${encodeURIComponent(domainId)}/tracking-domains/${encodeURIComponent(trackingDomainId)}`,
+  );
 
-	return [{ json: response, pairedItem: { item: index } }];
+  return [{ json: response, pairedItem: { item: index } }];
 }

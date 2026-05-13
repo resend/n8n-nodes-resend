@@ -1,0 +1,7 @@
+minimumReleaseAge: 0
+
+neverBuiltDependencies:
+  - isolated-vm
+
+allowBuilds:
+  isolated-vm: false
