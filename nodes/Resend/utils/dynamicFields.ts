@@ -1,20 +1,24 @@
-import type { INodeProperties, IExecuteFunctions, INodeParameterResourceLocator } from 'n8n-workflow';
+import type {
+  IExecuteFunctions,
+  INodeParameterResourceLocator,
+  INodeProperties,
+} from 'n8n-workflow';
 
 /**
  * Maps resource names to their corresponding API methods for loading dropdown options.
  * Used to dynamically determine which method to call for each resource type.
  */
 export const RESOURCE_METHOD_MAP = {
-	broadcast: 'getBroadcasts',
-	contact: 'getContacts',
-	domain: 'getDomains',
-	webhook: 'getWebhooks',
-	contactProperty: 'getContactProperties',
-	email: 'getEmails',
-	receivedEmail: 'getReceivedEmails',
-	segment: 'getSegments',
-	template: 'getTemplates',
-	topic: 'getTopics',
+  broadcast: 'getBroadcasts',
+  contact: 'getContacts',
+  domain: 'getDomains',
+  webhook: 'getWebhooks',
+  contactProperty: 'getContactProperties',
+  email: 'getEmails',
+  receivedEmail: 'getReceivedEmails',
+  segment: 'getSegments',
+  template: 'getTemplates',
+  topic: 'getTopics',
 } as const;
 
 /**
@@ -22,36 +26,36 @@ export const RESOURCE_METHOD_MAP = {
  * Used for generating consistent field labels across the application.
  */
 export const RESOURCE_DISPLAY_MAP = {
-	broadcast: 'Broadcast',
-	contact: 'Contact',
-	domain: 'Domain',
-	webhook: 'Webhook',
-	contactProperty: 'Contact Property',
-	email: 'Email',
-	receivedEmail: 'Received Email',
-	segment: 'Segment',
-	template: 'Template',
-	topic: 'Topic',
+  broadcast: 'Broadcast',
+  contact: 'Contact',
+  domain: 'Domain',
+  webhook: 'Webhook',
+  contactProperty: 'Contact Property',
+  email: 'Email',
+  receivedEmail: 'Received Email',
+  segment: 'Segment',
+  template: 'Template',
+  topic: 'Topic',
 } as const;
 
 /**
  * Configuration options for creating resourceLocator fields.
  */
 export interface DynamicIdFieldOptions {
-	/** Base name for the field (e.g., 'contactId', 'templateId') */
-	fieldName: string;
-	/** Resource name (e.g., 'contact', 'template') - must match keys in RESOURCE_METHOD_MAP */
-	resourceName: keyof typeof RESOURCE_METHOD_MAP;
-	/** Human-readable display name for the field */
-	displayName: string;
-	/** Whether the field is required */
-	required?: boolean;
-	/** Placeholder text for the manual input field */
-	placeholder?: string;
-	/** Additional description for the field */
-	description?: string;
-	/** Display options to control when fields are shown */
-	displayOptions?: INodeProperties['displayOptions'];
+  /** Base name for the field (e.g., 'contactId', 'templateId') */
+  fieldName: string;
+  /** Resource name (e.g., 'contact', 'template') - must match keys in RESOURCE_METHOD_MAP */
+  resourceName: keyof typeof RESOURCE_METHOD_MAP;
+  /** Human-readable display name for the field */
+  displayName: string;
+  /** Whether the field is required */
+  required?: boolean;
+  /** Placeholder text for the manual input field */
+  placeholder?: string;
+  /** Additional description for the field */
+  description?: string;
+  /** Display options to control when fields are shown */
+  displayOptions?: INodeProperties['displayOptions'];
 }
 
 /**
@@ -85,49 +89,54 @@ export interface DynamicIdFieldOptions {
  * });
  * ```
  */
-export function createDynamicIdField(options: DynamicIdFieldOptions): INodeProperties {
-	const {
-		fieldName,
-		resourceName,
-		displayName,
-		required = false,
-		placeholder,
-		description,
-		displayOptions,
-	} = options;
+export function createDynamicIdField(
+  options: DynamicIdFieldOptions,
+): INodeProperties {
+  const {
+    fieldName,
+    resourceName,
+    displayName,
+    required = false,
+    placeholder,
+    description,
+    displayOptions,
+  } = options;
 
-	// Get the display name for the resource
-	const resourceDisplayName = RESOURCE_DISPLAY_MAP[resourceName];
+  // Get the display name for the resource
+  const resourceDisplayName = RESOURCE_DISPLAY_MAP[resourceName];
 
-	// Get the method name for loading options
-	const methodName = RESOURCE_METHOD_MAP[resourceName];
+  // Get the method name for loading options
+  const methodName = RESOURCE_METHOD_MAP[resourceName];
 
-	return {
-		displayName,
-		name: fieldName,
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required,
-		displayOptions,
-		description: description || `Select a ${resourceDisplayName.toLowerCase()} or enter an ID directly. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.`,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: `Select ${resourceDisplayName.toLowerCase()}...`,
-				typeOptions: {
-					searchListMethod: methodName,
-				},
-			},
-			{
-				displayName: 'By ID',
-				name: 'id',
-				type: 'string',
-				placeholder: placeholder || `Enter ${resourceDisplayName.toLowerCase()} ID...`,
-			}
-		]
-	};
+  return {
+    displayName,
+    name: fieldName,
+    type: 'resourceLocator',
+    default: { mode: 'list', value: '' },
+    required,
+    displayOptions,
+    description:
+      description ||
+      `Select a ${resourceDisplayName.toLowerCase()} or enter an ID directly. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.`,
+    modes: [
+      {
+        displayName: 'From List',
+        name: 'list',
+        type: 'list',
+        placeholder: `Select ${resourceDisplayName.toLowerCase()}...`,
+        typeOptions: {
+          searchListMethod: methodName,
+        },
+      },
+      {
+        displayName: 'By ID',
+        name: 'id',
+        type: 'string',
+        placeholder:
+          placeholder || `Enter ${resourceDisplayName.toLowerCase()} ID...`,
+      },
+    ],
+  };
 }
 
 /**
@@ -153,10 +162,13 @@ export function createDynamicIdField(options: DynamicIdFieldOptions): INodePrope
  * ```
  */
 export function resolveDynamicIdValue(
-	executeFunctions: IExecuteFunctions,
-	fieldName: string,
-	index: number,
+  executeFunctions: IExecuteFunctions,
+  fieldName: string,
+  index: number,
 ): string {
-	const resourceLocator = executeFunctions.getNodeParameter(fieldName, index) as INodeParameterResourceLocator;
-	return resourceLocator.value as string;
+  const resourceLocator = executeFunctions.getNodeParameter(
+    fieldName,
+    index,
+  ) as INodeParameterResourceLocator;
+  return resourceLocator.value as string;
 }

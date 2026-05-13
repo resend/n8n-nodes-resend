@@ -1,8 +1,8 @@
 export const BUTTON_STYLE_SECONDARY =
-	'display:inline-block; text-decoration:none; background-color:#fff; color:#4a4a4a; padding:12px 24px; font-family: Arial,sans-serif; font-size:14px;font-weight:600; border:1px solid #d1d1d1; border-radius:6px; min-width:120px; margin: 12px 6px 0 6px;';
+  'display:inline-block; text-decoration:none; background-color:#fff; color:#4a4a4a; padding:12px 24px; font-family: Arial,sans-serif; font-size:14px;font-weight:600; border:1px solid #d1d1d1; border-radius:6px; min-width:120px; margin: 12px 6px 0 6px;';
 
 export const BUTTON_STYLE_PRIMARY =
-	'display:inline-block; text-decoration:none; background-color:#ff6d5a; color: #fff; padding:12px 24px; font-family: Arial,sans-serif; font-size:14px;font-weight:600; border-radius:6px; min-width:120px; margin: 12px 2px 0 2px;';
+  'display:inline-block; text-decoration:none; background-color:#ff6d5a; color: #fff; padding:12px 24px; font-family: Arial,sans-serif; font-size:14px;font-weight:600; border-radius:6px; min-width:120px; margin: 12px 2px 0 2px;';
 
 export const ACTION_RECORDED_PAGE = `
 	<html lang='en'>
@@ -96,15 +96,17 @@ export const ACTION_RECORDED_PAGE = `
 </html>`;
 
 export function createEmailBody(
-	message: string,
-	buttons: string,
-	options?: { instanceId?: string },
+  message: string,
+  buttons: string,
+  options?: { instanceId?: string },
 ) {
-	let footerHtml = '';
-	if (options?.instanceId !== undefined) {
-		const utm_campaign = options.instanceId ? `&utm_campaign=${options.instanceId}` : '';
-		const n8nWebsiteLink = `https://n8n.io/?utm_source=n8n-internal&utm_medium=send-and-wait${utm_campaign}`;
-		footerHtml = `
+  let footerHtml = '';
+  if (options?.instanceId !== undefined) {
+    const utm_campaign = options.instanceId
+      ? `&utm_campaign=${options.instanceId}`
+      : '';
+    const n8nWebsiteLink = `https://n8n.io/?utm_source=n8n-internal&utm_medium=send-and-wait${utm_campaign}`;
+    footerHtml = `
 				<!-- Footer -->
 				<table width="100%" cellpadding="0" cellspacing="0" border="0"
 					style="text-align: center; color: #7e8186; font-family: Arial, sans-serif; font-size: 12px;">
@@ -116,8 +118,8 @@ export function createEmailBody(
 						</td>
 					</tr>
 				</table>`;
-	}
-	return `
+  }
+  return `
 <!DOCTYPE html>
 <html lang='en'>
 
@@ -167,14 +169,17 @@ export function createEmailBody(
 
 /** @deprecated Use createEmailBody instead */
 export function createEmailBodyWithN8nAttribution(
-	message: string,
-	buttons: string,
-	instanceId?: string,
+  message: string,
+  buttons: string,
+  instanceId?: string,
 ) {
-	return createEmailBody(message, buttons, { instanceId: instanceId ?? '' });
+  return createEmailBody(message, buttons, { instanceId: instanceId ?? '' });
 }
 
 /** @deprecated Use createEmailBody instead */
-export function createEmailBodyWithoutN8nAttribution(message: string, buttons: string) {
-	return createEmailBody(message, buttons);
+export function createEmailBodyWithoutN8nAttribution(
+  message: string,
+  buttons: string,
+) {
+  return createEmailBody(message, buttons);
 }
