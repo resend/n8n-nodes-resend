@@ -5,6 +5,23 @@ import type {
 } from 'n8n-workflow';
 import { handleResendApiError, RESEND_API_BASE } from '../transport';
 
+/** Resend list endpoints return `{ data: [...] }`. */
+type ResendListResponseBody<T> = { data?: T[] };
+
+type ResendDropdownItem = { id: string; name?: string };
+type ResendContactItem = {
+  id: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+};
+type ResendWebhookItem = { id: string; endpoint?: string; status?: string };
+type ResendEmailItem = { id: string; subject?: string; created_at?: string };
+type ResendTemplateVariable = { key: string; type?: string };
+
+/** GET /templates/:id exposes `variables` for template placeholders. */
+type ResendTemplateDetailBody = { variables?: ResendTemplateVariable[] };
+
 /**
  * Load options for dropdown fields (max 100 items).
  * Used by getTemplates, getSegments, getTopics.
@@ -13,7 +30,7 @@ async function loadDropdownOptions(
   loadOptionsFunctions: ILoadOptionsFunctions,
   endpoint: string,
 ): Promise<INodePropertyOptions[]> {
-  let response;
+  let response: ResendListResponseBody<ResendDropdownItem> | undefined;
   try {
     response =
       await loadOptionsFunctions.helpers.httpRequestWithAuthentication.call(
@@ -32,8 +49,8 @@ async function loadDropdownOptions(
 
   const items = response?.data ?? [];
   return items
-    .filter((item: { id?: string }) => item?.id)
-    .map((item: { id: string; name?: string }) => ({
+    .filter((item) => item?.id)
+    .map((item) => ({
       name: item.name ? `${item.name} (${item.id})` : item.id,
       value: item.id,
     }));
@@ -99,7 +116,7 @@ export async function getTemplateVariables(
     return [];
   }
 
-  let response;
+  let response: ResendTemplateDetailBody | undefined;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
@@ -117,8 +134,8 @@ export async function getTemplateVariables(
   const variables = response?.variables ?? [];
 
   return variables
-    .filter((variable: { key?: string }) => variable?.key)
-    .map((variable: { key: string; type?: string }) => {
+    .filter((variable) => variable?.key)
+    .map((variable) => {
       const typeLabel = variable.type ? ` (${variable.type})` : '';
       return {
         name: `${variable.key}${typeLabel}`,
@@ -157,7 +174,7 @@ export async function getBroadcasts(
 export async function getContacts(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  let response;
+  let response: ResendListResponseBody<ResendContactItem> | undefined;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
@@ -175,33 +192,26 @@ export async function getContacts(
 
   const items = response?.data ?? [];
   return items
-    .filter((item: { id?: string }) => item?.id)
-    .map(
-      (item: {
-        id: string;
-        email?: string;
-        first_name?: string;
-        last_name?: string;
-      }) => {
-        const displayParts: string[] = [];
-        if (item.first_name || item.last_name) {
-          displayParts.push(
-            [item.first_name, item.last_name].filter(Boolean).join(' '),
-          );
-        }
-        if (item.email) {
-          displayParts.push(item.email);
-        }
-        const displayName =
-          displayParts.length > 0
-            ? `${displayParts.join(' - ')} (${item.id})`
-            : item.id;
-        return {
-          name: displayName,
-          value: item.id,
-        };
-      },
-    );
+    .filter((item) => item?.id)
+    .map((item) => {
+      const displayParts: string[] = [];
+      if (item.first_name || item.last_name) {
+        displayParts.push(
+          [item.first_name, item.last_name].filter(Boolean).join(' '),
+        );
+      }
+      if (item.email) {
+        displayParts.push(item.email);
+      }
+      const displayName =
+        displayParts.length > 0
+          ? `${displayParts.join(' - ')} (${item.id})`
+          : item.id;
+      return {
+        name: displayName,
+        value: item.id,
+      };
+    });
 }
 
 export async function getDomains(
@@ -216,7 +226,7 @@ export async function getDomains(
 export async function getWebhooks(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  let response;
+  let response: ResendListResponseBody<ResendWebhookItem> | undefined;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
@@ -234,14 +244,14 @@ export async function getWebhooks(
 
   const items = response?.data ?? [];
   return items
-    .filter((item: { id?: string }) => item?.id)
-    .map((item: { id: string; endpoint?: string; status?: string }) => {
+    .filter((item) => item?.id)
+    .map((item) => {
       let displayName = item.id;
       if (item.endpoint) {
         // Truncate long URLs for display
         const shortEndpoint =
           item.endpoint.length > 50
-            ? item.endpoint.substring(0, 47) + '...'
+            ? `${item.endpoint.substring(0, 47)}...`
             : item.endpoint;
         const statusLabel = item.status ? ` [${item.status}]` : '';
         displayName = `${shortEndpoint}${statusLabel} (${item.id})`;
@@ -262,7 +272,7 @@ export async function getContactProperties(
 export async function getEmails(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  let response;
+  let response: ResendListResponseBody<ResendEmailItem> | undefined;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
@@ -280,14 +290,14 @@ export async function getEmails(
 
   const items = response?.data ?? [];
   return items
-    .filter((item: { id?: string }) => item?.id)
-    .map((item: { id: string; subject?: string; created_at?: string }) => {
+    .filter((item) => item?.id)
+    .map((item) => {
       const parts: string[] = [];
       if (item.subject) {
         // Truncate long subjects
         parts.push(
           item.subject.length > 50
-            ? item.subject.substring(0, 47) + '...'
+            ? `${item.subject.substring(0, 47)}...`
             : item.subject,
         );
       }
@@ -311,7 +321,7 @@ export async function getEmails(
 export async function getReceivedEmails(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  let response;
+  let response: ResendListResponseBody<ResendEmailItem> | undefined;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
@@ -329,14 +339,14 @@ export async function getReceivedEmails(
 
   const items = response?.data ?? [];
   return items
-    .filter((item: { id?: string }) => item?.id)
-    .map((item: { id: string; subject?: string; created_at?: string }) => {
+    .filter((item) => item?.id)
+    .map((item) => {
       const parts: string[] = [];
       if (item.subject) {
         // Truncate long subjects
         parts.push(
           item.subject.length > 50
-            ? item.subject.substring(0, 47) + '...'
+            ? `${item.subject.substring(0, 47)}...`
             : item.subject,
         );
       }

@@ -700,12 +700,12 @@ export function configureWaitTillDate(
         }
 
         waitAmount *= 1000;
-        waitTill = new Date(new Date().getTime() + waitAmount);
+        waitTill = new Date(Date.now() + waitAmount);
       } else {
         waitTill = new Date(limitOptions.maxDateAndTime as string);
       }
 
-      if (isNaN(waitTill.getTime())) {
+      if (Number.isNaN(waitTill.getTime())) {
         throw new ApplicationError('Invalid date format');
       }
     } catch (error) {

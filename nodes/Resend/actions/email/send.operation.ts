@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -734,7 +735,7 @@ export async function execute(
     requestHeaders['Idempotency-Key'] = additionalOptions.idempotencyKey;
   }
 
-  let response;
+  let response: IDataObject;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,

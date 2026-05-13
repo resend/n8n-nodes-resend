@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -472,7 +473,7 @@ export async function execute(
     headers['Idempotency-Key'] = batchOptions.idempotency_key;
   }
 
-  let response;
+  let response: IDataObject;
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
