@@ -1,2 +1,3 @@
 .DS_Store
 *.tsbuildinfo
+dist/**/*.map

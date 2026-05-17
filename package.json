@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-resend",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "description": "Resend integration for n8n: Email, Broadcasts, Templates, Domains, Contacts, Segments, Topics, Webhooks, Workflows, Events, and more",
   "keywords": [
     "n8n-community-node-package",
@@ -43,8 +43,7 @@
     "dist"
   ],
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "n8n": {
     "n8nNodesApiVersion": 1,

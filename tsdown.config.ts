@@ -7,7 +7,7 @@ export default defineConfig({
   unbundle: true,
   format: 'cjs',
   dts: true,
-  sourcemap: true,
+  sourcemap: false,
   clean: true,
   target: 'es2019',
   fixedExtension: false,
