@@ -49,4 +49,4 @@ jobs:
         run: pnpm run lint
 
       - name: Publish to npm with provenance
-        run: npm publish --provenance --access public
+        run: pnpm publish --provenance --no-git-checks
