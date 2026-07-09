@@ -49,6 +49,7 @@
     "n8nNodesApiVersion": 1,
     "credentials": [
       "dist/credentials/ResendApi.credentials.js",
+      "dist/credentials/ResendOAuth2Api.credentials.js",
       "dist/credentials/ResendWebhookSigningSecretApi.credentials.js"
     ],
     "nodes": [

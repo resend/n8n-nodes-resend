@@ -70,6 +70,20 @@ export class Resend implements INodeType {
       {
         name: 'resendApi',
         required: true,
+        displayOptions: {
+          show: {
+            authentication: ['apiKey'],
+          },
+        },
+      },
+      {
+        name: 'resendOAuth2Api',
+        required: true,
+        displayOptions: {
+          show: {
+            authentication: ['oAuth2'],
+          },
+        },
       },
     ],
     waitingNodeTooltip: SEND_AND_WAIT_WAITING_TOOLTIP,
@@ -77,6 +91,22 @@ export class Resend implements INodeType {
     inputs: [NodeConnectionTypes.Main],
     outputs: [NodeConnectionTypes.Main],
     properties: [
+      {
+        displayName: 'Authentication',
+        name: 'authentication',
+        type: 'options',
+        options: [
+          {
+            name: 'API Key',
+            value: 'apiKey',
+          },
+          {
+            name: 'OAuth2',
+            value: 'oAuth2',
+          },
+        ],
+        default: 'apiKey',
+      },
       // Resource selection
       {
         displayName: 'Resource',

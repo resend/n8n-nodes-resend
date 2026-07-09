@@ -232,6 +232,15 @@ export function handleResendApiError(
 
 export const RESEND_API_BASE = 'https://api.resend.com';
 
+function getCredentialType(context: IExecuteFunctions): string {
+  const authentication = context.getNodeParameter(
+    'authentication',
+    0,
+    'apiKey',
+  ) as string;
+  return authentication === 'oAuth2' ? 'resendOAuth2Api' : 'resendApi';
+}
+
 export async function apiRequest(
   this: IExecuteFunctions,
   method: IHttpRequestMethods,
@@ -260,7 +269,7 @@ export async function apiRequest(
   try {
     return await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       options,
     );
   } catch (error) {
@@ -284,7 +293,7 @@ export async function requestList(
     try {
       return await this.helpers.httpRequestWithAuthentication.call(
         this,
-        'resendApi',
+        getCredentialType(this),
         {
           url: `${RESEND_API_BASE}${endpoint}`,
           method: 'GET',
