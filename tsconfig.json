@@ -2,7 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "es2019",
     "lib": ["es2019", "es2020", "es2022.error"],
     "types": ["node", "jest"],

@@ -1,14 +1,17 @@
 import type { INodeProperties } from 'n8n-workflow';
+import * as claim from './claim.operation';
 import * as create from './create.operation';
 import * as createTrackingDomain from './createTrackingDomain.operation';
 import * as del from './delete.operation';
 import * as deleteTrackingDomain from './deleteTrackingDomain.operation';
 import * as get from './get.operation';
+import * as getClaim from './getClaim.operation';
 import * as getTrackingDomain from './getTrackingDomain.operation';
 import * as list from './list.operation';
 import * as listTrackingDomains from './listTrackingDomains.operation';
 import * as update from './update.operation';
 import * as verify from './verify.operation';
+import * as verifyClaim from './verifyClaim.operation';
 import * as verifyTrackingDomain from './verifyTrackingDomain.operation';
 
 export const operations: INodeProperties[] = [
@@ -23,6 +26,13 @@ export const operations: INodeProperties[] = [
       },
     },
     options: [
+      {
+        name: 'Claim',
+        value: 'claim',
+        description:
+          'Claim a domain already verified by another team. Returns a TXT record to add to your DNS for ownership verification.',
+        action: 'Claim a domain from another team',
+      },
       {
         name: 'Create',
         value: 'create',
@@ -56,6 +66,13 @@ export const operations: INodeProperties[] = [
         description:
           'Retrieve details of a domain including DNS records, verification status, and configuration',
         action: 'Get domain details',
+      },
+      {
+        name: 'Get Claim',
+        value: 'getClaim',
+        description:
+          'Retrieve the latest claim status for a domain. Poll this endpoint to follow a claim status after starting a claim.',
+        action: 'Get domain claim status',
       },
       {
         name: 'Get Tracking Domain',
@@ -93,6 +110,13 @@ export const operations: INodeProperties[] = [
         action: 'Verify domain DNS records',
       },
       {
+        name: 'Verify Claim',
+        value: 'verifyClaim',
+        description:
+          'Trigger DNS verification for a domain claim. Add the TXT record from the Claim operation before calling this.',
+        action: 'Verify domain claim ownership',
+      },
+      {
         name: 'Verify Tracking Domain',
         value: 'verifyTrackingDomain',
         description:
@@ -106,12 +130,15 @@ export const operations: INodeProperties[] = [
 
 export const descriptions: INodeProperties[] = [
   ...operations,
+  ...claim.description,
   ...create.description,
   ...get.description,
+  ...getClaim.description,
   ...list.description,
   ...update.description,
   ...del.description,
   ...verify.description,
+  ...verifyClaim.description,
   ...createTrackingDomain.description,
   ...getTrackingDomain.description,
   ...listTrackingDomains.description,
@@ -121,15 +148,18 @@ export const descriptions: INodeProperties[] = [
 
 export { execute } from './execute';
 export {
+  claim,
   create,
   createTrackingDomain,
   del as delete,
   deleteTrackingDomain,
   get,
+  getClaim,
   getTrackingDomain,
   list,
   listTrackingDomains,
   update,
   verify,
+  verifyClaim,
   verifyTrackingDomain,
 };
