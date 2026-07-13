@@ -6,8 +6,8 @@ import type {
   INode,
   INodeExecutionData,
   JsonObject,
-} from "n8n-workflow";
-import { NodeApiError, NodeOperationError, sleep } from "n8n-workflow";
+} from 'n8n-workflow';
+import { NodeApiError, NodeOperationError, sleep } from 'n8n-workflow';
 
 interface ResendApiError {
   name: string;
@@ -17,31 +17,31 @@ interface ResendApiError {
 
 function formatResendErrorTitle(name: string): string {
   return name
-    .split("_")
+    .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(' ');
 }
 
 function extractResendError(error: unknown): ResendApiError | undefined {
-  if (!error || typeof error !== "object") return undefined;
+  if (!error || typeof error !== 'object') return undefined;
 
   const isResendShape = (obj: unknown): obj is ResendApiError => {
-    if (!obj || typeof obj !== "object") return false;
+    if (!obj || typeof obj !== 'object') return false;
     const o = obj as Record<string, unknown>;
     return (
-      typeof o.name === "string" &&
-      typeof o.message === "string" &&
-      o.name !== "Error" &&
-      o.name !== "NodeApiError" &&
-      o.name !== "NodeOperationError" &&
-      o.name !== "AxiosError"
+      typeof o.name === 'string' &&
+      typeof o.message === 'string' &&
+      o.name !== 'Error' &&
+      o.name !== 'NodeApiError' &&
+      o.name !== 'NodeOperationError' &&
+      o.name !== 'AxiosError'
     );
   };
 
   const tryJson = (value: unknown): ResendApiError | undefined => {
-    if (typeof value !== "string") return undefined;
+    if (typeof value !== 'string') return undefined;
     const trimmed = value.trim();
-    if (!trimmed.startsWith("{")) return undefined;
+    if (!trimmed.startsWith('{')) return undefined;
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (isResendShape(parsed)) return parsed;
@@ -58,14 +58,14 @@ function extractResendError(error: unknown): ResendApiError | undefined {
   let result = tryJson(err.message) ?? tryJson(err.description);
   if (result) return result;
 
-  if (err.cause && typeof err.cause === "object") {
+  if (err.cause && typeof err.cause === 'object') {
     const cause = err.cause as Record<string, unknown>;
 
-    if (cause.response && typeof cause.response === "object") {
+    if (cause.response && typeof cause.response === 'object') {
       const resp = cause.response as Record<string, unknown>;
       if (isResendShape(resp.data)) {
         result = resp.data as ResendApiError;
-        if (!result.statusCode && typeof resp.status === "number") {
+        if (!result.statusCode && typeof resp.status === 'number') {
           result = { ...result, statusCode: resp.status };
         }
         return result;
@@ -78,9 +78,9 @@ function extractResendError(error: unknown): ResendApiError | undefined {
     result = tryJson(cause.body);
     if (result) return result;
 
-    if (cause.cause && typeof cause.cause === "object") {
+    if (cause.cause && typeof cause.cause === 'object') {
       const inner = cause.cause as Record<string, unknown>;
-      if (inner.response && typeof inner.response === "object") {
+      if (inner.response && typeof inner.response === 'object') {
         const resp = inner.response as Record<string, unknown>;
         if (isResendShape(resp.data)) return resp.data as ResendApiError;
         result = tryJson(resp.data);
@@ -93,27 +93,27 @@ function extractResendError(error: unknown): ResendApiError | undefined {
 }
 
 interface ResponseHeaders {
-  "ratelimit-limit"?: string;
-  "ratelimit-remaining"?: string;
-  "ratelimit-reset"?: string;
-  "retry-after"?: string;
-  "x-resend-daily-quota"?: string;
-  "x-resend-monthly-quota"?: string;
+  'ratelimit-limit'?: string;
+  'ratelimit-remaining'?: string;
+  'ratelimit-reset'?: string;
+  'retry-after'?: string;
+  'x-resend-daily-quota'?: string;
+  'x-resend-monthly-quota'?: string;
 }
 
 function extractResponseHeaders(error: unknown): ResponseHeaders {
-  if (!error || typeof error !== "object") return {};
+  if (!error || typeof error !== 'object') return {};
   const cause = (error as Record<string, unknown>).cause;
-  if (!cause || typeof cause !== "object") return {};
+  if (!cause || typeof cause !== 'object') return {};
   const response = (cause as Record<string, unknown>).response;
-  if (!response || typeof response !== "object") return {};
+  if (!response || typeof response !== 'object') return {};
   const headers = (response as Record<string, unknown>).headers;
-  if (!headers || typeof headers !== "object") return {};
+  if (!headers || typeof headers !== 'object') return {};
   return headers as ResponseHeaders;
 }
 
 function sanitizeErrorMessage(message: string): string {
-  return message.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/`/g, "'");
+  return message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/`/g, "'");
 }
 
 function buildQuotaDescription(
@@ -122,22 +122,22 @@ function buildQuotaDescription(
 ): string {
   const base = sanitizeErrorMessage(resendError.message);
 
-  if (resendError.name === "daily_quota_exceeded") {
-    const retryAfter = headers["retry-after"] ?? headers["ratelimit-reset"];
+  if (resendError.name === 'daily_quota_exceeded') {
+    const retryAfter = headers['retry-after'] ?? headers['ratelimit-reset'];
     const resetNote = retryAfter
       ? ` Resets in approximately ${retryAfter} second(s).`
-      : "";
+      : '';
     return `${base} Upgrade your plan to remove the daily sending limit, or wait until your quota resets.${resetNote}`;
   }
 
-  if (resendError.name === "monthly_quota_exceeded") {
+  if (resendError.name === 'monthly_quota_exceeded') {
     return `${base} Upgrade your plan to increase your monthly email quota.`;
   }
 
   // Generic rate-limit (e.g. rate_limit_exceeded)
-  const retryAfter = headers["retry-after"] ?? headers["ratelimit-reset"];
-  const remaining = headers["ratelimit-remaining"];
-  const limit = headers["ratelimit-limit"];
+  const retryAfter = headers['retry-after'] ?? headers['ratelimit-reset'];
+  const remaining = headers['ratelimit-remaining'];
+  const limit = headers['ratelimit-limit'];
   const parts: string[] = [base];
   if (limit !== undefined && remaining !== undefined) {
     parts.push(`Limit: ${limit} req/s, remaining: ${remaining}.`);
@@ -146,9 +146,9 @@ function buildQuotaDescription(
     parts.push(`Retry after ${retryAfter} second(s).`);
   }
   parts.push(
-    "Consider reducing concurrent requests or adding a queue mechanism.",
+    'Consider reducing concurrent requests or adding a queue mechanism.',
   );
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 export function handleResendApiError(
@@ -175,7 +175,7 @@ export function handleResendApiError(
         {
           message: `${formatResendErrorTitle(resendError.name)} (429)`,
           description,
-          httpCode: "429",
+          httpCode: '429',
           ...(itemIndex !== undefined ? { itemIndex } : {}),
         },
       );
@@ -184,8 +184,8 @@ export function handleResendApiError(
     // 403 – contact quota exceeded (validation_error with quota message)
     if (
       statusCode === 403 &&
-      resendError.name === "validation_error" &&
-      resendError.message.toLowerCase().includes("contacts quota")
+      resendError.name === 'validation_error' &&
+      resendError.message.toLowerCase().includes('contacts quota')
     ) {
       const description = `${sanitizeErrorMessage(resendError.message)} Upgrade your Marketing plan to increase your contact limit and resume sending broadcasts.`;
       throw new NodeApiError(
@@ -196,9 +196,9 @@ export function handleResendApiError(
           statusCode,
         } as unknown as JsonObject,
         {
-          message: "Contact Quota Exceeded (403)",
+          message: 'Contact Quota Exceeded (403)',
           description,
-          httpCode: "403",
+          httpCode: '403',
           ...(itemIndex !== undefined ? { itemIndex } : {}),
         },
       );
@@ -230,15 +230,15 @@ export function handleResendApiError(
   });
 }
 
-export const RESEND_API_BASE = "https://api.resend.com";
+export const RESEND_API_BASE = 'https://api.resend.com';
 
 function getCredentialType(context: IExecuteFunctions): string {
   const authentication = context.getNodeParameter(
-    "authentication",
+    'authentication',
     0,
-    "apiKey",
+    'apiKey',
   ) as string;
-  return authentication === "oAuth2" ? "resendOAuth2Api" : "resendApi";
+  return authentication === 'oAuth2' ? 'resendOAuth2Api' : 'resendApi';
 }
 
 export async function apiRequest(
@@ -252,8 +252,8 @@ export async function apiRequest(
     url: `${RESEND_API_BASE}${endpoint}`,
     method,
     headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "n8n-nodes-resend",
+      'Content-Type': 'application/json',
+      'User-Agent': 'n8n-nodes-resend',
     },
     json: true,
   };
@@ -282,8 +282,8 @@ export async function requestList(
   endpoint: string,
   extraQs?: IDataObject,
 ): Promise<IDataObject[]> {
-  const returnAll = this.getNodeParameter("returnAll", 0, false) as boolean;
-  const limit = this.getNodeParameter("limit", 0, 50) as number;
+  const returnAll = this.getNodeParameter('returnAll', 0, false) as boolean;
+  const limit = this.getNodeParameter('limit', 0, 50) as number;
 
   const targetLimit = returnAll ? Number.POSITIVE_INFINITY : (limit ?? 50);
   const pageSize = Math.min(targetLimit, 100);
@@ -296,9 +296,9 @@ export async function requestList(
         getCredentialType(this),
         {
           url: `${RESEND_API_BASE}${endpoint}`,
-          method: "GET",
+          method: 'GET',
           headers: {
-            "User-Agent": "n8n-nodes-resend",
+            'User-Agent': 'n8n-nodes-resend',
           },
           qs,
           json: true,
@@ -355,9 +355,9 @@ export function normalizeEmailList(
   if (Array.isArray(value)) {
     return value.map((email) => String(email).trim()).filter((email) => email);
   }
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return value
-      .split(",")
+      .split(',')
       .map((email) => email.trim())
       .filter((email) => email);
   }
@@ -375,7 +375,7 @@ export function parseTemplateVariables(
         }>;
       }
     | undefined,
-  fallbackKey: "fallbackValue" | "fallback_value",
+  fallbackKey: 'fallbackValue' | 'fallback_value',
   itemIndex: number,
 ): Array<Record<string, unknown>> | undefined {
   if (!variablesInput?.variables?.length) {
@@ -389,11 +389,11 @@ export function parseTemplateVariables(
     };
 
     const fallbackValue = variable.fallbackValue;
-    if (fallbackValue !== undefined && fallbackValue !== "") {
+    if (fallbackValue !== undefined && fallbackValue !== '') {
       let parsedFallback: string | number = fallbackValue as string;
-      if (variable.type === "number") {
+      if (variable.type === 'number') {
         const numericFallback =
-          typeof fallbackValue === "number"
+          typeof fallbackValue === 'number'
             ? fallbackValue
             : Number(fallbackValue);
         if (Number.isNaN(numericFallback)) {
@@ -429,18 +429,18 @@ export function buildTemplateSendVariables(
   for (const variable of variablesInput.variables) {
     let keyValue: string | undefined;
     if (
-      typeof variable.key === "object" &&
+      typeof variable.key === 'object' &&
       variable.key !== null &&
-      "value" in variable.key
+      'value' in variable.key
     ) {
       const extracted = variable.key.value;
-      if (typeof extracted === "string") {
+      if (typeof extracted === 'string') {
         const trimmed = extracted.trim();
         if (trimmed) {
           keyValue = trimmed;
         }
       }
-    } else if (typeof variable.key === "string") {
+    } else if (typeof variable.key === 'string') {
       const trimmed = variable.key.trim();
       if (trimmed) {
         keyValue = trimmed;
@@ -450,7 +450,7 @@ export function buildTemplateSendVariables(
     if (!keyValue) {
       continue;
     }
-    variables[keyValue] = variable.value ?? "";
+    variables[keyValue] = variable.value ?? '';
   }
 
   return Object.keys(variables).length ? variables : undefined;
@@ -458,10 +458,10 @@ export function buildTemplateSendVariables(
 
 export function assertHttpsEndpoint(node: INode, endpoint: string): void {
   const normalizedEndpoint = endpoint.trim().toLowerCase();
-  if (normalizedEndpoint.startsWith("http://")) {
+  if (normalizedEndpoint.startsWith('http://')) {
     throw new NodeOperationError(
       node,
-      "Invalid webhook endpoint scheme. Resend requires a publicly reachable HTTPS URL.",
+      'Invalid webhook endpoint scheme. Resend requires a publicly reachable HTTPS URL.',
     );
   }
 }

@@ -2,23 +2,23 @@ import type {
   INodeType,
   INodeTypeDescription,
   IWebhookFunctions,
-} from "n8n-workflow";
-import { NodeConnectionTypes } from "n8n-workflow";
-import * as account from "./actions/account";
-import * as broadcasts from "./actions/broadcast";
-import * as contacts from "./actions/contact";
-import * as contactProperties from "./actions/contactProperty";
-import * as domains from "./actions/domain";
-import * as email from "./actions/email";
-import * as events from "./actions/event";
-import * as logs from "./actions/log";
-import * as receivingEmails from "./actions/receivingEmail";
-import { router } from "./actions/router";
-import * as segments from "./actions/segment";
-import * as templates from "./actions/template";
-import * as topics from "./actions/topic";
-import * as webhooks from "./actions/webhook";
-import * as workflows from "./actions/workflow";
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
+import * as account from './actions/account';
+import * as broadcasts from './actions/broadcast';
+import * as contacts from './actions/contact';
+import * as contactProperties from './actions/contactProperty';
+import * as domains from './actions/domain';
+import * as email from './actions/email';
+import * as events from './actions/event';
+import * as logs from './actions/log';
+import * as receivingEmails from './actions/receivingEmail';
+import { router } from './actions/router';
+import * as segments from './actions/segment';
+import * as templates from './actions/template';
+import * as topics from './actions/topic';
+import * as webhooks from './actions/webhook';
+import * as workflows from './actions/workflow';
 import {
   getBroadcasts,
   getBroadcastsListSearch,
@@ -42,47 +42,47 @@ import {
   getTopicsListSearch,
   getWebhooks,
   getWebhooksListSearch,
-} from "./methods";
+} from './methods';
 import {
   SEND_AND_WAIT_WAITING_TOOLTIP,
   sendAndWaitWebhook,
   sendAndWaitWebhooksDescription,
-} from "./utils/sendAndWait";
+} from './utils/sendAndWait';
 
 export class Resend implements INodeType {
   description: INodeTypeDescription = {
-    displayName: "Resend",
-    name: "resend",
+    displayName: 'Resend',
+    name: 'resend',
     icon: {
-      light: "file:resend-icon-black.svg",
-      dark: "file:resend-icon-white.svg",
+      light: 'file:resend-icon-black.svg',
+      dark: 'file:resend-icon-white.svg',
     },
-    group: ["output"],
+    group: ['output'],
     version: 1,
     usableAsTool: true,
     description:
-      "Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform",
+      'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
     subtitle:
       '={{(() => { const resourceLabels = { broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
     defaults: {
-      name: "Resend",
+      name: 'Resend',
     },
     credentials: [
       {
-        name: "resendOAuth2Api",
+        name: 'resendOAuth2Api',
         required: true,
         displayOptions: {
           show: {
-            authentication: ["oAuth2"],
+            authentication: ['oAuth2'],
           },
         },
       },
       {
-        name: "resendApi",
+        name: 'resendApi',
         required: true,
         displayOptions: {
           show: {
-            authentication: ["apiKey"],
+            authentication: ['apiKey'],
           },
         },
       },
@@ -93,117 +93,117 @@ export class Resend implements INodeType {
     outputs: [NodeConnectionTypes.Main],
     properties: [
       {
-        displayName: "Authentication",
-        name: "authentication",
-        type: "options",
+        displayName: 'Authentication',
+        name: 'authentication',
+        type: 'options',
         options: [
           {
-            name: "OAuth2 (Recommended)",
-            value: "oAuth2",
+            name: 'OAuth2 (Recommended)',
+            value: 'oAuth2',
             description:
-              "Sign in with your Resend account — n8n registers itself as an OAuth client automatically, no API key needed",
+              'Sign in with your Resend account — n8n registers itself as an OAuth client automatically, no API key needed',
           },
           {
-            name: "API Key",
-            value: "apiKey",
-            description: "Manually paste a Resend API key",
+            name: 'API Key',
+            value: 'apiKey',
+            description: 'Manually paste a Resend API key',
           },
         ],
-        default: "oAuth2",
+        default: 'oAuth2',
       },
       // Resource selection
       {
-        displayName: "Resource",
-        name: "resource",
-        type: "options",
+        displayName: 'Resource',
+        name: 'resource',
+        type: 'options',
         noDataExpression: true,
         options: [
           {
-            name: "Account",
-            value: "account",
+            name: 'Account',
+            value: 'account',
             description:
-              "Manage the connected Resend OAuth2 account, such as disconnecting it",
+              'Manage the connected Resend OAuth2 account, such as disconnecting it',
           },
           {
-            name: "Broadcast",
-            value: "broadcasts",
+            name: 'Broadcast',
+            value: 'broadcasts',
             description:
-              "Create, send, update, or delete email broadcasts to reach multiple contacts at once",
+              'Create, send, update, or delete email broadcasts to reach multiple contacts at once',
           },
           {
-            name: "Contact",
-            value: "contacts",
+            name: 'Contact',
+            value: 'contacts',
             description:
-              "Add, update, delete, or list contacts (email subscribers) and manage their segment and topic memberships",
+              'Add, update, delete, or list contacts (email subscribers) and manage their segment and topic memberships',
           },
           {
-            name: "Contact Property",
-            value: "contactProperties",
+            name: 'Contact Property',
+            value: 'contactProperties',
             description:
-              "Create, update, delete, or list custom contact properties (metadata fields) for storing additional contact information",
+              'Create, update, delete, or list custom contact properties (metadata fields) for storing additional contact information',
           },
           {
-            name: "Domain",
-            value: "domains",
+            name: 'Domain',
+            value: 'domains',
             description:
-              "Add, verify, update, or delete sending domains for email authentication and deliverability",
+              'Add, verify, update, or delete sending domains for email authentication and deliverability',
           },
           {
-            name: "Email",
-            value: "email",
+            name: 'Email',
+            value: 'email',
             description:
-              "Send single or batch emails, retrieve sent emails, cancel scheduled emails, or manage email attachments",
+              'Send single or batch emails, retrieve sent emails, cancel scheduled emails, or manage email attachments',
           },
           {
-            name: "Event",
-            value: "events",
+            name: 'Event',
+            value: 'events',
             description:
-              "Create, send, retrieve, update, or delete events for triggering workflows (private alpha)",
+              'Create, send, retrieve, update, or delete events for triggering workflows (private alpha)',
           },
           {
-            name: "Log",
-            value: "logs",
+            name: 'Log',
+            value: 'logs',
             description:
-              "List and retrieve API request logs including request bodies, response bodies, and status codes",
+              'List and retrieve API request logs including request bodies, response bodies, and status codes',
           },
           {
-            name: "Receiving Email",
-            value: "receivingEmails",
+            name: 'Receiving Email',
+            value: 'receivingEmails',
             description:
-              "List and retrieve received emails and their attachments from inbound email processing",
+              'List and retrieve received emails and their attachments from inbound email processing',
           },
           {
-            name: "Segment",
-            value: "segments",
+            name: 'Segment',
+            value: 'segments',
             description:
-              "Create, update, delete, or list contact segments for grouping contacts based on criteria",
+              'Create, update, delete, or list contact segments for grouping contacts based on criteria',
           },
           {
-            name: "Template",
-            value: "templates",
+            name: 'Template',
+            value: 'templates',
             description:
-              "Create, update, publish, duplicate, or delete reusable email templates with dynamic variables",
+              'Create, update, publish, duplicate, or delete reusable email templates with dynamic variables',
           },
           {
-            name: "Topic",
-            value: "topics",
+            name: 'Topic',
+            value: 'topics',
             description:
-              "Create, update, delete, or list subscription topics for managing email preferences",
+              'Create, update, delete, or list subscription topics for managing email preferences',
           },
           {
-            name: "Webhook",
-            value: "webhooks",
+            name: 'Webhook',
+            value: 'webhooks',
             description:
-              "Create, update, delete, or list webhooks for receiving real-time notifications about email events",
+              'Create, update, delete, or list webhooks for receiving real-time notifications about email events',
           },
           {
-            name: "Workflow",
-            value: "workflows",
+            name: 'Workflow',
+            value: 'workflows',
             description:
-              "Create, update, delete, or list automated email workflows and monitor runs (private alpha)",
+              'Create, update, delete, or list automated email workflows and monitor runs (private alpha)',
           },
         ],
-        default: "email",
+        default: 'email',
       },
 
       ...account.descriptions,
