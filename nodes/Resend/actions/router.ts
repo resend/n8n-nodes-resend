@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import * as account from './account';
 import * as broadcasts from './broadcast';
 import * as contacts from './contact';
 import * as contactProperties from './contactProperty';
@@ -19,6 +20,7 @@ import * as webhooks from './webhook';
 import * as workflows from './workflow';
 
 const resourceModules: Record<string, { execute: typeof email.execute }> = {
+  account,
   email,
   templates,
   domains,

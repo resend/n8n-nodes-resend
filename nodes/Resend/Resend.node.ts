@@ -4,6 +4,7 @@ import type {
   IWebhookFunctions,
 } from 'n8n-workflow';
 import { NodeConnectionTypes } from 'n8n-workflow';
+import * as account from './actions/account';
 import * as broadcasts from './actions/broadcast';
 import * as contacts from './actions/contact';
 import * as contactProperties from './actions/contactProperty';
@@ -68,8 +69,22 @@ export class Resend implements INodeType {
     },
     credentials: [
       {
+        name: 'resendOAuth2Api',
+        required: true,
+        displayOptions: {
+          show: {
+            authentication: ['oAuth2'],
+          },
+        },
+      },
+      {
         name: 'resendApi',
         required: true,
+        displayOptions: {
+          show: {
+            authentication: ['apiKey'],
+          },
+        },
       },
     ],
     waitingNodeTooltip: SEND_AND_WAIT_WAITING_TOOLTIP,
@@ -77,6 +92,25 @@ export class Resend implements INodeType {
     inputs: [NodeConnectionTypes.Main],
     outputs: [NodeConnectionTypes.Main],
     properties: [
+      {
+        displayName: 'Authentication',
+        name: 'authentication',
+        type: 'options',
+        options: [
+          {
+            name: 'OAuth2 (Recommended)',
+            value: 'oAuth2',
+            description:
+              'Sign in with your Resend account — n8n registers itself as an OAuth client automatically, no API key needed',
+          },
+          {
+            name: 'API Key',
+            value: 'apiKey',
+            description: 'Manually paste a Resend API key',
+          },
+        ],
+        default: 'oAuth2',
+      },
       // Resource selection
       {
         displayName: 'Resource',
@@ -84,6 +118,12 @@ export class Resend implements INodeType {
         type: 'options',
         noDataExpression: true,
         options: [
+          {
+            name: 'Account',
+            value: 'account',
+            description:
+              'Manage the connected Resend OAuth2 account, such as disconnecting it',
+          },
           {
             name: 'Broadcast',
             value: 'broadcasts',
@@ -166,6 +206,7 @@ export class Resend implements INodeType {
         default: 'email',
       },
 
+      ...account.descriptions,
       ...email.descriptions,
       ...templates.descriptions,
       ...domains.descriptions,
