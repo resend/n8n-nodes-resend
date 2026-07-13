@@ -10,62 +10,28 @@ export class ResendOAuth2Api implements ICredentialType {
   documentationUrl =
     "https://resend.com/docs/guides/building-a-resend-oauth-client";
 
-  icon = "file:resend.svg" as const;
+  icon = {
+    light: "file:resend-icon-black.svg",
+    dark: "file:resend-icon-white.svg",
+  } as const;
 
   properties: INodeProperties[] = [
     {
-      displayName:
-        "Before connecting, register your n8n instance as an OAuth client with Resend via <code>POST https://api.resend.com/oauth/register</code>. Use your n8n OAuth2 callback URL as the <code>redirect_uri</code> (e.g. <code>https://&lt;your-n8n-host&gt;/rest/oauth2-credential/callback</code>). Then paste the returned <code>client_id</code> in the Client ID field below.",
-      name: "setupNotice",
-      type: "notice",
-      default: "",
-    },
-    {
-      displayName: "Grant Type",
-      name: "grantType",
+      // Drives n8n's built-in OAuth2 Dynamic Client Registration: on connect, n8n
+      // discovers Resend's authorization server metadata from this URL's
+      // /.well-known/oauth-authorization-server and POSTs to the discovered
+      // registration_endpoint (https://api.resend.com/oauth/register) to obtain
+      // a fresh client_id, then proceeds with the standard PKCE authorization flow.
+      displayName: "Server URL",
+      name: "serverUrl",
       type: "hidden",
-      default: "pkce",
+      default: "https://api.resend.com",
     },
     {
-      displayName: "Authorization URL",
-      name: "authUrl",
+      displayName: "Use Dynamic Client Registration",
+      name: "useDynamicClientRegistration",
       type: "hidden",
-      default: "https://api.resend.com/oauth/authorize",
-      required: true,
-    },
-    {
-      displayName: "Access Token URL",
-      name: "accessTokenUrl",
-      type: "hidden",
-      default: "https://api.resend.com/oauth/token",
-      required: true,
-    },
-    {
-      displayName: "Scope",
-      name: "scope",
-      type: "options",
-      options: [
-        {
-          name: "Full Access (all API operations)",
-          value: "full_access",
-          description:
-            "Required for all API operations except send-only routes",
-        },
-        {
-          name: "Emails: Send (send-only)",
-          value: "emails:send",
-          description:
-            "Sufficient for POST /emails, POST /broadcasts/:id/send, and other send-only routes",
-        },
-      ],
-      default: "full_access",
-    },
-    {
-      displayName: "Authentication",
-      name: "authentication",
-      type: "hidden",
-      // Resend uses public clients (no client_secret) with client_id in the body
-      default: "body",
+      default: true,
     },
   ];
 }
