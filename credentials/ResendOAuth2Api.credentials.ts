@@ -18,7 +18,7 @@ export class ResendOAuth2Api implements ICredentialType {
   properties: INodeProperties[] = [
     {
       displayName:
-        "This one-click connection requires a recent version of n8n. If <b>Connect my account</b> doesn't work, update n8n, or use the <b>Resend API</b> credential (API key) instead — it works on all n8n versions.",
+        "This one-click connection requires a recent version of n8n. If <b>Connect</b> doesn't work, update n8n, or use the <b>Resend API</b> credential (API key) instead.",
       name: 'versionNotice',
       type: 'notice',
       default: '',
