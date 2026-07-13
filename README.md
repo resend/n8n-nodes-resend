@@ -37,6 +37,7 @@ The table below shows which endpoints are currently implemented:
 
 | API Resource           | Endpoint              | Status  | Operations                                                                                                                                                    |
 | ---------------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Account**            | `/oauth/revoke`       | ✅ Full | Disconnect (OAuth2 credential only)                                                                                                                           |
 | **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, List Attachments, Get Attachment                                                                  |
 | **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                                   |
 | **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Create Tracking Domain, Get Tracking Domain, List Tracking Domains, Delete Tracking Domain, Verify Tracking Domain |
@@ -62,7 +63,17 @@ The table below shows which endpoints are currently implemented:
 
 ## Credentials
 
-This package uses two separate credentials:
+This package uses three separate credentials:
+
+### Resend OAuth2 API (recommended)
+
+1. In n8n, go to **Credentials** > **Add credential** and search for **Resend OAuth2 API**
+2. Click **Connect my account**
+
+That's it! n8n registers itself as an OAuth client with Resend.
+
+> [!NOTE]
+> Dynamic Client Registration relies on OAuth2 support that's new in n8n core. If **Connect my account** doesn't work, make sure you're on a recent n8n version, or use the **Resend API** credential below instead.
 
 ### Resend API
 
@@ -70,7 +81,7 @@ This package uses two separate credentials:
 2. In n8n, go to **Credentials** > **Add credential**
 3. Search for **Resend API** and paste your key
 
-This credential is used by the main **Resend** node for all API operations.
+This credential is used by the main **Resend** node when **Authentication** is set to **API Key**.
 
 ### Resend Webhook Signing Secret
 
