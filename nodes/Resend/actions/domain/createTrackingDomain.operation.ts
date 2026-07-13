@@ -11,19 +11,6 @@ import {
 } from '../../utils/dynamicFields';
 
 export const description: INodeProperties[] = [
-  {
-    displayName:
-      'Custom tracking domains are currently in private alpha and only available to a limited number of users. APIs might change before GA. <a href="https://resend.com/contact">Contact us</a> if you\'re interested in testing this feature.',
-    name: 'trackingDomainAlphaNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['domains'],
-        operation: ['createTrackingDomain'],
-      },
-    },
-  },
   createDynamicIdField({
     fieldName: 'domainId',
     resourceName: 'domain',
