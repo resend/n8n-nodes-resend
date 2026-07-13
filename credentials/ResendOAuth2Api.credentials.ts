@@ -24,6 +24,13 @@ export class ResendOAuth2Api implements ICredentialType {
       default: '',
     },
     {
+      displayName:
+        "Getting a 400 error when connecting? Check the <b>OAuth Redirect URL</b> shown above — it must be a public <code>https://</code> URL. If it shows an internal address like <code>http://n8n.local:5678/...</code>, your n8n instance's public URL is misconfigured. Set the <code>WEBHOOK_URL</code> environment variable to your instance's real HTTPS address (e.g. <code>https://your-n8n-domain.com/</code>) and restart n8n.",
+      name: 'redirectUrlNotice',
+      type: 'notice',
+      default: '',
+    },
+    {
       // Drives n8n's built-in OAuth2 Dynamic Client Registration: on connect, n8n
       // discovers Resend's authorization server metadata from this URL's
       // /.well-known/oauth-authorization-server and POSTs to the discovered
