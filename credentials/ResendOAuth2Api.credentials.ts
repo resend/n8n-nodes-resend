@@ -17,6 +17,13 @@ export class ResendOAuth2Api implements ICredentialType {
 
   properties: INodeProperties[] = [
     {
+      displayName:
+        "This one-click connection requires a recent version of n8n. If <b>Connect my account</b> doesn't work, update n8n, or use the <b>Resend API</b> credential (API key) instead — it works on all n8n versions.",
+      name: 'versionNotice',
+      type: 'notice',
+      default: '',
+    },
+    {
       // Drives n8n's built-in OAuth2 Dynamic Client Registration: on connect, n8n
       // discovers Resend's authorization server metadata from this URL's
       // /.well-known/oauth-authorization-server and POSTs to the discovered
