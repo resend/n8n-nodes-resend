@@ -18,19 +18,6 @@ import {
 
 export const description: INodeProperties[] = [
   {
-    displayName:
-      'Tips: The sender address must be from a verified domain. Scheduled emails cannot include attachments. Maximum 50 recipients per email.',
-    name: 'sendEmailNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['email'],
-        operation: ['send'],
-      },
-    },
-  },
-  {
     displayName: 'From',
     name: 'from',
     type: 'string',

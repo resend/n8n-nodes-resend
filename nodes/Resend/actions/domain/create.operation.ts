@@ -8,19 +8,6 @@ import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
   {
-    displayName:
-      'After adding a domain, you must configure DNS records (SPF, DKIM, DMARC) and verify the domain before sending emails.',
-    name: 'domainNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['domains'],
-        operation: ['create'],
-      },
-    },
-  },
-  {
     displayName: 'Domain Name',
     name: 'domainName',
     type: 'string',

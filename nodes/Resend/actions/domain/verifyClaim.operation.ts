@@ -10,19 +10,6 @@ import {
 } from '../../utils/dynamicFields';
 
 export const description: INodeProperties[] = [
-  {
-    displayName:
-      'Add the TXT record returned by the Claim Domain operation before calling this. Resend checks the TXT record and runs ownership-safety checks before transferring the domain. Poll Get Domain Claim to follow the status.',
-    name: 'verifyClaimNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['domains'],
-        operation: ['verifyClaim'],
-      },
-    },
-  },
   createDynamicIdField({
     fieldName: 'domainId',
     resourceName: 'domain',

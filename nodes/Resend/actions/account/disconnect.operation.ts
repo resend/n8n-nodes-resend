@@ -48,20 +48,24 @@ export async function execute(
   }
 
   try {
-    await this.helpers.httpRequest({
-      method: 'POST',
-      url: 'https://api.resend.com/oauth/revoke',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'n8n-nodes-resend',
+    await this.helpers.httpRequestWithAuthentication.call(
+      this,
+      'resendOAuth2Api',
+      {
+        method: 'POST',
+        url: 'https://api.resend.com/oauth/revoke',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'n8n-nodes-resend',
+        },
+        body: {
+          client_id: clientId,
+          token: refreshToken,
+          token_type_hint: 'refresh_token',
+        },
+        json: true,
       },
-      body: {
-        client_id: clientId,
-        token: refreshToken,
-        token_type_hint: 'refresh_token',
-      },
-      json: true,
-    });
+    );
   } catch (error) {
     handleResendApiError(this.getNode(), error, index);
   }

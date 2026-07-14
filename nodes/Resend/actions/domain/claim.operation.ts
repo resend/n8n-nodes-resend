@@ -8,19 +8,6 @@ import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
   {
-    displayName:
-      'Use this operation when creating a domain fails because the domain is already verified by another team. Resend creates a placeholder domain and returns a TXT record to add to your DNS.',
-    name: 'claimDomainNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['domains'],
-        operation: ['claim'],
-      },
-    },
-  },
-  {
     displayName: 'Domain Name',
     name: 'domainName',
     type: 'string',

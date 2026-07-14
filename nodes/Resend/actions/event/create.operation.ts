@@ -6,22 +6,7 @@ import type {
 } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 
-const BETA_NOTICE =
-  'Workflows and Events are currently in private alpha and only available to a limited number of users. APIs might change before GA. <a href="https://resend.com/contact">Contact us</a> if you\'re interested in testing this feature.';
-
 export const description: INodeProperties[] = [
-  {
-    displayName: BETA_NOTICE,
-    name: 'eventBetaNotice',
-    type: 'notice',
-    default: '',
-    displayOptions: {
-      show: {
-        resource: ['events'],
-        operation: ['create'],
-      },
-    },
-  },
   {
     displayName: 'Event Name',
     name: 'eventName',
