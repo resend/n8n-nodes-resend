@@ -3,6 +3,7 @@ import type {
   IExecuteFunctions,
   IHttpRequestMethods,
   IHttpRequestOptions,
+  ILoadOptionsFunctions,
   INode,
   INodeExecutionData,
   JsonObject,
@@ -232,12 +233,22 @@ export function handleResendApiError(
 
 export const RESEND_API_BASE = 'https://api.resend.com';
 
-function getCredentialType(context: IExecuteFunctions): string {
-  const authentication = context.getNodeParameter(
-    'authentication',
-    0,
-    'apiKey',
-  ) as string;
+export function getCredentialType(
+  context: IExecuteFunctions | ILoadOptionsFunctions,
+): string {
+  let authentication: string;
+  if ('getInputData' in context) {
+    authentication = context.getNodeParameter(
+      'authentication',
+      0,
+      'apiKey',
+    ) as string;
+  } else {
+    authentication = context.getNodeParameter(
+      'authentication',
+      'apiKey',
+    ) as string;
+  }
   return authentication === 'oAuth2' ? 'resendOAuth2Api' : 'resendApi';
 }
 
