@@ -1,6 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
+  type ICredentialsDecrypted,
+  type ICredentialTestFunctions,
+  type IDataObject,
+  type IHookFunctions,
+  type IHttpRequestMethods,
   type INode,
+  type INodeCredentialTestResult,
   type INodeType,
   type INodeTypeDescription,
   type IWebhookFunctions,
@@ -83,6 +89,38 @@ async function verifySvixSignature(
   throw new NodeOperationError(node, 'Invalid webhook signature');
 }
 
+async function resendApiRequest(
+  this: IHookFunctions,
+  method: IHttpRequestMethods,
+  endpoint: string,
+  body?: IDataObject,
+): Promise<IDataObject> {
+  return (await this.helpers.httpRequestWithAuthentication.call(
+    this,
+    'resendApi',
+    {
+      url: `https://api.resend.com${endpoint}`,
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'n8n-nodes-resend',
+      },
+      json: true,
+      ...(body ? { body } : {}),
+    },
+  )) as IDataObject;
+}
+
+async function hasResendApiCredential(
+  context: IHookFunctions,
+): Promise<boolean> {
+  try {
+    return Boolean(await context.getCredentials('resendApi'));
+  } catch {
+    return false;
+  }
+}
+
 export class ResendTrigger implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'Resend Trigger',
@@ -104,11 +142,16 @@ export class ResendTrigger implements INodeType {
       {
         name: 'resendWebhookSigningSecretApi',
         required: true,
+        testedBy: 'resendWebhookSigningSecretTest',
+      },
+      {
+        name: 'resendApi',
+        required: false,
       },
     ],
     triggerPanel: {
       header:
-        'Copy the webhook URL below and paste it into your Resend dashboard webhook configuration.',
+        'Add a Resend API credential to register this webhook automatically, or copy the webhook URL below and paste it into your Resend dashboard webhook configuration.',
       executionsHelp: {
         inactive:
           'Webhooks have two modes: test and production.<br><br><b>Use test mode while you build your workflow</b>. Click the "Listen for test event" button, then paste the test URL into your Resend webhook configuration. The webhook executions will show up in the editor.<br><br><b>Use production mode to run your workflow automatically</b>. Activate the workflow, then paste the production URL into your Resend webhook configuration. These executions will show up in the executions list, but not in the editor.',
@@ -168,7 +211,114 @@ export class ResendTrigger implements INodeType {
         description: 'Select the Resend event types to listen for',
       },
     ],
+    usableAsTool: true,
   };
+
+  methods = {
+    credentialTest: {
+      async resendWebhookSigningSecretTest(
+        this: ICredentialTestFunctions,
+        credential: ICredentialsDecrypted,
+      ): Promise<INodeCredentialTestResult> {
+        const secret =
+          typeof credential.data?.webhookSigningSecret === 'string'
+            ? credential.data.webhookSigningSecret.trim()
+            : '';
+        if (!secret.startsWith('whsec_')) {
+          return {
+            status: 'Error',
+            message:
+              'Signing secret must start with "whsec_". Copy it from the webhook settings page in your Resend dashboard.',
+          };
+        }
+        const encoded = secret.slice('whsec_'.length);
+        if (!encoded || Buffer.from(encoded, 'base64').length === 0) {
+          return {
+            status: 'Error',
+            message: 'Signing secret is not valid base64',
+          };
+        }
+        return { status: 'OK', message: 'Signing secret format is valid' };
+      },
+    },
+  };
+
+  webhookMethods = {
+    default: {
+      async checkExists(this: IHookFunctions): Promise<boolean> {
+        if (!(await hasResendApiCredential(this))) {
+          // Manual mode: the webhook is managed in the Resend dashboard
+          return true;
+        }
+        const webhookData = this.getWorkflowStaticData('node');
+        if (!webhookData.webhookId) {
+          return false;
+        }
+        try {
+          await resendApiRequest.call(
+            this,
+            'GET',
+            `/webhooks/${webhookData.webhookId}`,
+          );
+          return true;
+        } catch {
+          delete webhookData.webhookId;
+          return false;
+        }
+      },
+      async create(this: IHookFunctions): Promise<boolean> {
+        if (!(await hasResendApiCredential(this))) {
+          // Manual mode: the user registers the webhook URL themselves
+          return true;
+        }
+        const webhookUrl = this.getNodeWebhookUrl('default');
+        const events = this.getNodeParameter('events') as string[];
+        const response = await resendApiRequest.call(
+          this,
+          'POST',
+          '/webhooks',
+          {
+            endpoint: webhookUrl,
+            events,
+          },
+        );
+        const webhookId =
+          (response.id as string | undefined) ??
+          ((response.data as IDataObject | undefined)?.id as
+            | string
+            | undefined);
+        if (!webhookId) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'Resend did not return a webhook ID when creating the webhook',
+          );
+        }
+        const webhookData = this.getWorkflowStaticData('node');
+        webhookData.webhookId = webhookId;
+        return true;
+      },
+      async delete(this: IHookFunctions): Promise<boolean> {
+        const webhookData = this.getWorkflowStaticData('node');
+        if (!webhookData.webhookId) {
+          return true;
+        }
+        if (await hasResendApiCredential(this)) {
+          try {
+            await resendApiRequest.call(
+              this,
+              'DELETE',
+              `/webhooks/${webhookData.webhookId}`,
+            );
+          } catch {
+            // Webhook was already removed on the Resend side
+          }
+        }
+        delete webhookData.webhookId;
+        return true;
+      },
+    },
+  };
+
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const bodyData = this.getBodyData();
     const headers = this.getHeaderData();
@@ -214,7 +364,7 @@ export class ResendTrigger implements INodeType {
           webhookSigningSecret,
           this.getNode(),
         );
-      } catch (_error) {
+      } catch {
         const res = this.getResponseObject();
         res.status(401).json({ error: 'Invalid webhook signature' });
         return {

@@ -43,7 +43,6 @@ export const description: INodeProperties[] = getSendAndWaitProperties(
 
 export async function execute(
   this: IExecuteFunctions,
-  _index: number,
 ): Promise<INodeExecutionData[]> {
   const email = createEmail(this);
 

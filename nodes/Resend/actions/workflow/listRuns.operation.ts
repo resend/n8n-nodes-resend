@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -35,8 +36,8 @@ export async function execute(
     `/workflows/${encodeURIComponent(workflowId)}/runs`,
   );
 
-  const items = (response as any)?.data ?? [];
-  const executionData = items.map((item: any) => ({
+  const items = (response.data as IDataObject[] | undefined) ?? [];
+  const executionData = items.map((item) => ({
     json: item,
     pairedItem: { item: index },
   }));
