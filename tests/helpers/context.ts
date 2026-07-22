@@ -204,7 +204,16 @@ export function createHookMock(options: HookMockOptions = {}): HookMock {
     getNode: () => testNode,
     getWorkflowStaticData: () => staticData,
     getNodeWebhookUrl: () => options.webhookUrl ?? 'https://n8n.test/webhook',
-    getNodeParameter: (name: string) => parameters[name],
+    getNodeParameter: (name: string, fallbackValue?: unknown) => {
+      const value = readParameter(parameters, name);
+      if (value === MISSING) {
+        if (fallbackValue !== undefined) {
+          return fallbackValue;
+        }
+        throw new Error(`Parameter "${name}" is not set`);
+      }
+      return value;
+    },
     getCredentials: async (name: string) => {
       const credential = options.credentials?.[name];
       if (!credential) {

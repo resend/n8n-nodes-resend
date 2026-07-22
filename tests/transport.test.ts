@@ -391,9 +391,9 @@ describe('requestList', () => {
 });
 
 describe('handleResendApiError', () => {
-  const expectNodeApiError = (error: unknown) => {
+  const expectNodeApiError = (error: unknown, itemIndex?: number) => {
     try {
-      handleResendApiError(testNode, error);
+      handleResendApiError(testNode, error, itemIndex);
     } catch (thrown) {
       return thrown as NodeApiError;
     }
@@ -549,14 +549,21 @@ describe('handleResendApiError', () => {
   });
 
   it('attaches the item index when provided', () => {
-    try {
-      handleResendApiError(
-        testNode,
-        { name: 'not_found', message: 'missing', statusCode: 404 },
-        4,
-      );
-    } catch (error) {
-      expect((error as NodeApiError).context?.itemIndex).toBe(4);
-    }
+    const error = expectNodeApiError(
+      { name: 'not_found', message: 'missing', statusCode: 404 },
+      4,
+    );
+
+    expect(error.context?.itemIndex).toBe(4);
+  });
+
+  it('omits the item index when none is given', () => {
+    const error = expectNodeApiError({
+      name: 'not_found',
+      message: 'missing',
+      statusCode: 404,
+    });
+
+    expect(error.context?.itemIndex).toBeUndefined();
   });
 });

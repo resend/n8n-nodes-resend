@@ -327,7 +327,16 @@ describe('email send', () => {
       },
     });
 
-    await expect(send.call(context, 0)).rejects.toBeInstanceOf(NodeApiError);
+    const error = await send.call(context, 2).then(
+      () => {
+        throw new Error('send did not throw');
+      },
+      (thrown: NodeApiError) => thrown,
+    );
+
+    expect(error).toBeInstanceOf(NodeApiError);
+    expect(error.message).toBe('Validation Error (422)');
+    expect(error.context?.itemIndex).toBe(2);
   });
 });
 
