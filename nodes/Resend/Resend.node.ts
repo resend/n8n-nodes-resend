@@ -98,15 +98,15 @@ export class Resend implements INodeType {
         type: 'options',
         options: [
           {
+            name: 'API Key',
+            value: 'apiKey',
+            description: 'Manually paste a Resend API key',
+          },
+          {
             name: 'OAuth2 (Recommended)',
             value: 'oAuth2',
             description:
               'Sign in with your Resend account — n8n registers itself as an OAuth client automatically, no API key needed',
-          },
-          {
-            name: 'API Key',
-            value: 'apiKey',
-            description: 'Manually paste a Resend API key',
           },
         ],
         default: 'oAuth2',

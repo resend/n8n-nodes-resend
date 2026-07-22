@@ -22,7 +22,7 @@ export const operations: INodeProperties[] = [
         value: 'disconnect',
         description:
           'Revoke the connected Resend OAuth2 grant, ending the connection to your Resend account',
-        action: 'Disconnect the Resend account',
+        action: 'Disconnect the resend account',
       },
     ],
     default: 'disconnect',

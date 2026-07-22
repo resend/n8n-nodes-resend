@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import { handleResendApiError } from '../transport';
 import * as account from './account';
 import * as broadcasts from './broadcast';
 import * as contacts from './contact';
@@ -75,7 +76,7 @@ export async function router(
         returnData.push({ json: errorData, pairedItem: { item: i } });
         continue;
       }
-      throw error;
+      handleResendApiError(this.getNode(), error, i);
     }
   }
 

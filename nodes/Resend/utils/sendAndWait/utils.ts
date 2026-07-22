@@ -71,6 +71,36 @@ export function getSendAndWaitProperties(
     ],
   };
 
+  const approveLabelProperty: INodeProperties = {
+    displayName: 'Approve Button Label',
+    name: 'approveLabel',
+    type: 'string',
+    default: 'Approve',
+    displayOptions: {
+      show: {
+        approvalType: ['single', 'double'],
+      },
+    },
+  };
+  if (options?.defaultApproveLabel) {
+    approveLabelProperty.default = options.defaultApproveLabel;
+  }
+
+  const disapproveLabelProperty: INodeProperties = {
+    displayName: 'Disapprove Button Label',
+    name: 'disapproveLabel',
+    type: 'string',
+    default: 'Decline',
+    displayOptions: {
+      show: {
+        approvalType: ['double'],
+      },
+    },
+  };
+  if (options?.defaultDisapproveLabel) {
+    disapproveLabelProperty.default = options.defaultDisapproveLabel;
+  }
+
   const approvalOptionsValues = [
     {
       displayName: 'Type of Approval',
@@ -89,17 +119,7 @@ export function getSendAndWaitProperties(
         },
       ],
     },
-    {
-      displayName: 'Approve Button Label',
-      name: 'approveLabel',
-      type: 'string',
-      default: options?.defaultApproveLabel || 'Approve',
-      displayOptions: {
-        show: {
-          approvalType: ['single', 'double'],
-        },
-      },
-    },
+    approveLabelProperty,
     ...[
       options?.noButtonStyle
         ? ({} as INodeProperties)
@@ -114,17 +134,7 @@ export function getSendAndWaitProperties(
             },
           },
     ],
-    {
-      displayName: 'Disapprove Button Label',
-      name: 'disapproveLabel',
-      type: 'string',
-      default: options?.defaultDisapproveLabel || 'Decline',
-      displayOptions: {
-        show: {
-          approvalType: ['double'],
-        },
-      },
-    },
+    disapproveLabelProperty,
     ...[
       options?.noButtonStyle
         ? ({} as INodeProperties)

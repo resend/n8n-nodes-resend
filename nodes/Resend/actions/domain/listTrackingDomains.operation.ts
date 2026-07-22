@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -39,8 +40,8 @@ export async function execute(
     `/domains/${encodeURIComponent(domainId)}/tracking-domains`,
   );
 
-  const items = (response as any)?.data ?? [];
-  const executionData = items.map((item: any, _i: number) => ({
+  const items = (response.data as IDataObject[] | undefined) ?? [];
+  const executionData = items.map((item) => ({
     json: item,
     pairedItem: { item: index },
   }));

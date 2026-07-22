@@ -37,5 +37,8 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: n8n community node lint
+        run: pnpm lint:n8n
+
       - name: Typecheck
         run: pnpm typecheck

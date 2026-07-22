@@ -1,10 +1,18 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
+  type ICredentialsDecrypted,
+  type ICredentialTestFunctions,
+  type IDataObject,
+  type IHookFunctions,
+  type IHttpRequestMethods,
   type INode,
+  type INodeCredentialTestResult,
   type INodeType,
   type INodeTypeDescription,
   type IWebhookFunctions,
   type IWebhookResponseData,
+  type JsonObject,
+  NodeApiError,
   NodeConnectionTypes,
   NodeOperationError,
 } from 'n8n-workflow';
@@ -83,6 +91,48 @@ async function verifySvixSignature(
   throw new NodeOperationError(node, 'Invalid webhook signature');
 }
 
+async function resendApiRequest(
+  this: IHookFunctions,
+  method: IHttpRequestMethods,
+  endpoint: string,
+  body?: IDataObject,
+): Promise<IDataObject> {
+  return (await this.helpers.httpRequestWithAuthentication.call(
+    this,
+    'resendApi',
+    {
+      url: `https://api.resend.com${endpoint}`,
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'n8n-nodes-resend',
+      },
+      json: true,
+      ...(body ? { body } : {}),
+    },
+  )) as IDataObject;
+}
+
+function isNotFoundError(error: unknown): boolean {
+  const e = error as {
+    httpCode?: string | number;
+    statusCode?: string | number;
+    response?: { status?: number };
+  };
+  const code = e?.httpCode ?? e?.statusCode ?? e?.response?.status;
+  return String(code) === '404';
+}
+
+async function hasResendApiCredential(
+  context: IHookFunctions,
+): Promise<boolean> {
+  try {
+    return Boolean(await context.getCredentials('resendApi'));
+  } catch {
+    return false;
+  }
+}
+
 export class ResendTrigger implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'Resend Trigger',
@@ -103,12 +153,17 @@ export class ResendTrigger implements INodeType {
     credentials: [
       {
         name: 'resendWebhookSigningSecretApi',
-        required: true,
+        required: false,
+        testedBy: 'resendWebhookSigningSecretTest',
+      },
+      {
+        name: 'resendApi',
+        required: false,
       },
     ],
     triggerPanel: {
       header:
-        'Copy the webhook URL below and paste it into your Resend dashboard webhook configuration.',
+        'Add a Resend API credential to register this webhook automatically, or copy the webhook URL below and paste it into your Resend dashboard webhook configuration.',
       executionsHelp: {
         inactive:
           'Webhooks have two modes: test and production.<br><br><b>Use test mode while you build your workflow</b>. Click the "Listen for test event" button, then paste the test URL into your Resend webhook configuration. The webhook executions will show up in the editor.<br><br><b>Use production mode to run your workflow automatically</b>. Activate the workflow, then paste the production URL into your Resend webhook configuration. These executions will show up in the executions list, but not in the editor.',
@@ -168,59 +223,199 @@ export class ResendTrigger implements INodeType {
         description: 'Select the Resend event types to listen for',
       },
     ],
+    usableAsTool: true,
   };
+
+  methods = {
+    credentialTest: {
+      async resendWebhookSigningSecretTest(
+        this: ICredentialTestFunctions,
+        credential: ICredentialsDecrypted,
+      ): Promise<INodeCredentialTestResult> {
+        const secret =
+          typeof credential.data?.webhookSigningSecret === 'string'
+            ? credential.data.webhookSigningSecret.trim()
+            : '';
+        if (!secret.startsWith('whsec_')) {
+          return {
+            status: 'Error',
+            message:
+              'Signing secret must start with "whsec_". Copy it from the webhook settings page in your Resend dashboard.',
+          };
+        }
+        const encoded = secret.slice('whsec_'.length);
+        if (!encoded || Buffer.from(encoded, 'base64').length === 0) {
+          return {
+            status: 'Error',
+            message: 'Signing secret is not valid base64',
+          };
+        }
+        return { status: 'OK', message: 'Signing secret format is valid' };
+      },
+    },
+  };
+
+  webhookMethods = {
+    default: {
+      async checkExists(this: IHookFunctions): Promise<boolean> {
+        if (!(await hasResendApiCredential(this))) {
+          // Manual mode: the webhook is managed in the Resend dashboard
+          return true;
+        }
+        const webhookData = this.getWorkflowStaticData('node');
+        if (!webhookData.webhookId) {
+          return false;
+        }
+        try {
+          await resendApiRequest.call(
+            this,
+            'GET',
+            `/webhooks/${webhookData.webhookId}`,
+          );
+          return true;
+        } catch (error) {
+          if (isNotFoundError(error)) {
+            delete webhookData.webhookId;
+            delete webhookData.webhookSigningSecret;
+            return false;
+          }
+          throw new NodeApiError(this.getNode(), error as JsonObject);
+        }
+      },
+      async create(this: IHookFunctions): Promise<boolean> {
+        if (!(await hasResendApiCredential(this))) {
+          // Manual mode: the user registers the webhook URL themselves
+          return true;
+        }
+        const webhookUrl = this.getNodeWebhookUrl('default');
+        const events = this.getNodeParameter('events') as string[];
+        const response = await resendApiRequest.call(
+          this,
+          'POST',
+          '/webhooks',
+          {
+            endpoint: webhookUrl,
+            events,
+          },
+        );
+        const webhookId =
+          (response.id as string | undefined) ??
+          ((response.data as IDataObject | undefined)?.id as
+            | string
+            | undefined);
+        if (!webhookId) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'Resend did not return a webhook ID when creating the webhook',
+          );
+        }
+        const signingSecret =
+          (response.signing_secret as string | undefined) ??
+          ((response.data as IDataObject | undefined)?.signing_secret as
+            | string
+            | undefined);
+        const webhookData = this.getWorkflowStaticData('node');
+        webhookData.webhookId = webhookId;
+        if (signingSecret) {
+          webhookData.webhookSigningSecret = signingSecret;
+        }
+        return true;
+      },
+      async delete(this: IHookFunctions): Promise<boolean> {
+        const webhookData = this.getWorkflowStaticData('node');
+        if (!webhookData.webhookId) {
+          return true;
+        }
+        if (await hasResendApiCredential(this)) {
+          try {
+            await resendApiRequest.call(
+              this,
+              'DELETE',
+              `/webhooks/${webhookData.webhookId}`,
+            );
+          } catch (error) {
+            if (!isNotFoundError(error)) {
+              throw new NodeApiError(this.getNode(), error as JsonObject);
+            }
+          }
+        }
+        delete webhookData.webhookId;
+        delete webhookData.webhookSigningSecret;
+        return true;
+      },
+    },
+  };
+
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const bodyData = this.getBodyData();
     const headers = this.getHeaderData();
     const request = this.getRequestObject();
     const subscribedEvents = this.getNodeParameter('events') as string[];
-    const credentials = await this.getCredentials(
-      'resendWebhookSigningSecretApi',
-    );
-    const webhookSigningSecret = credentials.webhookSigningSecret as string;
-    // Verify webhook signature if secret is provided
-    if (webhookSigningSecret && webhookSigningSecret.trim() !== '') {
+    const webhookData = this.getWorkflowStaticData('node');
+    let webhookSigningSecret =
+      typeof webhookData.webhookSigningSecret === 'string'
+        ? webhookData.webhookSigningSecret
+        : '';
+    if (!webhookSigningSecret) {
       try {
-        // Get the raw body for signature verification
-        const rawBody =
-          (request as { rawBody?: unknown }).rawBody ??
-          (request as { body?: unknown }).body;
-        const payload =
-          typeof rawBody === 'string'
-            ? rawBody
-            : Buffer.isBuffer(rawBody)
-              ? rawBody.toString('utf8')
-              : JSON.stringify(bodyData ?? {});
-
-        // Extract Svix headers with proper type handling
-        const svixId = getHeaderValue(headers, 'svix-id');
-        const svixTimestamp = getHeaderValue(headers, 'svix-timestamp');
-        const svixSignature = getHeaderValue(headers, 'svix-signature');
-
-        if (!svixId || !svixTimestamp || !svixSignature) {
-          const res = this.getResponseObject();
-          res.status(401).json({ error: 'Missing Svix signature headers' });
-          return {
-            noWebhookResponse: true,
-          };
-        }
-
-        // Verify the webhook signature
-        await verifySvixSignature(
-          payload,
-          svixId,
-          svixTimestamp,
-          svixSignature,
-          webhookSigningSecret,
-          this.getNode(),
+        const credentials = await this.getCredentials(
+          'resendWebhookSigningSecretApi',
         );
-      } catch (_error) {
+        webhookSigningSecret =
+          (credentials.webhookSigningSecret as string | undefined) ?? '';
+      } catch {
+        webhookSigningSecret = '';
+      }
+    }
+    if (!webhookSigningSecret || webhookSigningSecret.trim() === '') {
+      const res = this.getResponseObject();
+      res
+        .status(401)
+        .json({ error: 'Webhook signing secret is not configured' });
+      return {
+        noWebhookResponse: true,
+      };
+    }
+    try {
+      // Get the raw body for signature verification
+      const rawBody =
+        (request as { rawBody?: unknown }).rawBody ??
+        (request as { body?: unknown }).body;
+      const payload =
+        typeof rawBody === 'string'
+          ? rawBody
+          : Buffer.isBuffer(rawBody)
+            ? rawBody.toString('utf8')
+            : JSON.stringify(bodyData ?? {});
+
+      // Extract Svix headers with proper type handling
+      const svixId = getHeaderValue(headers, 'svix-id');
+      const svixTimestamp = getHeaderValue(headers, 'svix-timestamp');
+      const svixSignature = getHeaderValue(headers, 'svix-signature');
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
         const res = this.getResponseObject();
-        res.status(401).json({ error: 'Invalid webhook signature' });
+        res.status(401).json({ error: 'Missing Svix signature headers' });
         return {
           noWebhookResponse: true,
         };
       }
+
+      // Verify the webhook signature
+      await verifySvixSignature(
+        payload,
+        svixId,
+        svixTimestamp,
+        svixSignature,
+        webhookSigningSecret,
+        this.getNode(),
+      );
+    } catch {
+      const res = this.getResponseObject();
+      res.status(401).json({ error: 'Invalid webhook signature' });
+      return {
+        noWebhookResponse: true,
+      };
     }
 
     if (!bodyData || typeof bodyData !== 'object' || !('type' in bodyData)) {
