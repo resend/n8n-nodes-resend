@@ -153,9 +153,6 @@ export class ResendTrigger implements INodeType {
     credentials: [
       {
         name: 'resendWebhookSigningSecretApi',
-        // Optional: API auto-registration stores the endpoint's own
-        // signing_secret, so a manual signing-secret credential is only
-        // needed when the webhook is registered in the Resend dashboard.
         required: false,
         testedBy: 'resendWebhookSigningSecretTest',
       },
@@ -277,9 +274,6 @@ export class ResendTrigger implements INodeType {
           );
           return true;
         } catch (error) {
-          // Only a confirmed 404 means the endpoint is gone. Transient network
-          // or auth failures must propagate, otherwise create() would run again
-          // and register a duplicate endpoint.
           if (isNotFoundError(error)) {
             delete webhookData.webhookId;
             delete webhookData.webhookSigningSecret;
@@ -322,9 +316,6 @@ export class ResendTrigger implements INodeType {
             | undefined);
         const webhookData = this.getWorkflowStaticData('node');
         webhookData.webhookId = webhookId;
-        // Each API-created endpoint has its own signing secret. Persist it so
-        // webhook() verifies signatures against the correct secret instead of
-        // the pre-existing credential (which does not match a new endpoint).
         if (signingSecret) {
           webhookData.webhookSigningSecret = signingSecret;
         }
@@ -343,11 +334,6 @@ export class ResendTrigger implements INodeType {
               `/webhooks/${webhookData.webhookId}`,
             );
           } catch (error) {
-            // A 404 means the endpoint was already removed on Resend's side.
-            // Any other failure (expired token, transient error) must surface
-            // so the user is not left with an orphaned webhook still sending
-            // events to the old URL. Keep the static data so a retry can
-            // delete it again.
             if (!isNotFoundError(error)) {
               throw new NodeApiError(this.getNode(), error as JsonObject);
             }
@@ -365,10 +351,6 @@ export class ResendTrigger implements INodeType {
     const headers = this.getHeaderData();
     const request = this.getRequestObject();
     const subscribedEvents = this.getNodeParameter('events') as string[];
-    // Prefer the signing secret returned when the endpoint was auto-registered
-    // via the Resend API; fall back to the manually configured credential.
-    // The signing-secret credential is optional, so retrieval must not throw
-    // when it is absent (pure API-registration mode).
     const webhookData = this.getWorkflowStaticData('node');
     let webhookSigningSecret =
       typeof webhookData.webhookSigningSecret === 'string'
