@@ -111,6 +111,16 @@ async function resendApiRequest(
   )) as IDataObject;
 }
 
+function isNotFoundError(error: unknown): boolean {
+  const e = error as {
+    httpCode?: string | number;
+    statusCode?: string | number;
+    response?: { status?: number };
+  };
+  const code = e?.httpCode ?? e?.statusCode ?? e?.response?.status;
+  return String(code) === '404';
+}
+
 async function hasResendApiCredential(
   context: IHookFunctions,
 ): Promise<boolean> {
@@ -261,9 +271,16 @@ export class ResendTrigger implements INodeType {
             `/webhooks/${webhookData.webhookId}`,
           );
           return true;
-        } catch {
-          delete webhookData.webhookId;
-          return false;
+        } catch (error) {
+          // Only a confirmed 404 means the endpoint is gone. Transient network
+          // or auth failures must propagate, otherwise create() would run again
+          // and register a duplicate endpoint.
+          if (isNotFoundError(error)) {
+            delete webhookData.webhookId;
+            delete webhookData.webhookSigningSecret;
+            return false;
+          }
+          throw error;
         }
       },
       async create(this: IHookFunctions): Promise<boolean> {
@@ -293,8 +310,19 @@ export class ResendTrigger implements INodeType {
             'Resend did not return a webhook ID when creating the webhook',
           );
         }
+        const signingSecret =
+          (response.signing_secret as string | undefined) ??
+          ((response.data as IDataObject | undefined)?.signing_secret as
+            | string
+            | undefined);
         const webhookData = this.getWorkflowStaticData('node');
         webhookData.webhookId = webhookId;
+        // Each API-created endpoint has its own signing secret. Persist it so
+        // webhook() verifies signatures against the correct secret instead of
+        // the pre-existing credential (which does not match a new endpoint).
+        if (signingSecret) {
+          webhookData.webhookSigningSecret = signingSecret;
+        }
         return true;
       },
       async delete(this: IHookFunctions): Promise<boolean> {
@@ -314,6 +342,7 @@ export class ResendTrigger implements INodeType {
           }
         }
         delete webhookData.webhookId;
+        delete webhookData.webhookSigningSecret;
         return true;
       },
     },
@@ -324,10 +353,18 @@ export class ResendTrigger implements INodeType {
     const headers = this.getHeaderData();
     const request = this.getRequestObject();
     const subscribedEvents = this.getNodeParameter('events') as string[];
+    // Prefer the signing secret returned when the endpoint was auto-registered
+    // via the Resend API; fall back to the manually configured credential.
+    const webhookData = this.getWorkflowStaticData('node');
+    const storedSigningSecret =
+      typeof webhookData.webhookSigningSecret === 'string'
+        ? webhookData.webhookSigningSecret
+        : '';
     const credentials = await this.getCredentials(
       'resendWebhookSigningSecretApi',
     );
-    const webhookSigningSecret = credentials.webhookSigningSecret as string;
+    const webhookSigningSecret =
+      storedSigningSecret || (credentials.webhookSigningSecret as string);
     // Verify webhook signature if secret is provided
     if (webhookSigningSecret && webhookSigningSecret.trim() !== '') {
       try {

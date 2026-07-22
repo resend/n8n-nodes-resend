@@ -38,7 +38,7 @@ jobs:
         run: pnpm lint
 
       - name: n8n community node lint
-        run: npx @n8n/node-cli@latest lint
+        run: pnpm lint:n8n
 
       - name: Typecheck
         run: pnpm typecheck
