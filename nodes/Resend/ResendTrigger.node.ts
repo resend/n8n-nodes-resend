@@ -153,7 +153,10 @@ export class ResendTrigger implements INodeType {
     credentials: [
       {
         name: 'resendWebhookSigningSecretApi',
-        required: true,
+        // Optional: API auto-registration stores the endpoint's own
+        // signing_secret, so a manual signing-secret credential is only
+        // needed when the webhook is registered in the Resend dashboard.
+        required: false,
         testedBy: 'resendWebhookSigningSecretTest',
       },
       {
@@ -339,8 +342,15 @@ export class ResendTrigger implements INodeType {
               'DELETE',
               `/webhooks/${webhookData.webhookId}`,
             );
-          } catch {
-            // Webhook was already removed on the Resend side
+          } catch (error) {
+            // A 404 means the endpoint was already removed on Resend's side.
+            // Any other failure (expired token, transient error) must surface
+            // so the user is not left with an orphaned webhook still sending
+            // events to the old URL. Keep the static data so a retry can
+            // delete it again.
+            if (!isNotFoundError(error)) {
+              throw new NodeApiError(this.getNode(), error as JsonObject);
+            }
           }
         }
         delete webhookData.webhookId;
@@ -357,16 +367,24 @@ export class ResendTrigger implements INodeType {
     const subscribedEvents = this.getNodeParameter('events') as string[];
     // Prefer the signing secret returned when the endpoint was auto-registered
     // via the Resend API; fall back to the manually configured credential.
+    // The signing-secret credential is optional, so retrieval must not throw
+    // when it is absent (pure API-registration mode).
     const webhookData = this.getWorkflowStaticData('node');
-    const storedSigningSecret =
+    let webhookSigningSecret =
       typeof webhookData.webhookSigningSecret === 'string'
         ? webhookData.webhookSigningSecret
         : '';
-    const credentials = await this.getCredentials(
-      'resendWebhookSigningSecretApi',
-    );
-    const webhookSigningSecret =
-      storedSigningSecret || (credentials.webhookSigningSecret as string);
+    if (!webhookSigningSecret) {
+      try {
+        const credentials = await this.getCredentials(
+          'resendWebhookSigningSecretApi',
+        );
+        webhookSigningSecret =
+          (credentials.webhookSigningSecret as string | undefined) ?? '';
+      } catch {
+        webhookSigningSecret = '';
+      }
+    }
     // Verify webhook signature if secret is provided
     if (webhookSigningSecret && webhookSigningSecret.trim() !== '') {
       try {

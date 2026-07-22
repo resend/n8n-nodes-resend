@@ -37,7 +37,7 @@ importers:
         specifier: ^0.22.4
         version: 0.22.4(typescript@5.9.3)(unrun@0.3.1)
       typescript:
-        specifier: ^5.9.3
+        specifier: ~5.9.3
         version: 5.9.3
       unrun:
         specifier: ^0.3.1
