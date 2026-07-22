@@ -375,7 +375,6 @@ export async function execute(
       subject: email.subject,
     };
 
-    // Handle CC
     const ccValue = additionalOptions.cc;
     if (ccValue) {
       const ccList = normalizeEmailList(ccValue);
@@ -384,7 +383,6 @@ export async function execute(
       }
     }
 
-    // Handle BCC
     const bccValue = additionalOptions.bcc;
     if (bccValue) {
       const bccList = normalizeEmailList(bccValue);
@@ -393,7 +391,6 @@ export async function execute(
       }
     }
 
-    // Handle Reply To
     const replyToValue = additionalOptions.replyTo;
     if (replyToValue) {
       const replyToList = normalizeEmailList(replyToValue);
@@ -402,7 +399,6 @@ export async function execute(
       }
     }
 
-    // Handle Headers
     const headersInput = additionalOptions.headers;
     if (headersInput?.headers?.length) {
       const headers: Record<string, string> = {};
@@ -416,7 +412,6 @@ export async function execute(
       }
     }
 
-    // Handle Tags
     const tagsInput = additionalOptions.tags;
     if (tagsInput?.tags?.length) {
       emailObj.tags = tagsInput.tags
@@ -427,19 +422,16 @@ export async function execute(
         }));
     }
 
-    // Handle Topic ID
     const topicId = additionalOptions.topicId;
     if (topicId) {
       emailObj.topic_id = topicId;
     }
 
-    // Handle Scheduled At
     const scheduledAt = additionalOptions.scheduledAt;
     if (scheduledAt) {
       emailObj.scheduled_at = scheduledAt;
     }
 
-    // Handle content
     if (contentType === 'template') {
       if (!email.templateId) {
         throw new NodeOperationError(

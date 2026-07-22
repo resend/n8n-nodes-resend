@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "target": "es2019",
     "lib": ["es2019", "es2020", "es2022.error"],
-    "types": ["node", "jest"],
+    "types": ["node"],
     "removeComments": true,
     "useUnknownInCatchVariables": false,
     "forceConsistentCasingInFileNames": true,
@@ -26,6 +26,8 @@
     "credentials/**/*",
     "nodes/**/*",
     "nodes/**/*.json",
+    "tests/**/*",
+    "vitest.config.ts",
     "package.json"
   ]
 }

@@ -119,7 +119,7 @@ export const description: INodeProperties[] = [
     fieldName: 'emailTemplateId',
     resourceName: 'template',
     displayName: 'Email Template',
-    required: false, // Templates are optional for emails
+    required: false,
     placeholder: '34a080c9-b17d-4187-ad80-5af20266e535',
     description: 'Template to use for this email',
     displayOptions: {
@@ -542,7 +542,6 @@ export async function execute(
       (requestBody.template as Record<string, unknown>).variables = variables;
     }
   } else {
-    // Default to 'html' if emailFormat wasn't set (e.g., when switching from template mode)
     const emailFormat =
       (this.getNodeParameter('emailFormat', index, 'html') as string) || 'html';
     if (emailFormat === 'html' || emailFormat === 'both') {
@@ -573,7 +572,6 @@ export async function execute(
     }
   }
 
-  // Handle CC
   if (additionalOptions.cc) {
     const ccList = normalizeEmailList(additionalOptions.cc);
     if (ccList.length) {
@@ -581,7 +579,6 @@ export async function execute(
     }
   }
 
-  // Handle BCC
   if (additionalOptions.bcc) {
     const bccList = normalizeEmailList(additionalOptions.bcc);
     if (bccList.length) {
@@ -589,7 +586,6 @@ export async function execute(
     }
   }
 
-  // Handle Reply To
   if (additionalOptions.replyTo) {
     const replyToList = normalizeEmailList(additionalOptions.replyTo);
     if (replyToList.length) {
@@ -597,7 +593,6 @@ export async function execute(
     }
   }
 
-  // Handle Headers
   if (additionalOptions.headers?.headers?.length) {
     const headers: Record<string, string> = {};
     for (const header of additionalOptions.headers.headers) {
@@ -610,7 +605,6 @@ export async function execute(
     }
   }
 
-  // Handle Tags
   if (additionalOptions.tags?.tags?.length) {
     requestBody.tags = additionalOptions.tags.tags
       .filter((tag) => tag.name)
@@ -620,17 +614,14 @@ export async function execute(
       }));
   }
 
-  // Handle Topic ID
   if (additionalOptions.topicId) {
     requestBody.topic_id = additionalOptions.topicId;
   }
 
-  // Handle Scheduled At
   if (additionalOptions.scheduledAt) {
     requestBody.scheduled_at = additionalOptions.scheduledAt;
   }
 
-  // Validate attachments + scheduledAt
   if (
     additionalOptions.attachments?.attachments?.length &&
     additionalOptions.scheduledAt
@@ -642,7 +633,6 @@ export async function execute(
     );
   }
 
-  // Handle Attachments
   if (additionalOptions.attachments?.attachments?.length) {
     requestBody.attachments = additionalOptions.attachments.attachments
       .map((attachment) => {

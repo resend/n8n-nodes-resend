@@ -62,18 +62,15 @@ async function verifySvixSignature(
     );
   }
 
-  // Remove the "whsec_" prefix from the secret
   const secret = webhookSigningSecret.replace(/^whsec_/, '');
   const secretBytes = Buffer.from(secret, 'base64');
 
-  // Create the signed payload: "id.timestamp.payload"
   const signedPayload = `${svixId}.${svixTimestamp}.${payload}`;
   const expectedSignature = createHmac('sha256', secretBytes)
     .update(signedPayload)
     .digest('base64');
   const expectedBytes = Buffer.from(expectedSignature, 'base64');
 
-  // Parse signatures from the header (format: "v1,signature1 v1,signature2")
   const signatures = svixSignature.split(' ');
 
   for (const sig of signatures) {
@@ -84,7 +81,7 @@ async function verifySvixSignature(
         signatureBytes.length === expectedBytes.length &&
         timingSafeEqual(signatureBytes, expectedBytes)
       ) {
-        return; // Signature is valid
+        return;
       }
     }
   }
@@ -259,7 +256,6 @@ export class ResendTrigger implements INodeType {
     default: {
       async checkExists(this: IHookFunctions): Promise<boolean> {
         if (!(await hasResendApiCredential(this))) {
-          // Manual mode: the webhook is managed in the Resend dashboard
           return true;
         }
         const webhookData = this.getWorkflowStaticData('node');
@@ -284,7 +280,6 @@ export class ResendTrigger implements INodeType {
       },
       async create(this: IHookFunctions): Promise<boolean> {
         if (!(await hasResendApiCredential(this))) {
-          // Manual mode: the user registers the webhook URL themselves
           return true;
         }
         const webhookUrl = this.getNodeWebhookUrl('default');
@@ -377,7 +372,6 @@ export class ResendTrigger implements INodeType {
       };
     }
     try {
-      // Get the raw body for signature verification
       const rawBody =
         (request as { rawBody?: unknown }).rawBody ??
         (request as { body?: unknown }).body;
@@ -388,7 +382,6 @@ export class ResendTrigger implements INodeType {
             ? rawBody.toString('utf8')
             : JSON.stringify(bodyData ?? {});
 
-      // Extract Svix headers with proper type handling
       const svixId = getHeaderValue(headers, 'svix-id');
       const svixTimestamp = getHeaderValue(headers, 'svix-timestamp');
       const svixSignature = getHeaderValue(headers, 'svix-signature');
@@ -401,7 +394,6 @@ export class ResendTrigger implements INodeType {
         };
       }
 
-      // Verify the webhook signature
       await verifySvixSignature(
         payload,
         svixId,
