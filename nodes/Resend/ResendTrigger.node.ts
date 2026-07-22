@@ -367,49 +367,55 @@ export class ResendTrigger implements INodeType {
         webhookSigningSecret = '';
       }
     }
-    // Verify webhook signature if secret is provided
-    if (webhookSigningSecret && webhookSigningSecret.trim() !== '') {
-      try {
-        // Get the raw body for signature verification
-        const rawBody =
-          (request as { rawBody?: unknown }).rawBody ??
-          (request as { body?: unknown }).body;
-        const payload =
-          typeof rawBody === 'string'
-            ? rawBody
-            : Buffer.isBuffer(rawBody)
-              ? rawBody.toString('utf8')
-              : JSON.stringify(bodyData ?? {});
+    if (!webhookSigningSecret || webhookSigningSecret.trim() === '') {
+      const res = this.getResponseObject();
+      res
+        .status(401)
+        .json({ error: 'Webhook signing secret is not configured' });
+      return {
+        noWebhookResponse: true,
+      };
+    }
+    try {
+      // Get the raw body for signature verification
+      const rawBody =
+        (request as { rawBody?: unknown }).rawBody ??
+        (request as { body?: unknown }).body;
+      const payload =
+        typeof rawBody === 'string'
+          ? rawBody
+          : Buffer.isBuffer(rawBody)
+            ? rawBody.toString('utf8')
+            : JSON.stringify(bodyData ?? {});
 
-        // Extract Svix headers with proper type handling
-        const svixId = getHeaderValue(headers, 'svix-id');
-        const svixTimestamp = getHeaderValue(headers, 'svix-timestamp');
-        const svixSignature = getHeaderValue(headers, 'svix-signature');
+      // Extract Svix headers with proper type handling
+      const svixId = getHeaderValue(headers, 'svix-id');
+      const svixTimestamp = getHeaderValue(headers, 'svix-timestamp');
+      const svixSignature = getHeaderValue(headers, 'svix-signature');
 
-        if (!svixId || !svixTimestamp || !svixSignature) {
-          const res = this.getResponseObject();
-          res.status(401).json({ error: 'Missing Svix signature headers' });
-          return {
-            noWebhookResponse: true,
-          };
-        }
-
-        // Verify the webhook signature
-        await verifySvixSignature(
-          payload,
-          svixId,
-          svixTimestamp,
-          svixSignature,
-          webhookSigningSecret,
-          this.getNode(),
-        );
-      } catch {
+      if (!svixId || !svixTimestamp || !svixSignature) {
         const res = this.getResponseObject();
-        res.status(401).json({ error: 'Invalid webhook signature' });
+        res.status(401).json({ error: 'Missing Svix signature headers' });
         return {
           noWebhookResponse: true,
         };
       }
+
+      // Verify the webhook signature
+      await verifySvixSignature(
+        payload,
+        svixId,
+        svixTimestamp,
+        svixSignature,
+        webhookSigningSecret,
+        this.getNode(),
+      );
+    } catch {
+      const res = this.getResponseObject();
+      res.status(401).json({ error: 'Invalid webhook signature' });
+      return {
+        noWebhookResponse: true,
+      };
     }
 
     if (!bodyData || typeof bodyData !== 'object' || !('type' in bodyData)) {
