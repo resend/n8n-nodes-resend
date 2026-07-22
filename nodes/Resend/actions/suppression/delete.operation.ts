@@ -11,7 +11,7 @@ import {
 
 export const description: INodeProperties[] = [
   createDynamicIdField({
-    fieldName: 'suppressionId',
+    fieldName: 'suppressionIdentifier',
     resourceName: 'suppression',
     displayName: 'Suppression',
     required: true,
@@ -31,7 +31,11 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const suppression = resolveDynamicIdValue(this, 'suppressionId', index);
+  const suppression = resolveDynamicIdValue(
+    this,
+    'suppressionIdentifier',
+    index,
+  );
 
   const response = await apiRequest.call(
     this,
