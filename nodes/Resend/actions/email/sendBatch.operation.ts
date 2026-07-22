@@ -63,7 +63,10 @@ export const description: INodeProperties[] = [
                 displayName: 'Headers',
                 name: 'headers',
                 type: 'fixedCollection',
-                default: {},
+                default: { headers: [] },
+                typeOptions: {
+                  multipleValues: true,
+                },
                 options: [
                   {
                     name: 'headers',
@@ -97,10 +100,22 @@ export const description: INodeProperties[] = [
                   'Email address where replies should be sent. Can be different from the sender address.',
               },
               {
+                displayName: 'Scheduled At',
+                name: 'scheduledAt',
+                type: 'string',
+                default: '',
+                placeholder: 'in 1 hour',
+                description:
+                  'Schedule this email to be sent at a future time. Accepts natural language like "in 1 hour" or ISO 8601 format "2024-12-25T09:00:00Z". Each email in the batch can be scheduled independently.',
+              },
+              {
                 displayName: 'Tags',
                 name: 'tags',
                 type: 'fixedCollection',
-                default: {},
+                default: { tags: [] },
+                typeOptions: {
+                  multipleValues: true,
+                },
                 options: [
                   {
                     name: 'tags',
@@ -208,7 +223,10 @@ export const description: INodeProperties[] = [
             displayName: 'Template Variables',
             name: 'templateVariables',
             type: 'fixedCollection',
-            default: {},
+            default: { variables: [] },
+            typeOptions: {
+              multipleValues: true,
+            },
             description:
               'Key-value pairs to replace template placeholders. Keys must match the template variable names.',
             options: [
@@ -327,6 +345,7 @@ interface EmailInput {
     cc?: string;
     headers?: { headers: Array<{ name: string; value?: string }> };
     replyTo?: string;
+    scheduledAt?: string;
     tags?: { tags: Array<{ name: string; value?: string }> };
     topicId?: string;
   };
@@ -412,6 +431,12 @@ export async function execute(
     const topicId = additionalOptions.topicId;
     if (topicId) {
       emailObj.topic_id = topicId;
+    }
+
+    // Handle Scheduled At
+    const scheduledAt = additionalOptions.scheduledAt;
+    if (scheduledAt) {
+      emailObj.scheduled_at = scheduledAt;
     }
 
     // Handle content
