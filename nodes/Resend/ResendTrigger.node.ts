@@ -11,6 +11,8 @@ import {
   type INodeTypeDescription,
   type IWebhookFunctions,
   type IWebhookResponseData,
+  type JsonObject,
+  NodeApiError,
   NodeConnectionTypes,
   NodeOperationError,
 } from 'n8n-workflow';
@@ -280,7 +282,7 @@ export class ResendTrigger implements INodeType {
             delete webhookData.webhookSigningSecret;
             return false;
           }
-          throw error;
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
       async create(this: IHookFunctions): Promise<boolean> {
