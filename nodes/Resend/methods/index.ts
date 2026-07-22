@@ -3,7 +3,11 @@ import type {
   INodeListSearchResult,
   INodePropertyOptions,
 } from 'n8n-workflow';
-import { handleResendApiError, RESEND_API_BASE } from '../transport';
+import {
+  getCredentialType,
+  handleResendApiError,
+  RESEND_API_BASE,
+} from '../transport';
 
 /** Resend list endpoints return `{ data: [...] }`. */
 type ResendListResponseBody<T> = { data?: T[] };
@@ -35,7 +39,7 @@ async function loadDropdownOptions(
     response =
       await loadOptionsFunctions.helpers.httpRequestWithAuthentication.call(
         loadOptionsFunctions,
-        'resendApi',
+        getCredentialType(loadOptionsFunctions),
         {
           url: `${RESEND_API_BASE}${endpoint}`,
           method: 'GET',
@@ -120,7 +124,7 @@ export async function getTemplateVariables(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/templates/${encodeURIComponent(normalizedTemplateId)}`,
         method: 'GET',
@@ -178,7 +182,7 @@ export async function getContacts(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/contacts`,
         method: 'GET',
@@ -230,7 +234,7 @@ export async function getWebhooks(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/webhooks`,
         method: 'GET',
@@ -276,7 +280,7 @@ export async function getEmails(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/emails`,
         method: 'GET',
@@ -325,7 +329,7 @@ export async function getReceivedEmails(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/emails/receiving`,
         method: 'GET',

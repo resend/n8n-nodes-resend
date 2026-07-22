@@ -7,6 +7,7 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 import {
   buildTemplateSendVariables,
+  getCredentialType,
   handleResendApiError,
   normalizeEmailList,
   RESEND_API_BASE,
@@ -477,7 +478,7 @@ export async function execute(
   try {
     response = await this.helpers.httpRequestWithAuthentication.call(
       this,
-      'resendApi',
+      getCredentialType(this),
       {
         url: `${RESEND_API_BASE}/emails/batch`,
         method: 'POST',

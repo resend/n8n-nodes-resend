@@ -11,7 +11,11 @@ import {
   updateDisplayOptions,
   WAIT_INDEFINITELY,
 } from 'n8n-workflow';
-import { handleResendApiError, RESEND_API_BASE } from '../../transport';
+import {
+  getCredentialType,
+  handleResendApiError,
+  RESEND_API_BASE,
+} from '../../transport';
 import { limitWaitTimeOption } from './descriptions';
 import {
   ACTION_RECORDED_PAGE,
@@ -759,7 +763,7 @@ export async function sendResendEmail(
   try {
     await context.helpers.httpRequestWithAuthentication.call(
       context,
-      'resendApi',
+      getCredentialType(context),
       {
         url: `${RESEND_API_BASE}/emails`,
         method: 'POST',
