@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-resend",
-  "version": "2.6.3",
+  "version": "2.6.4",
   "description": "Resend integration for n8n: Email, Broadcasts, Templates, Domains, Contacts, Segments, Topics, Webhooks, Workflows, Events, and more",
   "keywords": [
     "n8n-community-node-package",
