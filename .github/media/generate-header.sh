@@ -40,10 +40,12 @@ resolve_font() {
 
   if command -v fc-match >/dev/null 2>&1; then
     local matched
-    matched="$(fc-match -f '%{family}|%{file}' "${family}:style=${style}" 2>/dev/null || true)"
-    local matched_family="${matched%%|*}" matched_file="${matched#*|}"
+    matched="$(fc-match -f '%{family}|%{style}|%{file}' "${family}:style=${style}" 2>/dev/null || true)"
+    local matched_rest="${matched#*|}"
+    local matched_family="${matched%%|*}" matched_style="${matched_rest%%|*}" matched_file="${matched_rest#*|}"
     if [[ -n "$matched_file" && -f "$matched_file" ]] &&
-      [[ ",${matched_family}," == *",${family},"* || "$matched_family" == "$family" ]]; then
+      [[ ",${matched_family}," == *",${family},"* || "$matched_family" == "$family" ]] &&
+      [[ ",${matched_style}," == *",${style},"* || "$matched_style" == "$style" ]]; then
       printf '%s\n' "$matched_file"
       return 0
     fi
