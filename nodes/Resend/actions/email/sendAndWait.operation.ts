@@ -46,10 +46,8 @@ export async function execute(
 ): Promise<INodeExecutionData[]> {
   const email = createEmail(this);
 
-  // Send email via Resend
   await sendResendEmail(this, email);
 
-  // Configure wait time and pause execution
   const waitTill = configureWaitTillDate(this);
   await this.putExecutionToWait(waitTill);
 

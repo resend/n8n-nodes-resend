@@ -9,7 +9,6 @@ import {
   RESEND_API_BASE,
 } from '../transport';
 
-/** Resend list endpoints return `{ data: [...] }`. */
 type ResendListResponseBody<T> = { data?: T[] };
 
 type ResendDropdownItem = { id: string; name?: string };
@@ -23,13 +22,8 @@ type ResendWebhookItem = { id: string; endpoint?: string; status?: string };
 type ResendEmailItem = { id: string; subject?: string; created_at?: string };
 type ResendTemplateVariable = { key: string; type?: string };
 
-/** GET /templates/:id exposes `variables` for template placeholders. */
 type ResendTemplateDetailBody = { variables?: ResendTemplateVariable[] };
 
-/**
- * Load options for dropdown fields (max 100 items).
- * Used by getTemplates, getSegments, getTopics.
- */
 async function loadDropdownOptions(
   loadOptionsFunctions: ILoadOptionsFunctions,
   endpoint: string,
@@ -162,9 +156,6 @@ export async function getSegments(
 
 type ResendSuppressionItem = { id: string; email?: string };
 
-/**
- * Load suppressions with the suppressed email in the display name.
- */
 export async function getSuppressions(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -205,9 +196,6 @@ export async function getBroadcasts(
   return loadDropdownOptions(this, '/broadcasts');
 }
 
-/**
- * Contacts are now fetched directly from /contacts endpoint.
- */
 export async function getContacts(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -257,9 +245,6 @@ export async function getDomains(
   return loadDropdownOptions(this, '/domains');
 }
 
-/**
- * Load webhooks with endpoint URL in display name.
- */
 export async function getWebhooks(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -285,7 +270,6 @@ export async function getWebhooks(
     .map((item) => {
       let displayName = item.id;
       if (item.endpoint) {
-        // Truncate long URLs for display
         const shortEndpoint =
           item.endpoint.length > 50
             ? `${item.endpoint.substring(0, 47)}...`
@@ -303,9 +287,6 @@ export async function getContactProperties(
   return loadDropdownOptions(this, '/contact-properties');
 }
 
-/**
- * Load sent emails with subject and date in display name.
- */
 export async function getEmails(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -331,7 +312,6 @@ export async function getEmails(
     .map((item) => {
       const parts: string[] = [];
       if (item.subject) {
-        // Truncate long subjects
         parts.push(
           item.subject.length > 50
             ? `${item.subject.substring(0, 47)}...`
@@ -339,7 +319,6 @@ export async function getEmails(
         );
       }
       if (item.created_at) {
-        // Format date as DD/MM/YYYY
         const date = new Date(item.created_at);
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -352,9 +331,6 @@ export async function getEmails(
     });
 }
 
-/**
- * Load received emails with subject and date in display name.
- */
 export async function getReceivedEmails(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -380,7 +356,6 @@ export async function getReceivedEmails(
     .map((item) => {
       const parts: string[] = [];
       if (item.subject) {
-        // Truncate long subjects
         parts.push(
           item.subject.length > 50
             ? `${item.subject.substring(0, 47)}...`
@@ -388,7 +363,6 @@ export async function getReceivedEmails(
         );
       }
       if (item.created_at) {
-        // Format date as DD/MM/YYYY
         const date = new Date(item.created_at);
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -401,12 +375,6 @@ export async function getReceivedEmails(
     });
 }
 
-// ListSearch wrapper functions for resourceLocator
-// These convert the loadOptions format to listSearch format
-
-/**
- * Generic wrapper to convert loadOptions methods to listSearch format
- */
 async function wrapForListSearch(
   loadOptionsFunctions: ILoadOptionsFunctions,
   loadOptionsMethod: () => Promise<INodePropertyOptions[]>,

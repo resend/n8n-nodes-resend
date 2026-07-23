@@ -166,20 +166,3 @@ export function createEmailBody(
 </html>
 	`;
 }
-
-/** @deprecated Use createEmailBody instead */
-export function createEmailBodyWithN8nAttribution(
-  message: string,
-  buttons: string,
-  instanceId?: string,
-) {
-  return createEmailBody(message, buttons, { instanceId: instanceId ?? '' });
-}
-
-/** @deprecated Use createEmailBody instead */
-export function createEmailBodyWithoutN8nAttribution(
-  message: string,
-  buttons: string,
-) {
-  return createEmailBody(message, buttons);
-}

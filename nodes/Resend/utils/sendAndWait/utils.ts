@@ -34,7 +34,6 @@ const appendAttributionOption: INodeProperties = {
     'Whether to include the phrase "This message was sent automatically with n8n" to the end of the message',
 };
 
-// HTML escape helper
 function escapeHtml(text: string): string {
   const map: { [key: string]: string } = {
     '&': '&amp;',
@@ -46,7 +45,6 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
-// Operation Properties ----------------------------------------------------------
 export function getSendAndWaitProperties(
   targetProperties: INodeProperties[],
   resource: string | null = 'email',
@@ -289,7 +287,6 @@ export function getSendAndWaitProperties(
   );
 }
 
-// Webhook Function --------------------------------------------------------------
 const getFormResponseCustomizations = (context: IWebhookFunctions) => {
   const message = context.getNodeParameter('message', '') as string;
   const options = context.getNodeParameter('options', {}) as {
@@ -324,7 +321,6 @@ const getFormResponseCustomizations = (context: IWebhookFunctions) => {
   };
 };
 
-// Simple form HTML for free text response
 function createFreeTextFormPage(
   formTitle: string,
   formDescription: string,
@@ -488,7 +484,6 @@ export async function sendAndWaitWebhook(this: IWebhookFunctions) {
   };
 }
 
-// Send and Wait Config -----------------------------------------------------------
 export function getSendAndWaitConfig(
   context: IExecuteFunctions,
 ): SendAndWaitConfig {
@@ -649,7 +644,6 @@ const sendAndWaitWaitingTooltip = (parameters: { operation: string }) => {
 
 export const SEND_AND_WAIT_WAITING_TOOLTIP = `={{ (${sendAndWaitWaitingTooltip})($parameter) }}`;
 
-// Configure wait till date
 export function configureWaitTillDate(
   context: IExecuteFunctions,
   location: 'options' | 'root' = 'options',
@@ -736,7 +730,6 @@ export function configureWaitTillDate(
   return waitTill;
 }
 
-// Send email via Resend API
 export async function sendResendEmail(
   context: IExecuteFunctions,
   email: IEmail,

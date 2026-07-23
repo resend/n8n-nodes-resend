@@ -45,11 +45,10 @@ function extractResendError(error: unknown): ResendApiError | undefined {
     if (!trimmed.startsWith('{')) return undefined;
     try {
       const parsed = JSON.parse(trimmed) as unknown;
-      if (isResendShape(parsed)) return parsed;
+      return isResendShape(parsed) ? parsed : undefined;
     } catch {
-      /* not JSON */
+      return undefined;
     }
-    return undefined;
   };
 
   if (isResendShape(error)) return error;
@@ -135,7 +134,6 @@ function buildQuotaDescription(
     return `${base} Upgrade your plan to increase your monthly email quota.`;
   }
 
-  // Generic rate-limit (e.g. rate_limit_exceeded)
   const retryAfter = headers['retry-after'] ?? headers['ratelimit-reset'];
   const remaining = headers['ratelimit-remaining'];
   const limit = headers['ratelimit-limit'];
@@ -163,7 +161,6 @@ export function handleResendApiError(
     const headers = extractResponseHeaders(error);
     const statusCode = resendError.statusCode;
 
-    // 429 – rate limit or sending quota exceeded
     if (statusCode === 429) {
       const description = buildQuotaDescription(resendError, headers);
       throw new NodeApiError(
@@ -182,7 +179,6 @@ export function handleResendApiError(
       );
     }
 
-    // 403 – contact quota exceeded (validation_error with quota message)
     if (
       statusCode === 403 &&
       resendError.name === 'validation_error' &&

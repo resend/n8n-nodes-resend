@@ -31,11 +31,6 @@ export class ResendOAuth2Api implements ICredentialType {
       default: '',
     },
     {
-      // Drives n8n's built-in OAuth2 Dynamic Client Registration: on connect, n8n
-      // discovers Resend's authorization server metadata from this URL's
-      // /.well-known/oauth-authorization-server and POSTs to the discovered
-      // registration_endpoint (https://api.resend.com/oauth/register) to obtain
-      // a fresh client_id, then proceeds with the standard PKCE authorization flow.
       displayName: 'Server URL',
       name: 'serverUrl',
       type: 'hidden',

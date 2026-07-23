@@ -7,8 +7,6 @@ export {
   BUTTON_STYLE_PRIMARY,
   BUTTON_STYLE_SECONDARY,
   createEmailBody,
-  createEmailBodyWithN8nAttribution,
-  createEmailBodyWithoutN8nAttribution,
 } from './email-templates';
 export type {
   FormResponseTypeOptions,
