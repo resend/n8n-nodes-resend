@@ -15,6 +15,7 @@ import * as events from './event';
 import * as logs from './log';
 import * as receivingEmails from './receivingEmail';
 import * as segments from './segment';
+import * as suppressions from './suppression';
 import * as templates from './template';
 import * as topics from './topic';
 import * as webhooks from './webhook';
@@ -27,6 +28,7 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
   domains,
   broadcasts,
   segments,
+  suppressions,
   topics,
   contacts,
   contactProperties,

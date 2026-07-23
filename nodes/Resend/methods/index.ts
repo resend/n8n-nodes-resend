@@ -160,6 +160,39 @@ export async function getSegments(
   return loadDropdownOptions(this, '/segments');
 }
 
+type ResendSuppressionItem = { id: string; email?: string };
+
+/**
+ * Load suppressions with the suppressed email in the display name.
+ */
+export async function getSuppressions(
+  this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+  let response: ResendListResponseBody<ResendSuppressionItem> | undefined;
+  try {
+    response = await this.helpers.httpRequestWithAuthentication.call(
+      this,
+      getCredentialType(this),
+      {
+        url: `${RESEND_API_BASE}/suppressions`,
+        method: 'GET',
+        qs: { limit: 100 },
+        json: true,
+      },
+    );
+  } catch (error) {
+    handleResendApiError(this.getNode(), error);
+  }
+
+  const items = response?.data ?? [];
+  return items
+    .filter((item) => item?.id)
+    .map((item) => ({
+      name: item.email ? `${item.email} (${item.id})` : item.id,
+      value: item.id,
+    }));
+}
+
 export async function getTopics(
   this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -420,6 +453,7 @@ export const getDomainsListSearch = createListSearch(getDomains);
 export const getEmailsListSearch = createListSearch(getEmails);
 export const getReceivedEmailsListSearch = createListSearch(getReceivedEmails);
 export const getSegmentsListSearch = createListSearch(getSegments);
+export const getSuppressionsListSearch = createListSearch(getSuppressions);
 export const getTemplatesListSearch = createListSearch(getTemplates);
 export const getTopicsListSearch = createListSearch(getTopics);
 export const getWebhooksListSearch = createListSearch(getWebhooks);

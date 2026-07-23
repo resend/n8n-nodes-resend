@@ -15,6 +15,7 @@ import * as logs from './actions/log';
 import * as receivingEmails from './actions/receivingEmail';
 import { router } from './actions/router';
 import * as segments from './actions/segment';
+import * as suppressions from './actions/suppression';
 import * as templates from './actions/template';
 import * as topics from './actions/topic';
 import * as webhooks from './actions/webhook';
@@ -34,6 +35,8 @@ import {
   getReceivedEmailsListSearch,
   getSegments,
   getSegmentsListSearch,
+  getSuppressions,
+  getSuppressionsListSearch,
   getTemplates,
   getTemplatesListSearch,
   getTemplateVariables,
@@ -63,7 +66,7 @@ export class Resend implements INodeType {
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
     subtitle:
-      '={{(() => { const resourceLabels = { broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+      '={{(() => { const resourceLabels = { broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step", batchAdd: "batch add", batchRemove: "batch remove" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
     defaults: {
       name: 'Resend',
     },
@@ -179,6 +182,12 @@ export class Resend implements INodeType {
               'Create, update, delete, or list contact segments for grouping contacts based on criteria',
           },
           {
+            name: 'Suppression',
+            value: 'suppressions',
+            description:
+              'Add, remove, or list suppressed email addresses that Resend skips at send time to avoid hard bounces and spam complaints',
+          },
+          {
             name: 'Template',
             value: 'templates',
             description:
@@ -212,6 +221,7 @@ export class Resend implements INodeType {
       ...domains.descriptions,
       ...broadcasts.descriptions,
       ...segments.descriptions,
+      ...suppressions.descriptions,
       ...topics.descriptions,
       ...contacts.descriptions,
       ...contactProperties.descriptions,
@@ -232,6 +242,7 @@ export class Resend implements INodeType {
       getEmails,
       getReceivedEmails,
       getSegments,
+      getSuppressions,
       getTemplateVariables,
       getTemplates,
       getTopics,
@@ -245,6 +256,7 @@ export class Resend implements INodeType {
       getEmails: getEmailsListSearch,
       getReceivedEmails: getReceivedEmailsListSearch,
       getSegments: getSegmentsListSearch,
+      getSuppressions: getSuppressionsListSearch,
       getTemplates: getTemplatesListSearch,
       getTemplateVariables: getTemplateVariablesListSearch,
       getTopics: getTopicsListSearch,

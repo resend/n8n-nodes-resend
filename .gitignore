@@ -7,4 +7,5 @@ npm-debug.log*
 yarn.lock
 .vscode/launch.json
 plans
+docs
 .claude/

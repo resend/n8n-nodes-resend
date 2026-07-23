@@ -17,6 +17,7 @@ export const RESOURCE_METHOD_MAP = {
   email: 'getEmails',
   receivedEmail: 'getReceivedEmails',
   segment: 'getSegments',
+  suppression: 'getSuppressions',
   template: 'getTemplates',
   topic: 'getTopics',
 } as const;
@@ -34,6 +35,7 @@ export const RESOURCE_DISPLAY_MAP = {
   email: 'Email',
   receivedEmail: 'Received Email',
   segment: 'Segment',
+  suppression: 'Suppression',
   template: 'Template',
   topic: 'Topic',
 } as const;
