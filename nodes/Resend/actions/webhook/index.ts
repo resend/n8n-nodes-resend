@@ -23,6 +23,8 @@ export const webhookEventOptions: INodePropertyOptions[] = [
   { name: 'Email Scheduled', value: 'email.scheduled' },
   { name: 'Email Sent', value: 'email.sent' },
   { name: 'Email Suppressed', value: 'email.suppressed' },
+  { name: 'Suppression Added', value: 'suppression.added' },
+  { name: 'Suppression Removed', value: 'suppression.removed' },
 ];
 
 export const operations: INodeProperties[] = [

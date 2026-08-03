@@ -216,6 +216,8 @@ export class ResendTrigger implements INodeType {
           { name: 'Email Scheduled', value: 'email.scheduled' },
           { name: 'Email Sent', value: 'email.sent' },
           { name: 'Email Suppressed', value: 'email.suppressed' },
+          { name: 'Suppression Added', value: 'suppression.added' },
+          { name: 'Suppression Removed', value: 'suppression.removed' },
         ],
         description: 'Select the Resend event types to listen for',
       },
