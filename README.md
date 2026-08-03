@@ -9,7 +9,7 @@
 	<img alt="GitHub License" src="https://img.shields.io/github/license/resend/n8n-nodes-resend">
 	<img alt="NPM Downloads" src="https://img.shields.io/npm/dm/n8n-nodes-resend">
 	<img alt="NPM Last Update" src="https://img.shields.io/npm/last-update/n8n-nodes-resend">
-	<img alt="Static Badge" src="https://img.shields.io/badge/n8n-2.6.4-EA4B71?logo=n8n">
+	<img alt="Static Badge" src="https://img.shields.io/badge/n8n-2.7.0-EA4B71?logo=n8n">
 </p>
 
 <p align="center">
