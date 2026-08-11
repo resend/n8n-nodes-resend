@@ -1,5 +1,6 @@
 import { createOperationRouter } from '../../transport';
 
+import * as cancel from './cancel.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
@@ -14,6 +15,7 @@ export const execute = createOperationRouter(
     update,
     delete: del,
     send,
+    cancel,
   },
   { list },
 );

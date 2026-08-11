@@ -1,4 +1,5 @@
 import type { INodeProperties } from 'n8n-workflow';
+import * as cancel from './cancel.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
@@ -18,6 +19,13 @@ export const operations: INodeProperties[] = [
       },
     },
     options: [
+      {
+        name: 'Cancel',
+        value: 'cancel',
+        description:
+          'Cancel a broadcast campaign that is queued or scheduled before it is delivered to its audience',
+        action: 'Cancel a broadcast',
+      },
       {
         name: 'Create',
         value: 'create',
@@ -73,7 +81,8 @@ export const descriptions: INodeProperties[] = [
   ...update.description,
   ...del.description,
   ...send.description,
+  ...cancel.description,
 ];
 
 export { execute } from './execute';
-export { create, del as delete, get, list, send, update };
+export { cancel, create, del as delete, get, list, send, update };

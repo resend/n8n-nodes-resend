@@ -110,6 +110,14 @@ const cases: RequestCase[] = [
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
+    operation: 'cancel',
+    parameters: { broadcastId: locator('bc 1') },
+    method: 'POST',
+    endpoint: '/broadcasts/bc%201/cancel',
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
     operation: 'update',
     parameters: {
       broadcastId: locator('bc_1'),
