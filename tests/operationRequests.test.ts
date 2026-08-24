@@ -28,12 +28,26 @@ interface RequestCase {
   execute: ResourceExecute;
   operation: string;
   parameters?: ParameterMap;
+  inputData?: INodeExecutionData[];
   response?: unknown;
   method: string;
   endpoint: string;
   body?: unknown;
   qs?: unknown;
 }
+
+const csvBinary = (fileName = 'contacts.csv'): INodeExecutionData[] => [
+  {
+    json: {},
+    binary: {
+      data: {
+        data: Buffer.from('email\nada@example.com').toString('base64'),
+        mimeType: 'text/csv',
+        fileName,
+      },
+    },
+  },
+];
 
 const locator = (value: string) => ({ mode: 'id', value });
 const listParameters = { returnAll: false, limit: 50 };
@@ -279,6 +293,44 @@ const cases: RequestCase[] = [
     method: 'PATCH',
     endpoint: '/contacts/c_1/topics',
     body: { topics: [{ id: 'topic_1', subscription: 'opted_out' }] },
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'createImport',
+    parameters: {
+      contactImportBinaryProperty: 'data',
+      contactImportFields: {
+        columnMap: '{"email":"Email"}',
+        onConflict: 'upsert',
+        segments: { segments: [{ id: 'seg_1' }] },
+        topics: { topics: [{ id: 'topic_1', subscription: 'opt_in' }] },
+      },
+    },
+    inputData: csvBinary(),
+    method: 'POST',
+    endpoint: '/contacts/imports',
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'listImports',
+    parameters: {
+      ...listParameters,
+      contactImportFilters: { status: 'completed' },
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/contacts/imports',
+    qs: { limit: 50, status: 'completed' },
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'getImport',
+    parameters: { contactImportId: 'imp 1' },
+    method: 'GET',
+    endpoint: '/contacts/imports/imp%201',
   },
   {
     resource: 'contactProperties',
@@ -1048,6 +1100,7 @@ describe.each(cases)('$resource $operation', ({
   execute,
   operation,
   parameters,
+  inputData,
   response,
   method,
   endpoint,
@@ -1057,6 +1110,7 @@ describe.each(cases)('$resource $operation', ({
   it(`calls ${method} ${endpoint}`, async () => {
     const mock = createExecuteMock({
       parameters,
+      inputData,
       response: response ?? { id: 'created' },
     });
 
@@ -1257,5 +1311,107 @@ describe('account disconnect', () => {
     ).rejects.toThrow(
       'No active Resend OAuth connection was found to disconnect.',
     );
+  });
+});
+
+describe('contact imports', () => {
+  const importParameters = {
+    contactImportBinaryProperty: 'data',
+    contactImportFields: {
+      columnMap: '{"email":"Email"}',
+      fileName: 'people.csv',
+      onConflict: 'upsert',
+      segments: { segments: [{ id: 'seg_1' }] },
+      topics: { topics: [{ id: 'topic_1', subscription: 'opt_in' }] },
+    },
+  };
+
+  it('uploads the CSV file and its options as multipart form data', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: importParameters,
+      inputData: csvBinary(),
+      response: { object: 'contact_import', id: 'imp_1' },
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).resolves.toEqual([
+      {
+        json: { object: 'contact_import', id: 'imp_1' },
+        pairedItem: { item: 0 },
+      },
+    ]);
+
+    const options = httpRequest.mock.calls[0][1];
+    expect(options.headers).not.toHaveProperty('Content-Type');
+
+    const form = options.body as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.get('column_map')).toBe('{"email":"Email"}');
+    expect(form.get('on_conflict')).toBe('upsert');
+    expect(form.get('segments')).toBe('[{"id":"seg_1"}]');
+    expect(form.get('topics')).toBe(
+      '[{"id":"topic_1","subscription":"opt_in"}]',
+    );
+
+    const file = form.get('file') as File;
+    expect(file.name).toBe('people.csv');
+    expect(file.type).toBe('text/csv');
+    await expect(file.text()).resolves.toBe('email\nada@example.com');
+  });
+
+  it('falls back to the binary file name and sends only the file', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields: {},
+      },
+      inputData: csvBinary('audience.csv'),
+    });
+
+    await contacts.execute.call(context, 0, 'createImport');
+
+    const form = httpRequest.mock.calls[0][1].body as FormData;
+    expect([...form.keys()]).toEqual(['file']);
+    expect((form.get('file') as File).name).toBe('audience.csv');
+  });
+
+  it('rejects a column map that is not valid JSON', async () => {
+    const { context } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields: { columnMap: 'not json' },
+      },
+      inputData: csvBinary(),
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).rejects.toThrow('Column Map must be a valid JSON object');
+  });
+
+  it('rejects a missing binary property', async () => {
+    const { context } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'csv',
+        contactImportFields: {},
+      },
+      inputData: csvBinary(),
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).rejects.toThrow('Binary property "csv" not found in item 0');
+  });
+
+  it('omits the status filter when no filter is set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { returnAll: false, limit: 50 },
+      response: { data: [] },
+    });
+
+    await contacts.execute.call(context, 0, 'listImports');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 50 });
   });
 });

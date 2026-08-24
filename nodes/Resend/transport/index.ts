@@ -284,6 +284,33 @@ export async function apiRequest(
   }
 }
 
+export async function apiRequestMultipart(
+  this: IExecuteFunctions,
+  method: IHttpRequestMethods,
+  endpoint: string,
+  form: FormData,
+): Promise<IDataObject> {
+  const options: IHttpRequestOptions = {
+    url: `${RESEND_API_BASE}${endpoint}`,
+    method,
+    headers: {
+      'User-Agent': 'n8n-nodes-resend',
+    },
+    body: form as unknown as IHttpRequestOptions['body'],
+    json: true,
+  };
+
+  try {
+    return await this.helpers.httpRequestWithAuthentication.call(
+      this,
+      getCredentialType(this),
+      options,
+    );
+  } catch (error) {
+    handleResendApiError(this.getNode(), error);
+  }
+}
+
 export async function requestList(
   this: IExecuteFunctions,
   endpoint: string,
