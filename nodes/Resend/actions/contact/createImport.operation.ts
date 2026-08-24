@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
       },
     },
     description:
-      'The name of the input binary field holding the CSV file to import. Maximum size is 50MB.',
+      'The name of the input binary field holding the CSV file to import. See the <a href="https://resend.com/docs/api-reference/contacts/create-contact-import">Resend contact import docs</a> for the current maximum file size.',
   },
   {
     displayName: 'Import Fields',
@@ -45,7 +45,7 @@ export const description: INodeProperties[] = [
         placeholder:
           '{"email":"Email","first_name":"First Name","properties":{"plan":{"column":"Plan","type":"string"}}}',
         description:
-          'JSON-encoded object mapping contact fields and custom property keys to CSV column names. Supports email, first_name, last_name, unsubscribed, and properties. Custom property mappings can include type as string, number, or boolean; defaults to string.',
+          'Maps CSV columns to contact fields, as a JSON object. Supports email, first_name, last_name, unsubscribed, and properties. Each custom property maps to an object with a required column and an optional type of string, number, or boolean, which defaults to string.',
       },
       {
         displayName: 'File Name',
@@ -61,7 +61,7 @@ export const description: INodeProperties[] = [
         name: 'onConflict',
         type: 'options',
         default: 'skip',
-        description: 'Strategy to use when an imported contact already exists',
+        description: 'How to handle contacts that already exist',
         options: [
           {
             name: 'Create or Update',
@@ -84,7 +84,7 @@ export const description: INodeProperties[] = [
         typeOptions: {
           multipleValues: true,
         },
-        description: 'Segments to add every imported contact to',
+        description: 'The segments to add the imported contacts to',
         options: [
           {
             name: 'segments',
@@ -114,7 +114,7 @@ export const description: INodeProperties[] = [
         typeOptions: {
           multipleValues: true,
         },
-        description: 'Topic subscriptions to apply to every imported contact',
+        description: 'Topic subscriptions to apply to the imported contacts',
         options: [
           {
             name: 'topics',
@@ -161,13 +161,74 @@ export const description: INodeProperties[] = [
   },
 ];
 
-interface SegmentItem {
-  id: string;
+const TOPIC_SUBSCRIPTIONS = ['opt_in', 'opt_out'];
+
+function isPlainObject(value: unknown): value is IDataObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-interface TopicItem {
-  id: string;
-  subscription: string;
+function readRequiredId(entry: unknown): string | undefined {
+  if (!isPlainObject(entry)) return undefined;
+  const id = entry.id;
+  if (typeof id !== 'string') return undefined;
+  const trimmed = id.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function parseColumnMap(
+  this: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): IDataObject | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  let parsed: unknown = value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      throw new NodeOperationError(
+        this.getNode(),
+        'Column Map must be valid JSON, for example {"email":"Email","first_name":"First Name"}',
+        { itemIndex: index },
+      );
+    }
+  }
+
+  if (!isPlainObject(parsed)) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'Column Map must be a JSON object mapping contact fields to CSV column names, for example {"email":"Email","first_name":"First Name"}',
+      { itemIndex: index },
+    );
+  }
+
+  return parsed;
+}
+
+function readEntries(
+  this: IExecuteFunctions,
+  value: unknown,
+  fieldName: string,
+  index: number,
+): unknown[] {
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new NodeOperationError(
+      this.getNode(),
+      `${fieldName} must be an array of objects`,
+      { itemIndex: index },
+    );
+  }
+  return value;
 }
 
 export async function execute(
@@ -184,11 +245,11 @@ export async function execute(
     index,
     {},
   ) as {
-    columnMap?: string | IDataObject;
+    columnMap?: unknown;
     fileName?: string;
     onConflict?: string;
-    segments?: { segments: SegmentItem[] };
-    topics?: { topics: TopicItem[] };
+    segments?: { segments?: unknown };
+    topics?: { topics?: unknown };
   };
 
   const items = this.getInputData();
@@ -218,48 +279,74 @@ export async function execute(
     fileName,
   );
 
-  const columnMap = importFields.columnMap;
+  const columnMap = parseColumnMap.call(this, importFields.columnMap, index);
   if (columnMap) {
-    if (typeof columnMap === 'string') {
-      const trimmed = columnMap.trim();
-      if (trimmed) {
-        try {
-          JSON.parse(trimmed);
-        } catch {
-          throw new NodeOperationError(
-            this.getNode(),
-            'Column Map must be a valid JSON object',
-            { itemIndex: index },
-          );
-        }
-        form.append('column_map', trimmed);
-      }
-    } else if (typeof columnMap === 'object') {
-      form.append('column_map', JSON.stringify(columnMap));
-    }
+    form.append('column_map', JSON.stringify(columnMap));
   }
 
   if (importFields.onConflict) {
     form.append('on_conflict', importFields.onConflict);
   }
 
-  if (importFields.segments?.segments?.length) {
+  const segments = readEntries.call(
+    this,
+    importFields.segments?.segments,
+    'Segments',
+    index,
+  );
+  if (segments.length) {
     form.append(
       'segments',
       JSON.stringify(
-        importFields.segments.segments.map((segment) => ({ id: segment.id })),
+        segments.map((segment) => {
+          const id = readRequiredId(segment);
+          if (!id) {
+            throw new NodeOperationError(
+              this.getNode(),
+              'Every entry in Segments must be an object with a non-empty "id", for example [{"id":"78261eea-8f8b-4381-83c6-79fa7120f1cf"}]',
+              { itemIndex: index },
+            );
+          }
+          return { id };
+        }),
       ),
     );
   }
 
-  if (importFields.topics?.topics?.length) {
+  const topics = readEntries.call(
+    this,
+    importFields.topics?.topics,
+    'Topics',
+    index,
+  );
+  if (topics.length) {
     form.append(
       'topics',
       JSON.stringify(
-        importFields.topics.topics.map((topic) => ({
-          id: topic.id,
-          subscription: topic.subscription,
-        })),
+        topics.map((topic) => {
+          const id = readRequiredId(topic);
+          if (!id) {
+            throw new NodeOperationError(
+              this.getNode(),
+              'Every entry in Topics must be an object with a non-empty "id", for example [{"id":"b6d24b8e-af0b-4c3c-be0c-359bbd97381e","subscription":"opt_in"}]',
+              { itemIndex: index },
+            );
+          }
+          const subscription = isPlainObject(topic)
+            ? topic.subscription
+            : undefined;
+          if (
+            typeof subscription !== 'string' ||
+            !TOPIC_SUBSCRIPTIONS.includes(subscription)
+          ) {
+            throw new NodeOperationError(
+              this.getNode(),
+              `Topic "${id}" must have a subscription of either "opt_in" or "opt_out"`,
+              { itemIndex: index },
+            );
+          }
+          return { id, subscription };
+        }),
       ),
     );
   }

@@ -1376,18 +1376,104 @@ describe('contact imports', () => {
     expect((form.get('file') as File).name).toBe('audience.csv');
   });
 
-  it('rejects a column map that is not valid JSON', async () => {
-    const { context } = createExecuteMock({
+  const rejectsImport = async (
+    contactImportFields: Record<string, unknown>,
+    message: string,
+  ) => {
+    const { context, httpRequest } = createExecuteMock({
       parameters: {
         contactImportBinaryProperty: 'data',
-        contactImportFields: { columnMap: 'not json' },
+        contactImportFields,
       },
       inputData: csvBinary(),
     });
 
     await expect(
       contacts.execute.call(context, 0, 'createImport'),
-    ).rejects.toThrow('Column Map must be a valid JSON object');
+    ).rejects.toThrow(message);
+    expect(httpRequest).not.toHaveBeenCalled();
+  };
+
+  it('rejects a column map that is not valid JSON', async () => {
+    await rejectsImport(
+      { columnMap: 'not json' },
+      'Column Map must be valid JSON',
+    );
+  });
+
+  it.each([
+    ['an array', '[{"email":"Email"}]'],
+    ['null', 'null'],
+    ['a string', '"Email"'],
+    ['a number', '42'],
+    ['a boolean', 'true'],
+  ])('rejects a column map that parses to %s', async (_label, columnMap) => {
+    await rejectsImport(
+      { columnMap },
+      'Column Map must be a JSON object mapping contact fields to CSV column names',
+    );
+  });
+
+  it('rejects a non-object column map passed as a resolved value', async () => {
+    await rejectsImport(
+      { columnMap: ['Email'] },
+      'Column Map must be a JSON object mapping contact fields to CSV column names',
+    );
+  });
+
+  it('accepts a column map supplied as an already-parsed object', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields: { columnMap: { email: 'Email' } },
+      },
+      inputData: csvBinary(),
+    });
+
+    await contacts.execute.call(context, 0, 'createImport');
+
+    const form = httpRequest.mock.calls[0][1].body as FormData;
+    expect(form.get('column_map')).toBe('{"email":"Email"}');
+  });
+
+  it.each([
+    ['Segments', 'segments'],
+    ['Topics', 'topics'],
+  ])('rejects %s that is not an array', async (fieldName, key) => {
+    await rejectsImport(
+      { [key]: { [key]: 'seg_1' } },
+      `${fieldName} must be an array of objects`,
+    );
+  });
+
+  it.each([
+    ['a missing ID', {}],
+    ['a blank ID', { id: '   ' }],
+    ['a non-string ID', { id: 42 }],
+    ['a non-object entry', 'seg_1'],
+  ])('rejects a segment with %s', async (_label, entry) => {
+    await rejectsImport(
+      { segments: { segments: [entry] } },
+      'Every entry in Segments must be an object with a non-empty "id"',
+    );
+  });
+
+  it('rejects a topic with a missing ID', async () => {
+    await rejectsImport(
+      { topics: { topics: [{ subscription: 'opt_in' }] } },
+      'Every entry in Topics must be an object with a non-empty "id"',
+    );
+  });
+
+  it.each([
+    ['is missing', {}],
+    ['is not one of the allowed values', { subscription: 'subscribed' }],
+    ['is not a string', { subscription: true }],
+  ])('rejects a topic whose subscription %s', async (_label, extra) => {
+    await rejectsImport(
+      { topics: { topics: [{ id: 'topic_1', ...extra }] } },
+      'Topic "topic_1" must have a subscription of either "opt_in" or "opt_out"',
+    );
   });
 
   it('rejects a missing binary property', async () => {
