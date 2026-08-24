@@ -41,6 +41,24 @@ const listQuery = { limit: 50 };
 
 const cases: RequestCase[] = [
   {
+    resource: 'account',
+    execute: account.execute,
+    operation: 'listGrants',
+    parameters: listParameters,
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/oauth/grants',
+    qs: listQuery,
+  },
+  {
+    resource: 'account',
+    execute: account.execute,
+    operation: 'revokeGrant',
+    parameters: { oauthGrantId: 'grant 1' },
+    method: 'DELETE',
+    endpoint: '/oauth/grants/grant%201',
+  },
+  {
     resource: 'broadcasts',
     execute: broadcasts.execute,
     operation: 'create',
