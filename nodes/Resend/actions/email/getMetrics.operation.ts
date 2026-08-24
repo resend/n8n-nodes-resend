@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 
 const metricOptions = [
@@ -192,6 +193,42 @@ export async function execute(
     {},
   ) as MetricsOptions;
 
+  const dimensions = options.dimensions ?? [];
+  const hasEmailDimension = dimensions.includes('email');
+  const hasBroadcastDimension = dimensions.includes('broadcast');
+  const domainIds = normalizeIdList(options.domainIds);
+  const emailIds = normalizeIdList(options.emailIds);
+  const broadcastIds = normalizeIdList(options.broadcastIds);
+
+  if (hasEmailDimension && hasBroadcastDimension) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'The "Email" and "Broadcast" dimensions cannot be combined. Resend rejects a metrics request that breaks the results down by both, so select only one of them.',
+      { itemIndex: index },
+    );
+  }
+  if (emailIds && broadcastIds) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'The "Email IDs" and "Broadcast IDs" filters cannot be combined. Resend rejects a metrics request that filters on both, so keep only one of them.',
+      { itemIndex: index },
+    );
+  }
+  if (emailIds && hasBroadcastDimension) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'The "Email IDs" filter cannot be combined with the "Broadcast" dimension. Resend rejects that combination, so remove one of them.',
+      { itemIndex: index },
+    );
+  }
+  if (broadcastIds && hasEmailDimension) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'The "Broadcast IDs" filter cannot be combined with the "Email" dimension. Resend rejects that combination, so remove one of them.',
+      { itemIndex: index },
+    );
+  }
+
   const qs: IDataObject = {};
 
   if (options.startDate) {
@@ -209,19 +246,15 @@ export async function execute(
   if (options.metrics?.length) {
     qs.metrics = options.metrics.join(',');
   }
-  if (options.dimensions?.length) {
-    qs.dimensions = options.dimensions.join(',');
+  if (dimensions.length) {
+    qs.dimensions = dimensions.join(',');
   }
-
-  const domainIds = normalizeIdList(options.domainIds);
   if (domainIds) {
     qs.domain_id = domainIds;
   }
-  const emailIds = normalizeIdList(options.emailIds);
   if (emailIds) {
     qs.email_id = emailIds;
   }
-  const broadcastIds = normalizeIdList(options.broadcastIds);
   if (broadcastIds) {
     qs.broadcast_id = broadcastIds;
   }
