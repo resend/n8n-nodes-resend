@@ -681,6 +681,26 @@ const cases: RequestCase[] = [
   {
     resource: 'segments',
     execute: segments.execute,
+    operation: 'getMetrics',
+    parameters: {
+      segmentMetricsOptions: {
+        dimensions: ['segment'],
+        metrics: ['all_contacts', 'subscribers', 'unsubscribers'],
+        segmentIds: 'seg_1, seg_2',
+      },
+    },
+    response: { object: 'metrics' },
+    method: 'GET',
+    endpoint: '/segments/metrics',
+    qs: {
+      dimensions: 'segment',
+      metrics: 'all_contacts,subscribers,unsubscribers',
+      segment_id: 'seg_1,seg_2',
+    },
+  },
+  {
+    resource: 'segments',
+    execute: segments.execute,
     operation: 'listContacts',
     parameters: { ...listParameters, segmentId: locator('seg_1') },
     response: { data: [] },
