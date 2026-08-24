@@ -2,6 +2,7 @@ import { SEND_AND_WAIT_OPERATION } from 'n8n-workflow';
 import { createOperationRouter } from '../../transport';
 import * as cancel from './cancel.operation';
 import * as getAttachment from './getAttachment.operation';
+import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as listAttachments from './listAttachments.operation';
 import * as retrieve from './retrieve.operation';
@@ -20,6 +21,7 @@ export const execute = createOperationRouter(
     cancel,
     listAttachments,
     getAttachment,
+    getMetrics,
   },
   { list },
 );

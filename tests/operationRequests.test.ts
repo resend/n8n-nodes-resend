@@ -510,6 +510,33 @@ const cases: RequestCase[] = [
     endpoint: '/emails/e_1/attachments/att_1',
   },
   {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'getMetrics',
+    parameters: {
+      metricsOptions: {
+        startDate: '2026-07-01T00:00:00.000Z',
+        endDate: '2026-07-08T00:00:00.000Z',
+        timezone: 'America/New_York',
+        granularity: 'daily',
+        metrics: ['sent', 'delivered', 'open_rate'],
+        dimensions: ['period', 'domain'],
+        domainIds: 'dom_1, dom_2',
+      },
+    },
+    method: 'GET',
+    endpoint: '/emails/metrics',
+    qs: {
+      start_date: '2026-07-01T00:00:00.000Z',
+      end_date: '2026-07-08T00:00:00.000Z',
+      timezone: 'America/New_York',
+      granularity: 'daily',
+      metrics: 'sent,delivered,open_rate',
+      dimensions: 'period,domain',
+      domain_id: 'dom_1,dom_2',
+    },
+  },
+  {
     resource: 'events',
     execute: events.execute,
     operation: 'create',
@@ -1123,6 +1150,61 @@ describe('operation results', () => {
 
     expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
   });
+
+  it('requests email metrics without a query when no option is set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { metricsOptions: {} },
+      response: { object: 'metrics', totals: { sent: 1 } },
+    });
+
+    await expect(email.execute.call(context, 2, 'getMetrics')).resolves.toEqual(
+      [
+        {
+          json: { object: 'metrics', totals: { sent: 1 } },
+          pairedItem: { item: 2 },
+        },
+      ],
+    );
+    expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
+  });
+
+  it('sends the email metric filter as comma separated ids', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          emailIds: ' e_1 , e_2 ',
+          dimensions: ['period', 'email'],
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      email_id: 'e_1,e_2',
+      dimensions: 'period,email',
+    });
+  });
+
+  it('sends the broadcast metric filter as comma separated ids', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          broadcastIds: ' bc_1 , bc_2 ',
+          dimensions: ['period', 'broadcast'],
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      broadcast_id: 'bc_1,bc_2',
+      dimensions: 'period,broadcast',
+    });
+  });
 });
 
 describe('operation validation', () => {
@@ -1195,6 +1277,74 @@ describe('operation validation', () => {
     await expect(
       suppressions.execute.call(context, 0, 'batchRemove'),
     ).rejects.toThrow('at most 100 entries per request');
+  });
+
+  it('rejects combining the email and broadcast metric dimensions', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { dimensions: ['email', 'broadcast'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email" and "Broadcast" dimensions cannot be combined',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects combining the email and broadcast metric id filters', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { emailIds: 'e_1', broadcastIds: 'bc_1' },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email IDs" and "Broadcast IDs" filters cannot be combined',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects the email metric id filter with the broadcast dimension', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { emailIds: 'e_1', dimensions: ['broadcast'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email IDs" filter cannot be combined with the "Broadcast" dimension',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects the broadcast metric id filter with the email dimension', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { broadcastIds: 'bc_1', dimensions: ['email'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Broadcast IDs" filter cannot be combined with the "Email" dimension',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('ignores blank metric id filters when checking conflicts', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          emailIds: 'e_1',
+          broadcastIds: ' , ',
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ email_id: 'e_1' });
   });
 });
 
