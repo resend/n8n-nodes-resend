@@ -37,7 +37,7 @@ The table below shows which endpoints are currently implemented:
 
 | API Resource           | Endpoint              | Status  | Operations                                                                                                                                                    |
 | ---------------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Account**            | `/oauth/revoke`       | ✅ Full | Disconnect (OAuth2 credential only)                                                                                                                           |
+| **Account**            | `/oauth`              | ✅ Full | Disconnect (OAuth2 credential only), List Grants, Revoke Grant                                                                                                |
 | **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, List Attachments, Get Attachment                                                                  |
 | **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                                   |
 | **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Create Tracking Domain, Get Tracking Domain, List Tracking Domains, Delete Tracking Domain, Verify Tracking Domain |
