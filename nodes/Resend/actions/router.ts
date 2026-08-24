@@ -6,6 +6,7 @@ import type {
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { handleResendApiError } from '../transport';
 import * as account from './account';
+import * as automations from './automation';
 import * as broadcasts from './broadcast';
 import * as contacts from './contact';
 import * as contactProperties from './contactProperty';
@@ -19,10 +20,10 @@ import * as suppressions from './suppression';
 import * as templates from './template';
 import * as topics from './topic';
 import * as webhooks from './webhook';
-import * as workflows from './workflow';
 
 const resourceModules: Record<string, { execute: typeof email.execute }> = {
   account,
+  automations,
   email,
   templates,
   domains,
@@ -34,7 +35,6 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
   contactProperties,
   webhooks,
   receivingEmails,
-  workflows,
   events,
   logs,
 };

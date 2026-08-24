@@ -5,6 +5,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeConnectionTypes } from 'n8n-workflow';
 import * as account from './actions/account';
+import * as automations from './actions/automation';
 import * as broadcasts from './actions/broadcast';
 import * as contacts from './actions/contact';
 import * as contactProperties from './actions/contactProperty';
@@ -19,7 +20,6 @@ import * as suppressions from './actions/suppression';
 import * as templates from './actions/template';
 import * as topics from './actions/topic';
 import * as webhooks from './actions/webhook';
-import * as workflows from './actions/workflow';
 import {
   getBroadcasts,
   getBroadcastsListSearch,
@@ -66,7 +66,7 @@ export class Resend implements INodeType {
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
     subtitle:
-      '={{(() => { const resourceLabels = { account: "account", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step", batchAdd: "batch add", batchRemove: "batch remove" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+      '={{(() => { const resourceLabels = { account: "account", automations: "automation", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", batchAdd: "batch add", batchRemove: "batch remove" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
     defaults: {
       name: 'Resend',
     },
@@ -127,6 +127,12 @@ export class Resend implements INodeType {
               'Manage the connected Resend OAuth2 account, such as disconnecting it',
           },
           {
+            name: 'Automation',
+            value: 'automations',
+            description:
+              'Create, update, delete, duplicate, stop, or list automated email sequences and monitor runs (private alpha)',
+          },
+          {
             name: 'Broadcast',
             value: 'broadcasts',
             description:
@@ -160,7 +166,7 @@ export class Resend implements INodeType {
             name: 'Event',
             value: 'events',
             description:
-              'Create, send, retrieve, update, or delete events for triggering workflows (private alpha)',
+              'Create, send, retrieve, update, or delete events for triggering automations (private alpha)',
           },
           {
             name: 'Log',
@@ -204,17 +210,12 @@ export class Resend implements INodeType {
             description:
               'Create, update, delete, or list webhooks for receiving real-time notifications about email events',
           },
-          {
-            name: 'Workflow',
-            value: 'workflows',
-            description:
-              'Create, update, delete, or list automated email workflows and monitor runs (private alpha)',
-          },
         ],
         default: 'email',
       },
 
       ...account.descriptions,
+      ...automations.descriptions,
       ...email.descriptions,
       ...templates.descriptions,
       ...domains.descriptions,
@@ -226,7 +227,6 @@ export class Resend implements INodeType {
       ...contactProperties.descriptions,
       ...webhooks.descriptions,
       ...receivingEmails.descriptions,
-      ...workflows.descriptions,
       ...events.descriptions,
       ...logs.descriptions,
     ],

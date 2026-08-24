@@ -1,6 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { describe, expect, it } from 'vitest';
 import * as account from '../nodes/Resend/actions/account';
+import * as automations from '../nodes/Resend/actions/automation';
 import * as broadcasts from '../nodes/Resend/actions/broadcast';
 import * as contacts from '../nodes/Resend/actions/contact';
 import * as contactProperties from '../nodes/Resend/actions/contactProperty';
@@ -14,7 +15,6 @@ import * as suppressions from '../nodes/Resend/actions/suppression';
 import * as templates from '../nodes/Resend/actions/template';
 import * as topics from '../nodes/Resend/actions/topic';
 import * as webhooks from '../nodes/Resend/actions/webhook';
-import * as workflows from '../nodes/Resend/actions/workflow';
 import { createExecuteMock, type ParameterMap } from './helpers/context';
 
 type ResourceExecute = (
@@ -955,92 +955,91 @@ const cases: RequestCase[] = [
     qs: listQuery,
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'create',
     parameters: {
-      workflowName: 'Onboarding',
-      workflowSteps: '[{"id":"s1"}]',
-      workflowEdges: '[]',
-      additionalOptions: { status: 'draft' },
+      automationName: 'Onboarding',
+      automationSteps: '[{"key":"s1"}]',
+      automationConnections: '[]',
+      additionalOptions: { status: 'disabled' },
     },
     method: 'POST',
-    endpoint: '/workflows',
+    endpoint: '/automations',
     body: {
       name: 'Onboarding',
-      steps: [{ id: 's1' }],
-      edges: [],
-      status: 'draft',
+      steps: [{ key: 's1' }],
+      connections: [],
+      status: 'disabled',
     },
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'get',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     method: 'GET',
-    endpoint: '/workflows/wf_1',
+    endpoint: '/automations/auto_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'delete',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     method: 'DELETE',
-    endpoint: '/workflows/wf_1',
+    endpoint: '/automations/auto_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'update',
-    parameters: { workflowId: 'wf_1', workflowStatus: 'live' },
+    parameters: { automationId: 'auto_1', automationStatus: 'enabled' },
     method: 'PATCH',
-    endpoint: '/workflows/wf_1',
-    body: { status: 'live' },
+    endpoint: '/automations/auto_1',
+    body: { status: 'enabled' },
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'list',
     parameters: listParameters,
     response: { data: [] },
     method: 'GET',
-    endpoint: '/workflows',
+    endpoint: '/automations',
     qs: listQuery,
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'listRuns',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     response: { data: [] },
     method: 'GET',
-    endpoint: '/workflows/wf_1/runs',
+    endpoint: '/automations/auto_1/runs',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'getRun',
-    parameters: { workflowId: 'wf_1', runId: 'run_1' },
+    parameters: { automationId: 'auto_1', runId: 'run_1' },
     method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1',
+    endpoint: '/automations/auto_1/runs/run_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
-    operation: 'listRunSteps',
-    parameters: { workflowId: 'wf_1', runId: 'run_1' },
-    response: { data: [] },
-    method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1/steps',
+    resource: 'automations',
+    execute: automations.execute,
+    operation: 'duplicate',
+    parameters: { automationId: 'auto_1' },
+    method: 'POST',
+    endpoint: '/automations/auto_1/duplicate',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
-    operation: 'getRunStep',
-    parameters: { workflowId: 'wf_1', runId: 'run_1', stepId: 'step_1' },
-    method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1/steps/step_1',
+    resource: 'automations',
+    execute: automations.execute,
+    operation: 'stop',
+    parameters: { automationId: 'auto_1' },
+    method: 'POST',
+    endpoint: '/automations/auto_1/stop',
   },
 ];
 
@@ -1088,12 +1087,12 @@ describe('operation results', () => {
 
   it('unwraps nested list responses', async () => {
     const { context } = createExecuteMock({
-      parameters: { workflowId: 'wf_1' },
+      parameters: { automationId: 'auto_1' },
       response: { data: [{ id: 'run_1' }, { id: 'run_2' }] },
     });
 
     await expect(
-      workflows.execute.call(context, 1, 'listRuns'),
+      automations.execute.call(context, 1, 'listRuns'),
     ).resolves.toEqual([
       { json: { id: 'run_1' }, pairedItem: { item: 1 } },
       { json: { id: 'run_2' }, pairedItem: { item: 1 } },
