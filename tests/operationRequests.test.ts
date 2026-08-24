@@ -510,6 +510,33 @@ const cases: RequestCase[] = [
     endpoint: '/emails/e_1/attachments/att_1',
   },
   {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'getMetrics',
+    parameters: {
+      metricsOptions: {
+        startDate: '2026-07-01T00:00:00.000Z',
+        endDate: '2026-07-08T00:00:00.000Z',
+        timezone: 'America/New_York',
+        granularity: 'daily',
+        metrics: ['sent', 'delivered', 'open_rate'],
+        dimensions: ['period', 'domain'],
+        domainIds: 'dom_1, dom_2',
+      },
+    },
+    method: 'GET',
+    endpoint: '/emails/metrics',
+    qs: {
+      start_date: '2026-07-01T00:00:00.000Z',
+      end_date: '2026-07-08T00:00:00.000Z',
+      timezone: 'America/New_York',
+      granularity: 'daily',
+      metrics: 'sent,delivered,open_rate',
+      dimensions: 'period,domain',
+      domain_id: 'dom_1,dom_2',
+    },
+  },
+  {
     resource: 'events',
     execute: events.execute,
     operation: 'create',
@@ -1122,6 +1149,39 @@ describe('operation results', () => {
     await contacts.execute.call(context, 0, 'getTopics');
 
     expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
+  });
+
+  it('requests email metrics without a query when no option is set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { metricsOptions: {} },
+      response: { object: 'metrics', totals: { sent: 1 } },
+    });
+
+    await expect(email.execute.call(context, 2, 'getMetrics')).resolves.toEqual(
+      [
+        {
+          json: { object: 'metrics', totals: { sent: 1 } },
+          pairedItem: { item: 2 },
+        },
+      ],
+    );
+    expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
+  });
+
+  it('sends email and broadcast metric filters as comma separated ids', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { emailIds: 'e_1,e_2', broadcastIds: ' bc_1 ' },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      email_id: 'e_1,e_2',
+      broadcast_id: 'bc_1',
+    });
   });
 });
 

@@ -1,6 +1,7 @@
 import { type INodeProperties, SEND_AND_WAIT_OPERATION } from 'n8n-workflow';
 import * as cancel from './cancel.operation';
 import * as getAttachment from './getAttachment.operation';
+import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as listAttachments from './listAttachments.operation';
 import * as retrieve from './retrieve.operation';
@@ -34,6 +35,13 @@ export const operations: INodeProperties[] = [
         description:
           'Download a specific attachment from a sent email using the email ID and attachment ID',
         action: 'Get attachment from email',
+      },
+      {
+        name: 'Get Metrics',
+        value: 'getMetrics',
+        description:
+          'Get aggregated email metrics such as sends, deliveries, opens, and clicks over a date range, optionally broken down by period, domain, email, or broadcast',
+        action: 'Get email metrics',
       },
       {
         name: 'List',
@@ -100,12 +108,14 @@ export const descriptions: INodeProperties[] = [
   ...cancel.description,
   ...listAttachments.description,
   ...getAttachment.description,
+  ...getMetrics.description,
 ];
 
 export { execute } from './execute';
 export {
   cancel,
   getAttachment,
+  getMetrics,
   list,
   listAttachments,
   retrieve,
