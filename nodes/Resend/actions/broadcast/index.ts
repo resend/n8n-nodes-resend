@@ -3,6 +3,7 @@ import * as cancel from './cancel.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
+import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
@@ -48,6 +49,13 @@ export const operations: INodeProperties[] = [
         action: 'Get broadcast details',
       },
       {
+        name: 'Get Metrics',
+        value: 'getMetrics',
+        description:
+          'Retrieve account-wide broadcast metrics such as sends, deliveries, opens, and clicks, optionally broken down by period or broadcast',
+        action: 'Get broadcast metrics',
+      },
+      {
         name: 'List',
         value: 'list',
         description:
@@ -77,6 +85,7 @@ export const descriptions: INodeProperties[] = [
   ...operations,
   ...create.description,
   ...get.description,
+  ...getMetrics.description,
   ...list.description,
   ...update.description,
   ...del.description,
@@ -85,4 +94,4 @@ export const descriptions: INodeProperties[] = [
 ];
 
 export { execute } from './execute';
-export { cancel, create, del as delete, get, list, send, update };
+export { cancel, create, del as delete, get, getMetrics, list, send, update };

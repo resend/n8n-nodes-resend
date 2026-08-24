@@ -118,6 +118,33 @@ const cases: RequestCase[] = [
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
+    operation: 'getMetrics',
+    parameters: {
+      broadcastMetricsOptions: {
+        startDate: '2026-07-01',
+        endDate: '2026-07-08',
+        timezone: 'America/New_York',
+        granularity: 'daily',
+        metrics: ['sent', 'delivered', 'open_rate'],
+        dimensions: ['period', 'broadcast'],
+        broadcastIds: 'bc_1,bc_2',
+      },
+    },
+    method: 'GET',
+    endpoint: '/broadcasts/metrics',
+    qs: {
+      start_date: '2026-07-01',
+      end_date: '2026-07-08',
+      timezone: 'America/New_York',
+      granularity: 'daily',
+      metrics: 'sent,delivered,open_rate',
+      dimensions: 'period,broadcast',
+      broadcast_id: 'bc_1,bc_2',
+    },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
     operation: 'update',
     parameters: {
       broadcastId: locator('bc_1'),
