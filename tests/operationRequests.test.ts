@@ -145,6 +145,28 @@ const cases: RequestCase[] = [
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
+    operation: 'getMetrics',
+    parameters: {
+      broadcastMetricsOptions: { broadcastIds: ' bc_1 , bc_2 ' },
+    },
+    method: 'GET',
+    endpoint: '/broadcasts/metrics',
+    qs: { broadcast_id: 'bc_1,bc_2' },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
+    operation: 'getMetrics',
+    parameters: {
+      broadcastMetricsOptions: { metrics: ['sent'], broadcastIds: ' , ' },
+    },
+    method: 'GET',
+    endpoint: '/broadcasts/metrics',
+    qs: { metrics: 'sent' },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
     operation: 'update',
     parameters: {
       broadcastId: locator('bc_1'),

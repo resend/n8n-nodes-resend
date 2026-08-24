@@ -238,8 +238,14 @@ export async function execute(
   if (options.dimensions?.length) {
     qs.dimensions = options.dimensions.join(',');
   }
-  if (options.broadcastIds) {
-    qs.broadcast_id = options.broadcastIds;
+
+  const broadcastIds = (options.broadcastIds ?? '')
+    .split(',')
+    .map((broadcastId) => broadcastId.trim())
+    .filter((broadcastId) => broadcastId);
+
+  if (broadcastIds.length) {
+    qs.broadcast_id = broadcastIds.join(',');
   }
 
   const response = await apiRequest.call(
