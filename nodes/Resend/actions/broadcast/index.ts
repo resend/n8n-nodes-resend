@@ -4,6 +4,7 @@ import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
 import * as list from './list.operation';
+import * as listRecipients from './listRecipients.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
 
@@ -55,6 +56,13 @@ export const operations: INodeProperties[] = [
         action: 'List all broadcasts',
       },
       {
+        name: 'List Recipients',
+        value: 'listRecipients',
+        description:
+          'Get the recipients of a broadcast filtered by event type, such as delivered, opened, clicked, or bounced',
+        action: 'List broadcast recipients',
+      },
+      {
         name: 'Send',
         value: 'send',
         description:
@@ -78,6 +86,7 @@ export const descriptions: INodeProperties[] = [
   ...create.description,
   ...get.description,
   ...list.description,
+  ...listRecipients.description,
   ...update.description,
   ...del.description,
   ...send.description,
@@ -85,4 +94,13 @@ export const descriptions: INodeProperties[] = [
 ];
 
 export { execute } from './execute';
-export { cancel, create, del as delete, get, list, send, update };
+export {
+  cancel,
+  create,
+  del as delete,
+  get,
+  list,
+  listRecipients,
+  send,
+  update,
+};
