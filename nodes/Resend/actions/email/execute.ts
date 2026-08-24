@@ -8,6 +8,7 @@ import * as retrieve from './retrieve.operation';
 import * as send from './send.operation';
 import * as sendAndWait from './sendAndWait.operation';
 import * as sendBatch from './sendBatch.operation';
+import * as share from './share.operation';
 import * as update from './update.operation';
 
 export const execute = createOperationRouter(
@@ -17,6 +18,7 @@ export const execute = createOperationRouter(
     sendBatch,
     retrieve,
     update,
+    share,
     cancel,
     listAttachments,
     getAttachment,
