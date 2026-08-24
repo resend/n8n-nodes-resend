@@ -1,10 +1,13 @@
 import type { INodeProperties } from 'n8n-workflow';
 import * as addToSegment from './addToSegment.operation';
 import * as create from './create.operation';
+import * as createImport from './createImport.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
+import * as getImport from './getImport.operation';
 import * as getTopics from './getTopics.operation';
 import * as list from './list.operation';
+import * as listImports from './listImports.operation';
 import * as listSegments from './listSegments.operation';
 import * as removeFromSegment from './removeFromSegment.operation';
 import * as update from './update.operation';
@@ -37,6 +40,13 @@ export const operations: INodeProperties[] = [
         action: 'Create a new contact',
       },
       {
+        name: 'Create Import',
+        value: 'createImport',
+        description:
+          'Import contacts in bulk from a CSV file, optionally mapping columns and assigning segments and topics',
+        action: 'Create a contact import',
+      },
+      {
         name: 'Delete',
         value: 'delete',
         description: 'Permanently delete a contact by their contact ID',
@@ -48,6 +58,13 @@ export const operations: INodeProperties[] = [
         description:
           "Retrieve a contact's details including email, name, properties, and subscription status by contact ID",
         action: 'Get contact details',
+      },
+      {
+        name: 'Get Import',
+        value: 'getImport',
+        description:
+          'Retrieve a single contact import with its status and the counts of created, updated, skipped, and failed rows',
+        action: 'Get a contact import',
       },
       {
         name: 'Get Topics',
@@ -62,6 +79,13 @@ export const operations: INodeProperties[] = [
         description:
           'Get a list of all contacts in the account with their email addresses and basic information',
         action: 'List all contacts',
+      },
+      {
+        name: 'List Imports',
+        value: 'listImports',
+        description:
+          'Retrieve a list of contact imports, optionally filtered by status',
+        action: 'List contact imports',
       },
       {
         name: 'List Segments',
@@ -107,16 +131,22 @@ export const descriptions: INodeProperties[] = [
   ...removeFromSegment.description,
   ...getTopics.description,
   ...updateTopics.description,
+  ...createImport.description,
+  ...listImports.description,
+  ...getImport.description,
 ];
 
 export { execute } from './execute';
 export {
   addToSegment,
   create,
+  createImport,
   del as delete,
   get,
+  getImport,
   getTopics,
   list,
+  listImports,
   listSegments,
   removeFromSegment,
   update,
