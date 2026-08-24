@@ -98,6 +98,41 @@ const cases: RequestCase[] = [
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
+    operation: 'listRecipients',
+    parameters: {
+      ...listParameters,
+      broadcastIdRecipients: locator('bc 1'),
+      recipientType: 'sent',
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc%201/recipients',
+    qs: { limit: 50, type: 'sent' },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
+    operation: 'listRecipients',
+    parameters: {
+      ...listParameters,
+      broadcastIdRecipients: locator('bc_1'),
+      recipientType: 'bounced',
+      recipientEmail: 'carter@example.com',
+      bounceType: 'permanent',
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc_1/recipients',
+    qs: {
+      limit: 50,
+      type: 'bounced',
+      email: 'carter@example.com',
+      bounce_type: 'permanent',
+    },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
     operation: 'send',
     parameters: {
       broadcastId: locator('bc_1'),
