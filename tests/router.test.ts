@@ -1,4 +1,4 @@
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { describe, expect, it, vi } from 'vitest';
 import * as email from '../nodes/Resend/actions/email';
 import { router } from '../nodes/Resend/actions/router';
@@ -37,6 +37,39 @@ describe('router', () => {
     await expect(router.call(context)).rejects.toThrow(
       'Unknown resource: nope',
     );
+  });
+
+  it('explains the rename for the legacy workflows resource', async () => {
+    const { context } = createExecuteMock({
+      parameters: { resource: 'workflows', operation: 'list' },
+    });
+
+    const error = await router.call(context).catch((thrown) => thrown);
+
+    expect(error).toBeInstanceOf(NodeOperationError);
+    expect((error as NodeOperationError).message).toContain(
+      'The Workflow resource was renamed to Automation',
+    );
+    expect((error as NodeOperationError).description).toContain(
+      'select the Automation resource',
+    );
+  });
+
+  it('keeps the operation error description when continuing', async () => {
+    const { context } = createExecuteMock({
+      parameters: { resource: 'workflows', operation: 'list' },
+      continueOnFail: true,
+    });
+
+    const [items] = await router.call(context);
+
+    expect(items[0].json).toMatchObject({
+      error: expect.stringContaining(
+        'The Workflow resource was renamed to Automation',
+      ),
+      description: expect.stringContaining('select the Automation resource'),
+    });
+    expect(items[0].json).not.toHaveProperty('statusCode');
   });
 
   it('collects the error message when continueOnFail is enabled', async () => {
