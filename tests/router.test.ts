@@ -55,6 +55,23 @@ describe('router', () => {
     );
   });
 
+  it('keeps the operation error description when continuing', async () => {
+    const { context } = createExecuteMock({
+      parameters: { resource: 'workflows', operation: 'list' },
+      continueOnFail: true,
+    });
+
+    const [items] = await router.call(context);
+
+    expect(items[0].json).toMatchObject({
+      error: expect.stringContaining(
+        'The Workflow resource was renamed to Automation',
+      ),
+      description: expect.stringContaining('select the Automation resource'),
+    });
+    expect(items[0].json).not.toHaveProperty('statusCode');
+  });
+
   it('collects the error message when continueOnFail is enabled', async () => {
     const executeSpy = vi
       .spyOn(email, 'execute')

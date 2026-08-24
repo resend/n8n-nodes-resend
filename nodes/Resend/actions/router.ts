@@ -80,13 +80,16 @@ export async function router(
           error: (error as Error).message,
         };
 
-        if (error instanceof NodeApiError) {
-          if (error.httpCode) {
-            errorData.statusCode = error.httpCode;
-          }
-          if (error.description) {
-            errorData.description = error.description;
-          }
+        if (error instanceof NodeApiError && error.httpCode) {
+          errorData.statusCode = error.httpCode;
+        }
+
+        if (
+          (error instanceof NodeApiError ||
+            error instanceof NodeOperationError) &&
+          error.description
+        ) {
+          errorData.description = error.description;
         }
 
         returnData.push({ json: errorData, pairedItem: { item: i } });
