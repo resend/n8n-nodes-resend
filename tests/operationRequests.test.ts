@@ -32,6 +32,7 @@ interface RequestCase {
   method: string;
   endpoint: string;
   body?: unknown;
+  noBody?: boolean;
   qs?: unknown;
 }
 
@@ -508,6 +509,24 @@ const cases: RequestCase[] = [
     parameters: { emailId: locator('e_1'), attachmentId: 'att_1' },
     method: 'GET',
     endpoint: '/emails/e_1/attachments/att_1',
+  },
+  {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'share',
+    parameters: { emailIdShare: locator('e 1'), expiresIn: '2 hours' },
+    method: 'POST',
+    endpoint: '/emails/e%201/share',
+    body: { expires_in: '2 hours' },
+  },
+  {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'share',
+    parameters: { emailIdShare: locator('e_1'), expiresIn: '' },
+    method: 'POST',
+    endpoint: '/emails/e_1/share',
+    noBody: true,
   },
   {
     resource: 'events',
@@ -1052,9 +1071,10 @@ describe.each(cases)('$resource $operation', ({
   method,
   endpoint,
   body,
+  noBody,
   qs,
 }) => {
-  it(`calls ${method} ${endpoint}`, async () => {
+  it(`calls ${method} ${endpoint}${noBody ? ' without a body' : ''}`, async () => {
     const mock = createExecuteMock({
       parameters,
       response: response ?? { id: 'created' },
@@ -1067,6 +1087,9 @@ describe.each(cases)('$resource $operation', ({
     expect(options.url).toBe(`https://api.resend.com${endpoint}`);
     if (body !== undefined) {
       expect(options.body).toEqual(body);
+    }
+    if (noBody) {
+      expect(options).not.toHaveProperty('body');
     }
     if (qs !== undefined) {
       expect(options.qs).toEqual(qs);

@@ -7,6 +7,7 @@ import * as retrieve from './retrieve.operation';
 import * as send from './send.operation';
 import * as sendAndWait from './sendAndWait.operation';
 import * as sendBatch from './sendBatch.operation';
+import * as share from './share.operation';
 import * as update from './update.operation';
 
 export const operations: INodeProperties[] = [
@@ -78,6 +79,13 @@ export const operations: INodeProperties[] = [
         action: 'Send multiple emails in batch',
       },
       {
+        name: 'Share',
+        value: 'share',
+        description:
+          'Create a temporary public link to view a sent email in the browser',
+        action: 'Share an email',
+      },
+      {
         name: 'Update',
         value: 'update',
         description:
@@ -97,6 +105,7 @@ export const descriptions: INodeProperties[] = [
   ...list.description,
   ...retrieve.description,
   ...update.description,
+  ...share.description,
   ...cancel.description,
   ...listAttachments.description,
   ...getAttachment.description,
@@ -112,5 +121,6 @@ export {
   send,
   sendAndWait,
   sendBatch,
+  share,
   update,
 };
