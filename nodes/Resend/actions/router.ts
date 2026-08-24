@@ -4,7 +4,7 @@ import type {
   INodeExecutionData,
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
-import { handleResendApiError } from '../transport';
+import { handleResendApiError, type OperationRouter } from '../transport';
 import * as account from './account';
 import * as broadcasts from './broadcast';
 import * as contacts from './contact';
@@ -21,7 +21,7 @@ import * as topics from './topic';
 import * as webhooks from './webhook';
 import * as workflows from './workflow';
 
-const resourceModules: Record<string, { execute: typeof email.execute }> = {
+const resourceModules: Record<string, { execute: OperationRouter }> = {
   account,
   email,
   templates,
@@ -46,6 +46,15 @@ export async function router(
   const returnData: INodeExecutionData[] = [];
 
   for (let i = 0; i < items.length; i++) {
+    // List operations have no per-item input: they resolve their parameters at
+    // item index 0 and return a whole collection, so running them once per input
+    // item would repeat the same API calls and emit duplicate output rows.
+    // Because of that we let item 0 decide: `resource`/`operation` are evaluated
+    // for the first item, and if that resolves to a list operation we run it once
+    // and stop. Per-item expressions on `resource`/`operation` are therefore not
+    // honoured for list operations (they still are for item operations).
+    let isListOperation = false;
+
     try {
       const resource = this.getNodeParameter('resource', i) as string;
       const operation = this.getNodeParameter('operation', i) as string;
@@ -58,27 +67,33 @@ export async function router(
         );
       }
 
+      isListOperation = mod.execute.listOperations.has(operation);
+
       const executionData = await mod.execute.call(this, i, operation);
       returnData.push(...executionData);
     } catch (error) {
-      if (this.continueOnFail()) {
-        const errorData: IDataObject = {
-          error: (error as Error).message,
-        };
-
-        if (error instanceof NodeApiError) {
-          if (error.httpCode) {
-            errorData.statusCode = error.httpCode;
-          }
-          if (error.description) {
-            errorData.description = error.description;
-          }
-        }
-
-        returnData.push({ json: errorData, pairedItem: { item: i } });
-        continue;
+      if (!this.continueOnFail()) {
+        handleResendApiError(this.getNode(), error, i);
       }
-      handleResendApiError(this.getNode(), error, i);
+
+      const errorData: IDataObject = {
+        error: (error as Error).message,
+      };
+
+      if (error instanceof NodeApiError) {
+        if (error.httpCode) {
+          errorData.statusCode = error.httpCode;
+        }
+        if (error.description) {
+          errorData.description = error.description;
+        }
+      }
+
+      returnData.push({ json: errorData, pairedItem: { item: i } });
+    }
+
+    if (isListOperation) {
+      break;
     }
   }
 
