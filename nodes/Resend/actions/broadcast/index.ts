@@ -52,7 +52,7 @@ export const operations: INodeProperties[] = [
         name: 'Get Metrics',
         value: 'getMetrics',
         description:
-          'Retrieve account-wide broadcast metrics such as sends, deliveries, opens, and clicks, optionally broken down by period or broadcast',
+          'Retrieve account-wide broadcast metrics such as sends, deliveries, opens, and clicks, optionally broken down by period or broadcast. Responses are cached for up to 15 minutes, so the same range may return slightly stale data.',
         action: 'Get broadcast metrics',
       },
       {

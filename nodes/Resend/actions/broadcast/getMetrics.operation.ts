@@ -185,7 +185,7 @@ export const description: INodeProperties[] = [
         type: 'dateTime',
         default: '',
         description:
-          'The start of the date range. Must be on or before the end date. Defaults to 6 days before the end date.',
+          "The start of the date range. Must be on or before the end date. Defaults to 6 days before the end date. A start date older than your plan's data retention window is clamped to the oldest retained date, unless Broadcast IDs are set.",
       },
       {
         displayName: 'Timezone',
