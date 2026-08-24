@@ -39,6 +39,8 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
   logs,
 };
 
+const LEGACY_WORKFLOWS_RESOURCE = 'workflows';
+
 export async function router(
   this: IExecuteFunctions,
 ): Promise<INodeExecutionData[][]> {
@@ -52,6 +54,18 @@ export async function router(
 
       const mod = resourceModules[resource];
       if (!mod) {
+        if (resource === LEGACY_WORKFLOWS_RESOURCE) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'The Workflow resource was renamed to Automation, because Resend renamed this API from /workflows to /automations',
+            {
+              itemIndex: i,
+              description:
+                'Open this node, select the Automation resource, pick the operation again, and re-enter the ID in the Automation ID field (previously Workflow ID).',
+            },
+          );
+        }
+
         throw new NodeOperationError(
           this.getNode(),
           `Unknown resource: ${resource}`,
