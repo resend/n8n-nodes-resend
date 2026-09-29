@@ -8,6 +8,7 @@ import * as update from './update.operation';
 export const webhookEventOptions: INodePropertyOptions[] = [
   { name: 'Contact Created', value: 'contact.created' },
   { name: 'Contact Deleted', value: 'contact.deleted' },
+  { name: 'Contact Topics Updated', value: 'contact.topics.updated' },
   { name: 'Contact Updated', value: 'contact.updated' },
   { name: 'Domain Created', value: 'domain.created' },
   { name: 'Domain Deleted', value: 'domain.deleted' },
@@ -25,6 +26,9 @@ export const webhookEventOptions: INodePropertyOptions[] = [
   { name: 'Email Suppressed', value: 'email.suppressed' },
   { name: 'Suppression Added', value: 'suppression.added' },
   { name: 'Suppression Removed', value: 'suppression.removed' },
+  { name: 'Topic Created', value: 'topic.created' },
+  { name: 'Topic Deleted', value: 'topic.deleted' },
+  { name: 'Topic Updated', value: 'topic.updated' },
 ];
 
 export const operations: INodeProperties[] = [

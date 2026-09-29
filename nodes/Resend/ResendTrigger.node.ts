@@ -143,7 +143,7 @@ export class ResendTrigger implements INodeType {
     description:
       'Triggers workflows when Resend email events occur, such as email sent, delivered, opened, clicked, bounced, or complained. Includes secure webhook signature verification.',
     subtitle:
-      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress" }; return events.map((event) => { const [resource, action] = event.split("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
+      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
     defaults: {
       name: 'Resend Trigger',
     },
@@ -201,6 +201,7 @@ export class ResendTrigger implements INodeType {
         options: [
           { name: 'Contact Created', value: 'contact.created' },
           { name: 'Contact Deleted', value: 'contact.deleted' },
+          { name: 'Contact Topics Updated', value: 'contact.topics.updated' },
           { name: 'Contact Updated', value: 'contact.updated' },
           { name: 'Domain Created', value: 'domain.created' },
           { name: 'Domain Deleted', value: 'domain.deleted' },
@@ -218,6 +219,9 @@ export class ResendTrigger implements INodeType {
           { name: 'Email Suppressed', value: 'email.suppressed' },
           { name: 'Suppression Added', value: 'suppression.added' },
           { name: 'Suppression Removed', value: 'suppression.removed' },
+          { name: 'Topic Created', value: 'topic.created' },
+          { name: 'Topic Deleted', value: 'topic.deleted' },
+          { name: 'Topic Updated', value: 'topic.updated' },
         ],
         description: 'Select the Resend event types to listen for',
       },
