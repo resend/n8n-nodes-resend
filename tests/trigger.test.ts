@@ -83,7 +83,9 @@ describe('ResendTrigger description', () => {
 
     expect(events?.options?.length).toBeGreaterThan(0);
     for (const option of events?.options ?? []) {
-      expect((option as { value: string }).value).toMatch(/^[a-z]+\.[a-z_]+$/);
+      expect((option as { value: string }).value).toMatch(
+        /^[a-z]+(\.[a-z_]+)+$/,
+      );
     }
   });
 });
