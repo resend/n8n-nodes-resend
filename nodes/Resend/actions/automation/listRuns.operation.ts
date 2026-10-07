@@ -8,34 +8,19 @@ import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
   {
-    displayName: 'Workflow ID',
-    name: 'workflowId',
+    displayName: 'Automation ID',
+    name: 'automationId',
     type: 'string',
     required: true,
     default: '',
     placeholder: 'c9b16d4f-ba6c-4e2e-b044-6bf4404e57fd',
     displayOptions: {
       show: {
-        resource: ['workflows'],
-        operation: ['listRunSteps'],
+        resource: ['automations'],
+        operation: ['listRuns'],
       },
     },
-    description: 'The unique identifier of the workflow',
-  },
-  {
-    displayName: 'Run ID',
-    name: 'runId',
-    type: 'string',
-    required: true,
-    default: '',
-    placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    displayOptions: {
-      show: {
-        resource: ['workflows'],
-        operation: ['listRunSteps'],
-      },
-    },
-    description: 'The unique identifier of the workflow run',
+    description: 'The unique identifier of the automation to list runs for',
   },
 ];
 
@@ -43,13 +28,12 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const workflowId = this.getNodeParameter('workflowId', index) as string;
-  const runId = this.getNodeParameter('runId', index) as string;
+  const automationId = this.getNodeParameter('automationId', index) as string;
 
   const response = await apiRequest.call(
     this,
     'GET',
-    `/workflows/${encodeURIComponent(workflowId)}/runs/${encodeURIComponent(runId)}/steps`,
+    `/automations/${encodeURIComponent(automationId)}/runs`,
   );
 
   const items = (response.data as IDataObject[] | undefined) ?? [];

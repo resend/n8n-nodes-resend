@@ -30,6 +30,9 @@ The official node for [n8n](https://n8n.io) that integrates with the [Resend](ht
 > [!WARNING]
 > Audiences are deprecated in favor of Segments and won't be supported in this node. Please use Segments for contact grouping and targeting.
 
+> [!IMPORTANT]
+> **Breaking change — Workflow is now Automation.** Resend renamed this API from `/workflows` to `/automations`, so the node's **Workflow** resource was renamed to **Automation**. Existing nodes still set to the old resource fail with an error explaining the rename; to migrate, open the node, select the **Automation** resource, pick the operation again, and re-enter the ID in **Automation ID** (previously **Workflow ID**). The `List Run Steps` and `Get Run Step` operations were removed because those endpoints no longer exist — run steps are returned inline by **Get Run**.
+
 The table below shows which endpoints are currently implemented:
 
 <details>
@@ -50,7 +53,7 @@ The table below shows which endpoints are currently implemented:
 | **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
 | **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
 | **Events**             | `/events`             | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
-| **Workflows**          | `/workflows`          | ✅ Full | Create, List, Get, Update, Delete, List Runs, Get Run, List Run Steps, Get Run Step                                                                           |
+| **Automations**        | `/automations`        | ✅ Full | Create, List, Get, Update, Delete, Duplicate, Stop, List Runs, Get Run                                                                                        |
 | **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                                |
 
 </details>

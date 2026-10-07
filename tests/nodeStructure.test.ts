@@ -1,6 +1,7 @@
 import type { INodeProperties } from 'n8n-workflow';
 import { describe, expect, it } from 'vitest';
 import * as account from '../nodes/Resend/actions/account';
+import * as automations from '../nodes/Resend/actions/automation';
 import * as broadcasts from '../nodes/Resend/actions/broadcast';
 import * as contacts from '../nodes/Resend/actions/contact';
 import * as contactProperties from '../nodes/Resend/actions/contactProperty';
@@ -15,7 +16,6 @@ import * as suppressions from '../nodes/Resend/actions/suppression';
 import * as templates from '../nodes/Resend/actions/template';
 import * as topics from '../nodes/Resend/actions/topic';
 import * as webhooks from '../nodes/Resend/actions/webhook';
-import * as workflows from '../nodes/Resend/actions/workflow';
 import { Resend } from '../nodes/Resend/Resend.node';
 import { createExecuteMock } from './helpers/context';
 
@@ -44,7 +44,7 @@ const resourceModules: Record<string, ResourceModule> = {
   templates: templates as unknown as ResourceModule,
   topics: topics as unknown as ResourceModule,
   webhooks: webhooks as unknown as ResourceModule,
-  workflows: workflows as unknown as ResourceModule,
+  automations: automations as unknown as ResourceModule,
 };
 
 const node = new Resend();
