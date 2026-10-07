@@ -6,9 +6,10 @@ import * as get from './get.operation';
 import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as listContacts from './listContacts.operation';
+import * as update from './update.operation';
 
 export { execute } from './execute';
-export { create, del as delete, get, getMetrics, list, listContacts };
+export { create, del as delete, get, getMetrics, list, listContacts, update };
 
 export const operations: INodeProperties[] = [
   {
@@ -63,6 +64,12 @@ export const operations: INodeProperties[] = [
         description: 'Get all contacts belonging to a specific segment',
         action: 'List segment contacts',
       },
+      {
+        name: 'Update',
+        value: 'update',
+        description: 'Rename an existing segment',
+        action: 'Update a segment',
+      },
     ],
     default: 'list',
   },
@@ -75,5 +82,6 @@ export const descriptions: INodeProperties[] = [
   ...getMetrics.description,
   ...list.description,
   ...listContacts.description,
+  ...update.description,
   ...del.description,
 ];
