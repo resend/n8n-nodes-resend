@@ -5,6 +5,8 @@ import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
 import * as list from './list.operation';
+import * as listClickedLinks from './listClickedLinks.operation';
+import * as listRecipients from './listRecipients.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
 
@@ -16,6 +18,8 @@ export const execute = createOperationRouter(
     delete: del,
     send,
     cancel,
+    listClickedLinks,
+    listRecipients,
   },
   { list },
 );

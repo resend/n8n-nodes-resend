@@ -8,23 +8,23 @@ import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
   {
-    displayName: 'Workflow ID',
-    name: 'workflowId',
+    displayName: 'Automation ID',
+    name: 'automationId',
     type: 'string',
     required: true,
     default: '',
     placeholder: 'c9b16d4f-ba6c-4e2e-b044-6bf4404e57fd',
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['update'],
       },
     },
-    description: 'The unique identifier of the workflow to update',
+    description: 'The unique identifier of the automation to update',
   },
   {
     displayName: 'Status',
-    name: 'workflowStatus',
+    name: 'automationStatus',
     type: 'options',
     required: true,
     options: [
@@ -34,11 +34,11 @@ export const description: INodeProperties[] = [
     default: 'enabled',
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['update'],
       },
     },
-    description: 'The status of the workflow',
+    description: 'The status of the automation',
   },
 ];
 
@@ -46,15 +46,15 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const workflowId = this.getNodeParameter('workflowId', index) as string;
-  const status = this.getNodeParameter('workflowStatus', index) as string;
+  const automationId = this.getNodeParameter('automationId', index) as string;
+  const status = this.getNodeParameter('automationStatus', index) as string;
 
   const body: IDataObject = { status };
 
   const response = await apiRequest.call(
     this,
     'PATCH',
-    `/workflows/${encodeURIComponent(workflowId)}`,
+    `/automations/${encodeURIComponent(automationId)}`,
     body,
   );
 

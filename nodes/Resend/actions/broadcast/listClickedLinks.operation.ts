@@ -11,17 +11,17 @@ import {
 
 export const description: INodeProperties[] = [
   createDynamicIdField({
-    fieldName: 'segmentId',
-    resourceName: 'segment',
-    displayName: 'Segment',
+    fieldName: 'broadcastIdClickedLinks',
+    resourceName: 'broadcast',
+    displayName: 'Broadcast',
     required: true,
-    placeholder: 'seg_123456',
+    placeholder: 'bc_123456',
     description:
-      'Select a segment or enter an ID using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+      'Select a broadcast or enter an ID using an expression. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
     displayOptions: {
       show: {
-        resource: ['segments'],
-        operation: ['listContacts'],
+        resource: ['broadcasts'],
+        operation: ['listClickedLinks'],
       },
     },
   }),
@@ -32,8 +32,8 @@ export const description: INodeProperties[] = [
     default: false,
     displayOptions: {
       show: {
-        resource: ['segments'],
-        operation: ['listContacts'],
+        resource: ['broadcasts'],
+        operation: ['listClickedLinks'],
       },
     },
     description: 'Whether to return all results or only up to a given limit',
@@ -48,8 +48,8 @@ export const description: INodeProperties[] = [
     },
     displayOptions: {
       show: {
-        resource: ['segments'],
-        operation: ['listContacts'],
+        resource: ['broadcasts'],
+        operation: ['listClickedLinks'],
         returnAll: [false],
       },
     },
@@ -61,11 +61,15 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const segmentId = resolveDynamicIdValue(this, 'segmentId', index);
+  const broadcastId = resolveDynamicIdValue(
+    this,
+    'broadcastIdClickedLinks',
+    index,
+  );
 
   const items = await requestList.call(
     this,
-    `/segments/${encodeURIComponent(segmentId)}/contacts`,
+    `/broadcasts/${encodeURIComponent(broadcastId)}/clicked-links`,
     undefined,
     index,
   );

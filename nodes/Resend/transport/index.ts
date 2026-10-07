@@ -284,13 +284,45 @@ export async function apiRequest(
   }
 }
 
+export async function apiRequestMultipart(
+  this: IExecuteFunctions,
+  method: IHttpRequestMethods,
+  endpoint: string,
+  form: FormData,
+): Promise<IDataObject> {
+  const options: IHttpRequestOptions = {
+    url: `${RESEND_API_BASE}${endpoint}`,
+    method,
+    headers: {
+      'User-Agent': 'n8n-nodes-resend',
+    },
+    body: form as unknown as IHttpRequestOptions['body'],
+    json: true,
+  };
+
+  try {
+    return await this.helpers.httpRequestWithAuthentication.call(
+      this,
+      getCredentialType(this),
+      options,
+    );
+  } catch (error) {
+    handleResendApiError(this.getNode(), error);
+  }
+}
+
 export async function requestList(
   this: IExecuteFunctions,
   endpoint: string,
   extraQs?: IDataObject,
+  itemIndex = 0,
 ): Promise<IDataObject[]> {
-  const returnAll = this.getNodeParameter('returnAll', 0, false) as boolean;
-  const limit = this.getNodeParameter('limit', 0, 50) as number;
+  const returnAll = this.getNodeParameter(
+    'returnAll',
+    itemIndex,
+    false,
+  ) as boolean;
+  const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
   const targetLimit = returnAll ? Number.POSITIVE_INFINITY : (limit ?? 50);
   const pageSize = Math.min(targetLimit, 100);
@@ -312,7 +344,7 @@ export async function requestList(
         },
       );
     } catch (error) {
-      handleResendApiError(this.getNode(), error);
+      handleResendApiError(this.getNode(), error, itemIndex);
     }
   };
 
@@ -369,6 +401,13 @@ export function normalizeEmailList(
       .filter((email) => email);
   }
   return [];
+}
+
+export function normalizeIdList(
+  value: string | string[] | undefined,
+): string | undefined {
+  const ids = normalizeEmailList(value);
+  return ids.length ? ids.join(',') : undefined;
 }
 
 export function parseTemplateVariables(
@@ -494,15 +533,19 @@ interface ListOperation {
   execute(this: IExecuteFunctions): Promise<INodeExecutionData[]>;
 }
 
-export function createOperationRouter(
-  itemOps: Record<string, ItemOperation>,
-  listOps: Record<string, ListOperation> = {},
-): (
+export type OperationRouter = ((
   this: IExecuteFunctions,
   index: number,
   operation: string,
-) => Promise<INodeExecutionData[]> {
-  return async function execute(
+) => Promise<INodeExecutionData[]>) & {
+  readonly listOperations: ReadonlySet<string>;
+};
+
+export function createOperationRouter(
+  itemOps: Record<string, ItemOperation>,
+  listOps: Record<string, ListOperation> = {},
+): OperationRouter {
+  const execute = async function (
     this: IExecuteFunctions,
     index: number,
     operation: string,
@@ -520,4 +563,8 @@ export function createOperationRouter(
       `Unsupported operation: ${operation}`,
     );
   };
+
+  return Object.assign(execute, {
+    listOperations: new Set(Object.keys(listOps)) as ReadonlySet<string>,
+  });
 }
