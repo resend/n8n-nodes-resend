@@ -6,6 +6,7 @@ import * as get from './get.operation';
 import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as listContacts from './listContacts.operation';
+import * as update from './update.operation';
 
 export const execute = createOperationRouter(
   {
@@ -13,6 +14,7 @@ export const execute = createOperationRouter(
     get,
     getMetrics,
     delete: del,
+    update,
     listContacts,
   },
   { list },

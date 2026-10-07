@@ -11,17 +11,16 @@ import {
 
 export const description: INodeProperties[] = [
   createDynamicIdField({
-    fieldName: 'receivedEmailId',
-    resourceName: 'receivedEmail',
-    displayName: 'Email',
+    fieldName: 'webhookId',
+    resourceName: 'webhook',
+    displayName: 'Webhook',
     required: true,
-    placeholder: 'email_123456',
-    description:
-      'The received email whose attachments to list. Obtain from the List Receiving Emails or Get Receiving Email operation.',
+    placeholder: '4dd369bc-aa82-4ff3-97de-514ae3000ee0',
+    description: 'The webhook to list delivered events for',
     displayOptions: {
       show: {
-        resource: ['receivingEmails'],
-        operation: ['listAttachments'],
+        resource: ['webhooks'],
+        operation: ['listEvents'],
       },
     },
   }),
@@ -32,8 +31,8 @@ export const description: INodeProperties[] = [
     default: false,
     displayOptions: {
       show: {
-        resource: ['receivingEmails'],
-        operation: ['listAttachments'],
+        resource: ['webhooks'],
+        operation: ['listEvents'],
       },
     },
     description: 'Whether to return all results or only up to a given limit',
@@ -48,8 +47,8 @@ export const description: INodeProperties[] = [
     },
     displayOptions: {
       show: {
-        resource: ['receivingEmails'],
-        operation: ['listAttachments'],
+        resource: ['webhooks'],
+        operation: ['listEvents'],
         returnAll: [false],
       },
     },
@@ -61,17 +60,13 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const emailId = resolveDynamicIdValue(this, 'receivedEmailId', index);
+  const webhookId = resolveDynamicIdValue(this, 'webhookId', index);
 
   const items = await requestList.call(
     this,
-    `/emails/receiving/${encodeURIComponent(emailId)}/attachments`,
+    `/webhooks/${encodeURIComponent(webhookId)}/events`,
     undefined,
     index,
   );
-
-  return items.map((item) => ({
-    json: item,
-    pairedItem: { item: index },
-  }));
+  return items.map((item) => ({ json: item, pairedItem: { item: index } }));
 }

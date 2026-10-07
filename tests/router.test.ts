@@ -155,12 +155,20 @@ describe('router', () => {
         'broadcasts/bc_{i}/recipients',
       ],
       ['segments', 'listContacts', 'segmentId', 'segments/bc_{i}/contacts'],
+      ['webhooks', 'listEvents', 'webhookId', 'webhooks/bc_{i}/events'],
+      [
+        'webhooks',
+        'listEventAttempts',
+        'webhookId',
+        'webhooks/bc_{i}/events/evt_1/attempts',
+      ],
     ]) {
       const { context, httpRequest } = createExecuteMock({
         parameters: {
           resource,
           operation,
           recipientType: 'sent',
+          webhookEventId: 'evt_1',
           returnAll: false,
           limit: 50,
         },

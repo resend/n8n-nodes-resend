@@ -4,7 +4,11 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import {
+  apiRequest,
+  normalizeEmailList,
+  parseTemplateVariables,
+} from '../../transport';
 
 export const description: INodeProperties[] = [
   {
@@ -27,7 +31,6 @@ export const description: INodeProperties[] = [
     displayName: 'From',
     name: 'templateFrom',
     type: 'string',
-    required: true,
     default: '',
     placeholder: 'Resend Store <store@resend.com>',
     displayOptions: {
@@ -43,7 +46,6 @@ export const description: INodeProperties[] = [
     displayName: 'Subject',
     name: 'templateSubject',
     type: 'string',
-    required: true,
     default: '',
     placeholder: 'Thanks for your order!',
     displayOptions: {
@@ -129,41 +131,105 @@ export const description: INodeProperties[] = [
       },
     ],
   },
+  {
+    displayName: 'Additional Fields',
+    name: 'templateCreateFields',
+    type: 'collection',
+    placeholder: 'Add Field',
+    default: {},
+    displayOptions: {
+      show: {
+        resource: ['templates'],
+        operation: ['create'],
+      },
+    },
+    options: [
+      {
+        displayName: 'Alias',
+        name: 'alias',
+        type: 'string',
+        default: '',
+        description:
+          'A human-readable shortcut to reference the template instead of its ID',
+      },
+      {
+        displayName: 'Reply To',
+        name: 'replyTo',
+        type: 'string',
+        default: '',
+        description:
+          'Default reply-to email address. For multiple addresses, use comma-separated values.',
+      },
+      {
+        displayName: 'Text Content',
+        name: 'text',
+        type: 'string',
+        default: '',
+        typeOptions: {
+          multiline: true,
+          rows: 4,
+        },
+        description:
+          'Plain text version of the template. If this field is not added, it is generated from the HTML. Add it and leave it empty to opt out of the generated plain text version.',
+      },
+    ],
+  },
 ];
-
-interface TemplateVariable {
-  key: string;
-  type: string;
-  fallbackValue?: string;
-}
 
 export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
   const name = this.getNodeParameter('templateName', index) as string;
-  const from = this.getNodeParameter('templateFrom', index) as string;
-  const subject = this.getNodeParameter('templateSubject', index) as string;
+  const from = this.getNodeParameter('templateFrom', index, '') as string;
+  const subject = this.getNodeParameter('templateSubject', index, '') as string;
   const html = this.getNodeParameter('templateHtml', index) as string;
   const templateVariables = this.getNodeParameter('templateVariables', index, {
     variables: [],
-  }) as { variables: TemplateVariable[] };
+  }) as {
+    variables: Array<{ key: string; type: string; fallbackValue?: unknown }>;
+  };
+  const createFields = this.getNodeParameter(
+    'templateCreateFields',
+    index,
+    {},
+  ) as {
+    alias?: string;
+    replyTo?: string;
+    text?: string;
+  };
 
   const body: IDataObject = {
     name,
-    from,
-    subject,
     html,
   };
+  if (from) {
+    body.from = from;
+  }
+  if (subject) {
+    body.subject = subject;
+  }
+  if (createFields.alias) {
+    body.alias = createFields.alias;
+  }
+  if (createFields.replyTo) {
+    const replyTo = normalizeEmailList(createFields.replyTo);
+    if (replyTo.length) {
+      body.reply_to = replyTo;
+    }
+  }
+  if (createFields.text !== undefined) {
+    body.text = createFields.text;
+  }
 
-  if (templateVariables.variables && templateVariables.variables.length > 0) {
-    body.variables = templateVariables.variables.map((v) => {
-      const variable: Record<string, unknown> = { key: v.key, type: v.type };
-      if (v.fallbackValue) {
-        variable.fallbackValue = v.fallbackValue;
-      }
-      return variable;
-    });
+  const variables = parseTemplateVariables(
+    this,
+    templateVariables,
+    'fallback_value',
+    index,
+  );
+  if (variables) {
+    body.variables = variables;
   }
 
   const response = await apiRequest.call(this, 'POST', '/templates', body);

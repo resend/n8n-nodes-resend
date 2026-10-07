@@ -4,7 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import { apiRequest, normalizeEmailList } from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -68,6 +68,15 @@ export const description: INodeProperties[] = [
         placeholder: 'Internal broadcast name',
         description:
           'The friendly name of the broadcast. Only used for internal reference.',
+      },
+      {
+        displayName: 'Preview Text',
+        name: 'previewText',
+        type: 'string',
+        default: '',
+        placeholder: 'Here are our announcements',
+        description:
+          'The preview text shown next to the subject line in most email clients',
       },
       {
         displayName: 'Reply To',
@@ -140,7 +149,15 @@ export async function execute(
   if (updateFields.from) body.from = updateFields.from;
   if (updateFields.html) body.html = updateFields.html;
   if (updateFields.name) body.name = updateFields.name;
-  if (updateFields.replyTo) body.reply_to = updateFields.replyTo;
+  // Sent even when empty so an existing preview text can be cleared.
+  if (updateFields.previewText !== undefined) {
+    body.preview_text = updateFields.previewText;
+  }
+  const replyTo = normalizeEmailList(
+    updateFields.replyTo as string | undefined,
+  );
+  if (replyTo.length)
+    body.reply_to = replyTo.length === 1 ? replyTo[0] : replyTo;
   if (updateFields.subject) body.subject = updateFields.subject;
   if (updateFields.segmentId) body.segment_id = updateFields.segmentId;
   if (updateFields.text) body.text = updateFields.text;

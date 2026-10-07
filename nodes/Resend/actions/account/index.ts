@@ -1,11 +1,12 @@
 import type { INodeProperties } from 'n8n-workflow';
 
 import * as disconnect from './disconnect.operation';
+import * as getUsage from './getUsage.operation';
 import * as listGrants from './listGrants.operation';
 import * as revokeGrant from './revokeGrant.operation';
 
 export { execute } from './execute';
-export { disconnect, listGrants, revokeGrant };
+export { disconnect, getUsage, listGrants, revokeGrant };
 
 export const operations: INodeProperties[] = [
   {
@@ -25,6 +26,13 @@ export const operations: INodeProperties[] = [
         description:
           'Revoke the connected Resend OAuth2 grant, ending the connection to your Resend account',
         action: 'Disconnect the resend account',
+      },
+      {
+        name: 'Get Usage',
+        value: 'getUsage',
+        description:
+          "Retrieve the account's current email, contact, and segment usage along with its plan limits",
+        action: 'Get account usage',
       },
       {
         name: 'List Grants',
@@ -48,6 +56,7 @@ export const operations: INodeProperties[] = [
 export const descriptions: INodeProperties[] = [
   ...operations,
   ...disconnect.description,
+  ...getUsage.description,
   ...listGrants.description,
   ...revokeGrant.description,
 ];

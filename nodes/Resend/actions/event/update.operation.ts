@@ -28,7 +28,7 @@ export const description: INodeProperties[] = [
     type: 'json',
     required: true,
     default: '',
-    placeholder: '{"type":"object","properties":{"name":{"type":"string"}}}',
+    placeholder: '{"plan":"string","amount":"number"}',
     displayOptions: {
       show: {
         resource: ['events'],
@@ -36,7 +36,7 @@ export const description: INodeProperties[] = [
       },
     },
     description:
-      'The JSON schema object that defines the shape of the event payload. Set to null to remove the existing schema.',
+      'The schema for the event payload, as an object with flat key/type pairs. Supported types: string, number, boolean, date. Set to null to remove the existing schema.',
   },
 ];
 

@@ -2,6 +2,7 @@ import type { INodeProperties } from 'n8n-workflow';
 import * as cancel from './cancel.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
+import * as duplicate from './duplicate.operation';
 import * as get from './get.operation';
 import * as list from './list.operation';
 import * as listClickedLinks from './listClickedLinks.operation';
@@ -43,6 +44,13 @@ export const operations: INodeProperties[] = [
         action: 'Delete a broadcast',
       },
       {
+        name: 'Duplicate',
+        value: 'duplicate',
+        description:
+          'Create a new draft broadcast that copies the segment, topic, sender, subject, reply-to, preview text, and content of an existing broadcast',
+        action: 'Duplicate a broadcast',
+      },
+      {
         name: 'Get',
         value: 'get',
         description:
@@ -81,7 +89,7 @@ export const operations: INodeProperties[] = [
         name: 'Update',
         value: 'update',
         description:
-          "Update a broadcast's subject, content, audience, or schedule before it is sent",
+          "Update a draft broadcast's sender, subject, content, preview text, or target segment before it is sent",
         action: 'Update a broadcast',
       },
     ],
@@ -99,6 +107,7 @@ export const descriptions: INodeProperties[] = [
   ...del.description,
   ...send.description,
   ...cancel.description,
+  ...duplicate.description,
   ...listClickedLinks.description,
 ];
 
@@ -107,6 +116,7 @@ export {
   cancel,
   create,
   del as delete,
+  duplicate,
   get,
   list,
   listClickedLinks,

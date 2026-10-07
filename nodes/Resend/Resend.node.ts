@@ -66,7 +66,7 @@ export class Resend implements INodeType {
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
     subtitle:
-      '={{(() => { const resourceLabels = { account: "account", automations: "automation", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", batchAdd: "batch add", batchRemove: "batch remove", listClickedLinks: "list clicked links", listRecipients: "list recipients", getMetrics: "get metrics", listGrants: "list grants", revokeGrant: "revoke grant", createImport: "create import", listImports: "list imports", getImport: "get import" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+      '={{(() => { const resourceLabels = { account: "account", automations: "automation", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", batchAdd: "batch add", batchRemove: "batch remove", listClickedLinks: "list clicked links", listRecipients: "list recipients", getMetrics: "get metrics", listGrants: "list grants", revokeGrant: "revoke grant", createImport: "create import", listImports: "list imports", getImport: "get import", getUsage: "get usage", rotateSigningSecret: "rotate signing secret", listEvents: "list events", getEvent: "get event", replayEvent: "replay event", listEventAttempts: "list event attempts" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
     defaults: {
       name: 'Resend',
     },
@@ -124,7 +124,7 @@ export class Resend implements INodeType {
             name: 'Account',
             value: 'account',
             description:
-              'Manage the connected Resend OAuth2 account and its OAuth grants, such as disconnecting it or revoking a grant',
+              'Get account usage and plan limits, or manage the connected OAuth2 account and its OAuth grants',
           },
           {
             name: 'Automation',

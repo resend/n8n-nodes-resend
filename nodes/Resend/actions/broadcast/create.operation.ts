@@ -4,7 +4,8 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import { NodeOperationError } from 'n8n-workflow';
+import { apiRequest, normalizeEmailList } from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -75,7 +76,6 @@ export const description: INodeProperties[] = [
     displayName: 'HTML Content',
     name: 'broadcastHtml',
     type: 'string',
-    required: true,
     default: '',
     typeOptions: {
       multiline: true,
@@ -114,6 +114,15 @@ export const description: INodeProperties[] = [
           'The friendly name of the broadcast. Only used for internal reference.',
       },
       {
+        displayName: 'Preview Text',
+        name: 'previewText',
+        type: 'string',
+        default: '',
+        placeholder: 'Here are our announcements',
+        description:
+          'The preview text shown next to the subject line in most email clients',
+      },
+      {
         displayName: 'Reply To',
         name: 'replyTo',
         type: 'string',
@@ -121,6 +130,23 @@ export const description: INodeProperties[] = [
         placeholder: 'noreply@example.com',
         description:
           'Reply-to email address. For multiple addresses, use comma-separated values.',
+      },
+      {
+        displayName: 'Scheduled At',
+        name: 'scheduledAt',
+        type: 'string',
+        default: '',
+        placeholder: 'in 1 hour',
+        description:
+          'Schedule the broadcast for later delivery. Accepts natural language (e.g., "in 1 hour") or ISO 8601 format. Requires Send Immediately to be enabled.',
+      },
+      {
+        displayName: 'Send Immediately',
+        name: 'send',
+        type: 'boolean',
+        default: false,
+        description:
+          'Whether to send (or schedule, if Scheduled At is set) the broadcast right after creating it instead of keeping it as a draft',
       },
       {
         displayName: 'Text Content',
@@ -163,7 +189,10 @@ export async function execute(
     {},
   ) as {
     name?: string;
+    previewText?: string;
     replyTo?: string;
+    scheduledAt?: string;
+    send?: boolean;
     text?: string;
     topicId?: string;
   };
@@ -172,20 +201,40 @@ export async function execute(
     segment_id: segmentId,
     from,
     subject,
-    html,
   };
+
+  if (html) {
+    body.html = html;
+  }
 
   if (createOptions.name) {
     body.name = createOptions.name;
   }
-  if (createOptions.replyTo) {
-    body.reply_to = createOptions.replyTo;
+  if (createOptions.previewText) {
+    body.preview_text = createOptions.previewText;
+  }
+  const replyTo = normalizeEmailList(createOptions.replyTo);
+  if (replyTo.length) {
+    body.reply_to = replyTo.length === 1 ? replyTo[0] : replyTo;
   }
   if (createOptions.text) {
     body.text = createOptions.text;
   }
   if (createOptions.topicId) {
     body.topic_id = createOptions.topicId;
+  }
+  if (createOptions.scheduledAt && !createOptions.send) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'Scheduled At requires Send Immediately to be enabled',
+      { itemIndex: index },
+    );
+  }
+  if (createOptions.send) {
+    body.send = true;
+    if (createOptions.scheduledAt) {
+      body.scheduled_at = createOptions.scheduledAt;
+    }
   }
 
   const response = await apiRequest.call(this, 'POST', '/broadcasts', body);

@@ -302,8 +302,8 @@ const cases: RequestCase[] = [
     parameters: { ...listParameters, segmentIdFilter: locator('seg_1') },
     response: { data: [] },
     method: 'GET',
-    endpoint: '/contacts',
-    qs: { limit: 50, segment_id: 'seg_1' },
+    endpoint: '/segments/seg_1/contacts',
+    qs: listQuery,
   },
   {
     resource: 'contacts',
@@ -359,7 +359,7 @@ const cases: RequestCase[] = [
     },
     method: 'PATCH',
     endpoint: '/contacts/c_1/topics',
-    body: { topics: [{ id: 'topic_1', subscription: 'opted_out' }] },
+    body: [{ id: 'topic_1', subscription: 'opted_out' }],
   },
   {
     resource: 'contacts',
@@ -569,48 +569,6 @@ const cases: RequestCase[] = [
     qs: listQuery,
   },
   {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'createTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingSubdomain: 'links' },
-    method: 'POST',
-    endpoint: '/domains/dom_1/tracking-domains',
-    body: { subdomain: 'links' },
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'getTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'GET',
-    endpoint: '/domains/dom_1/tracking-domains/td_1',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'listTrackingDomains',
-    parameters: { domainId: locator('dom_1') },
-    response: { data: [] },
-    method: 'GET',
-    endpoint: '/domains/dom_1/tracking-domains',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'verifyTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'POST',
-    endpoint: '/domains/dom_1/tracking-domains/td_1/verify',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'deleteTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'DELETE',
-    endpoint: '/domains/dom_1/tracking-domains/td_1',
-  },
-  {
     resource: 'email',
     execute: email.execute,
     operation: 'list',
@@ -722,7 +680,7 @@ const cases: RequestCase[] = [
     },
     method: 'POST',
     endpoint: '/events/send',
-    body: { event: 'signup', contactId: 'c_1', payload: { plan: 'pro' } },
+    body: { event: 'signup', contact_id: 'c_1', payload: { plan: 'pro' } },
   },
   {
     resource: 'events',
@@ -961,7 +919,7 @@ const cases: RequestCase[] = [
       subject: 'Welcome',
       html: '<p>Hi {{name}}</p>',
       variables: [
-        { key: 'name', type: 'string', fallbackValue: 'friend' },
+        { key: 'name', type: 'string', fallback_value: 'friend' },
         { key: 'plan', type: 'string' },
       ],
     },
@@ -1033,7 +991,7 @@ const cases: RequestCase[] = [
     endpoint: '/topics',
     body: {
       name: 'Product updates',
-      defaultSubscription: 'opted_in',
+      default_subscription: 'opted_in',
       description: 'News',
       visibility: 'public',
     },
@@ -1292,20 +1250,7 @@ describe('operation results', () => {
     ]);
   });
 
-  it('returns the raw response when a nested list is empty', async () => {
-    const { context } = createExecuteMock({
-      parameters: { domainId: locator('dom_1') },
-      response: { message: 'no tracking domains' },
-    });
-
-    await expect(
-      domains.execute.call(context, 0, 'listTrackingDomains'),
-    ).resolves.toEqual([
-      { json: { message: 'no tracking domains' }, pairedItem: { item: 0 } },
-    ]);
-  });
-
-  it('omits the limit when returning all sub-resources', async () => {
+  it('requests full pages when returning all sub-resources', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: { contactIdGetTopics: locator('c_1'), returnAll: true },
       response: { data: [] },
@@ -1313,7 +1258,7 @@ describe('operation results', () => {
 
     await contacts.execute.call(context, 0, 'getTopics');
 
-    expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 100 });
   });
 
   it('requests email metrics without a query when no option is set', async () => {

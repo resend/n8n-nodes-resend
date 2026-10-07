@@ -442,7 +442,7 @@ export function parseTemplateVariables(
           typeof fallbackValue === 'number'
             ? fallbackValue
             : Number(fallbackValue);
-        if (Number.isNaN(numericFallback)) {
+        if (!Number.isFinite(numericFallback)) {
           throw new NodeOperationError(
             executeFunctions.getNode(),
             `Variable "${variable.key}" fallback value must be a number`,

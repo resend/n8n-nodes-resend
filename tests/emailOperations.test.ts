@@ -283,8 +283,8 @@ describe('email send', () => {
     );
   });
 
-  it('rejects attachments on scheduled emails', async () => {
-    const { context } = sendMock({
+  it('allows attachments on scheduled emails', async () => {
+    const { context, httpRequest } = sendMock({
       additionalOptions: {
         scheduledAt: 'in 1 hour',
         attachments: {
@@ -299,9 +299,12 @@ describe('email send', () => {
       },
     });
 
-    await expect(send.call(context, 0)).rejects.toThrow(
-      'Attachments cannot be used with scheduled emails.',
-    );
+    await send.call(context, 0);
+
+    expect(httpRequest.mock.calls[0][1].body).toMatchObject({
+      scheduled_at: 'in 1 hour',
+      attachments: [{ filename: 'a.pdf', path: 'https://example.com/a.pdf' }],
+    });
   });
 
   it('forwards the idempotency key as a header', async () => {
@@ -501,11 +504,10 @@ describe('email sendBatch', () => {
 
     await sendBatch.call(context, 0);
 
-    expect(httpRequest.mock.calls[0][1].qs).toEqual({
-      validation_mode: 'permissive',
-    });
+    expect(httpRequest.mock.calls[0][1].qs).toBeUndefined();
     expect(httpRequest.mock.calls[0][1].headers).toMatchObject({
       'Idempotency-Key': 'key-1',
+      'x-batch-validation': 'permissive',
     });
   });
 });
