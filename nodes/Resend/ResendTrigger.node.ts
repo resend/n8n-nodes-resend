@@ -143,7 +143,7 @@ export class ResendTrigger implements INodeType {
     description:
       'Triggers workflows when Resend email events occur, such as email sent, delivered, opened, clicked, bounced, or complained. Includes secure webhook signature verification.',
     subtitle:
-      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
+      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress", assigned: "assign", unassigned: "unassign" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
     defaults: {
       name: 'Resend Trigger',
     },
@@ -217,6 +217,26 @@ export class ResendTrigger implements INodeType {
           { name: 'Email Scheduled', value: 'email.scheduled' },
           { name: 'Email Sent', value: 'email.sent' },
           { name: 'Email Suppressed', value: 'email.suppressed' },
+          { name: 'Inbox Created', value: 'inbox.created' },
+          { name: 'Inbox Deleted', value: 'inbox.deleted' },
+          { name: 'Inbox Draft Created', value: 'inbox.draft.created' },
+          { name: 'Inbox Draft Deleted', value: 'inbox.draft.deleted' },
+          { name: 'Inbox Draft Sent', value: 'inbox.draft.sent' },
+          { name: 'Inbox Draft Updated', value: 'inbox.draft.updated' },
+          { name: 'Inbox Email Received', value: 'inbox.email.received' },
+          { name: 'Inbox Email Sent', value: 'inbox.email.sent' },
+          { name: 'Inbox Thread Assigned', value: 'inbox.thread.assigned' },
+          { name: 'Inbox Thread Created', value: 'inbox.thread.created' },
+          {
+            name: 'Inbox Thread Folder Updated',
+            value: 'inbox.thread.folder.updated',
+          },
+          {
+            name: 'Inbox Thread Labels Updated',
+            value: 'inbox.thread.labels.updated',
+          },
+          { name: 'Inbox Thread Unassigned', value: 'inbox.thread.unassigned' },
+          { name: 'Inbox Updated', value: 'inbox.updated' },
           { name: 'Suppression Added', value: 'suppression.added' },
           { name: 'Suppression Removed', value: 'suppression.removed' },
           { name: 'Topic Created', value: 'topic.created' },
