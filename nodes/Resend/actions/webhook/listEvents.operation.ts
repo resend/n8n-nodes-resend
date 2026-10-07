@@ -4,8 +4,26 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { createListExecutionData, requestList } from '../../transport';
+import {
+  createDynamicIdField,
+  resolveDynamicIdValue,
+} from '../../utils/dynamicFields';
 
 export const description: INodeProperties[] = [
+  createDynamicIdField({
+    fieldName: 'webhookId',
+    resourceName: 'webhook',
+    displayName: 'Webhook',
+    required: true,
+    placeholder: '4dd369bc-aa82-4ff3-97de-514ae3000ee0',
+    description: 'The webhook to list delivered events for',
+    displayOptions: {
+      show: {
+        resource: ['webhooks'],
+        operation: ['listEvents'],
+      },
+    },
+  }),
   {
     displayName: 'Return All',
     name: 'returnAll',
@@ -14,7 +32,7 @@ export const description: INodeProperties[] = [
     displayOptions: {
       show: {
         resource: ['webhooks'],
-        operation: ['list'],
+        operation: ['listEvents'],
       },
     },
     description: 'Whether to return all results or only up to a given limit',
@@ -30,7 +48,7 @@ export const description: INodeProperties[] = [
     displayOptions: {
       show: {
         resource: ['webhooks'],
-        operation: ['list'],
+        operation: ['listEvents'],
         returnAll: [false],
       },
     },
@@ -41,6 +59,11 @@ export const description: INodeProperties[] = [
 export async function execute(
   this: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
-  const items = await requestList.call(this, '/webhooks');
+  const webhookId = resolveDynamicIdValue(this, 'webhookId', 0);
+
+  const items = await requestList.call(
+    this,
+    `/webhooks/${encodeURIComponent(webhookId)}/events`,
+  );
   return createListExecutionData.call(this, items);
 }

@@ -1,35 +1,16 @@
-import type { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
+import * as getEvent from './getEvent.operation';
 import * as list from './list.operation';
+import * as listEventAttempts from './listEventAttempts.operation';
+import * as listEvents from './listEvents.operation';
+import * as replayEvent from './replayEvent.operation';
+import * as rotateSigningSecret from './rotateSigningSecret.operation';
 import * as update from './update.operation';
 
-export const webhookEventOptions: INodePropertyOptions[] = [
-  { name: 'Contact Created', value: 'contact.created' },
-  { name: 'Contact Deleted', value: 'contact.deleted' },
-  { name: 'Contact Topics Updated', value: 'contact.topics.updated' },
-  { name: 'Contact Updated', value: 'contact.updated' },
-  { name: 'Domain Created', value: 'domain.created' },
-  { name: 'Domain Deleted', value: 'domain.deleted' },
-  { name: 'Domain Updated', value: 'domain.updated' },
-  { name: 'Email Bounced', value: 'email.bounced' },
-  { name: 'Email Clicked', value: 'email.clicked' },
-  { name: 'Email Complained', value: 'email.complained' },
-  { name: 'Email Delivered', value: 'email.delivered' },
-  { name: 'Email Delivery Delayed', value: 'email.delivery_delayed' },
-  { name: 'Email Failed', value: 'email.failed' },
-  { name: 'Email Opened', value: 'email.opened' },
-  { name: 'Email Received', value: 'email.received' },
-  { name: 'Email Scheduled', value: 'email.scheduled' },
-  { name: 'Email Sent', value: 'email.sent' },
-  { name: 'Email Suppressed', value: 'email.suppressed' },
-  { name: 'Suppression Added', value: 'suppression.added' },
-  { name: 'Suppression Removed', value: 'suppression.removed' },
-  { name: 'Topic Created', value: 'topic.created' },
-  { name: 'Topic Deleted', value: 'topic.deleted' },
-  { name: 'Topic Updated', value: 'topic.updated' },
-];
+export { webhookEventOptions } from './events';
 
 export const operations: INodeProperties[] = [
   {
@@ -65,11 +46,46 @@ export const operations: INodeProperties[] = [
         action: 'Get webhook details',
       },
       {
+        name: 'Get Event',
+        value: 'getEvent',
+        description:
+          'Retrieve a single event delivered to a webhook, including its payload and delivery status',
+        action: 'Get a webhook event',
+      },
+      {
         name: 'List',
         value: 'list',
         description:
           'Get all configured webhooks with their URLs, event subscriptions, and status',
         action: 'List all webhooks',
+      },
+      {
+        name: 'List Event Attempts',
+        value: 'listEventAttempts',
+        description:
+          'Retrieve the delivery attempts of a webhook event, most recent first',
+        action: 'List webhook event attempts',
+      },
+      {
+        name: 'List Events',
+        value: 'listEvents',
+        description:
+          'Retrieve the events delivered to a webhook, most recent first',
+        action: 'List webhook events',
+      },
+      {
+        name: 'Replay Event',
+        value: 'replayEvent',
+        description:
+          'Queue one more delivery of a webhook event. The webhook must be enabled.',
+        action: 'Replay a webhook event',
+      },
+      {
+        name: 'Rotate Signing Secret',
+        value: 'rotateSigningSecret',
+        description:
+          'Generate a new signing secret for a webhook. The previous secret stays valid for 24 hours.',
+        action: 'Rotate a webhook signing secret',
       },
       {
         name: 'Update',
@@ -89,7 +105,23 @@ export const descriptions: INodeProperties[] = [
   ...list.description,
   ...update.description,
   ...del.description,
+  ...rotateSigningSecret.description,
+  ...listEvents.description,
+  ...getEvent.description,
+  ...replayEvent.description,
+  ...listEventAttempts.description,
 ];
 
 export { execute } from './execute';
-export { create, del as delete, get, list, update };
+export {
+  create,
+  del as delete,
+  get,
+  getEvent,
+  list,
+  listEventAttempts,
+  listEvents,
+  replayEvent,
+  rotateSigningSecret,
+  update,
+};

@@ -8,7 +8,7 @@ import {
   createDynamicIdField,
   resolveDynamicIdValue,
 } from '../../utils/dynamicFields';
-import { webhookEventOptions } from './index';
+import { webhookEventOptions } from './events';
 
 export const description: INodeProperties[] = [
   createDynamicIdField({
@@ -55,7 +55,7 @@ export const description: INodeProperties[] = [
         default: ['email.sent'],
         options: webhookEventOptions,
         description:
-          'Update which email events should trigger webhook notifications',
+          'The event types that should trigger webhook notifications. Replaces the current subscription list.',
       },
       {
         displayName: 'Status',

@@ -5,7 +5,7 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { apiRequest, assertHttpsEndpoint } from '../../transport';
-import { webhookEventOptions } from './index';
+import { webhookEventOptions } from './events';
 
 export const description: INodeProperties[] = [
   {
@@ -38,7 +38,7 @@ export const description: INodeProperties[] = [
     },
     options: webhookEventOptions,
     description:
-      'Select which email events should trigger webhook notifications. Common events include email.sent, email.delivered, email.opened, and email.bounced.',
+      'The event types that should trigger webhook notifications, such as email.sent, email.delivered, contact.created, or inbox.email.received',
   },
 ];
 

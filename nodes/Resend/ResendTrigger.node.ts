@@ -16,6 +16,7 @@ import {
   NodeConnectionTypes,
   NodeOperationError,
 } from 'n8n-workflow';
+import { webhookEventOptions } from './actions/webhook/events';
 
 const WEBHOOK_TOLERANCE_MS = 5 * 60 * 1000;
 
@@ -141,9 +142,9 @@ export class ResendTrigger implements INodeType {
     group: ['trigger'],
     version: 1,
     description:
-      'Triggers workflows when Resend email events occur, such as email sent, delivered, opened, clicked, bounced, or complained. Includes secure webhook signature verification.',
+      'Triggers workflows when Resend events occur, such as emails being sent, delivered, opened, or bounced, contacts or domains changing, or inbox threads receiving new emails. Includes secure webhook signature verification.',
     subtitle:
-      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
+      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress", added: "add", removed: "remove", assigned: "assign", unassigned: "unassign" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
     defaults: {
       name: 'Resend Trigger',
     },
@@ -198,31 +199,7 @@ export class ResendTrigger implements INodeType {
         type: 'multiOptions',
         required: true,
         default: ['email.sent'],
-        options: [
-          { name: 'Contact Created', value: 'contact.created' },
-          { name: 'Contact Deleted', value: 'contact.deleted' },
-          { name: 'Contact Topics Updated', value: 'contact.topics.updated' },
-          { name: 'Contact Updated', value: 'contact.updated' },
-          { name: 'Domain Created', value: 'domain.created' },
-          { name: 'Domain Deleted', value: 'domain.deleted' },
-          { name: 'Domain Updated', value: 'domain.updated' },
-          { name: 'Email Bounced', value: 'email.bounced' },
-          { name: 'Email Clicked', value: 'email.clicked' },
-          { name: 'Email Complained', value: 'email.complained' },
-          { name: 'Email Delivered', value: 'email.delivered' },
-          { name: 'Email Delivery Delayed', value: 'email.delivery_delayed' },
-          { name: 'Email Failed', value: 'email.failed' },
-          { name: 'Email Opened', value: 'email.opened' },
-          { name: 'Email Received', value: 'email.received' },
-          { name: 'Email Scheduled', value: 'email.scheduled' },
-          { name: 'Email Sent', value: 'email.sent' },
-          { name: 'Email Suppressed', value: 'email.suppressed' },
-          { name: 'Suppression Added', value: 'suppression.added' },
-          { name: 'Suppression Removed', value: 'suppression.removed' },
-          { name: 'Topic Created', value: 'topic.created' },
-          { name: 'Topic Deleted', value: 'topic.deleted' },
-          { name: 'Topic Updated', value: 'topic.updated' },
-        ],
+        options: webhookEventOptions,
         description: 'Select the Resend event types to listen for',
       },
     ],
@@ -272,7 +249,7 @@ export class ResendTrigger implements INodeType {
           await resendApiRequest.call(
             this,
             'GET',
-            `/webhooks/${webhookData.webhookId}`,
+            `/webhooks/${encodeURIComponent(String(webhookData.webhookId))}`,
           );
           return true;
         } catch (error) {
@@ -332,7 +309,7 @@ export class ResendTrigger implements INodeType {
             await resendApiRequest.call(
               this,
               'DELETE',
-              `/webhooks/${webhookData.webhookId}`,
+              `/webhooks/${encodeURIComponent(String(webhookData.webhookId))}`,
             );
           } catch (error) {
             if (!isNotFoundError(error)) {
