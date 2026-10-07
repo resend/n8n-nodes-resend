@@ -5,10 +5,8 @@ import type {
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { normalizeEmailList } from '../../transport';
-import {
-  createDynamicIdField,
-  resolveDynamicIdValue,
-} from '../../utils/dynamicFields';
+import { createDynamicIdField } from '../../utils/dynamicFields';
+import { inboxPath } from '../inbox/fields';
 
 export function createInboxField(
   resource: string,
@@ -153,15 +151,7 @@ export function getInboxPath(
   context: IExecuteFunctions,
   index: number,
 ): string {
-  const inboxId = String(
-    resolveDynamicIdValue(context, 'inboxId', index) ?? '',
-  ).trim();
-  if (!inboxId) {
-    throw new NodeOperationError(context.getNode(), 'Inbox is required', {
-      itemIndex: index,
-    });
-  }
-  return `/inboxes/${encodeURIComponent(inboxId)}`;
+  return inboxPath(context, index);
 }
 
 export function getThreadPath(

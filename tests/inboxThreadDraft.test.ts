@@ -248,6 +248,22 @@ describe('inbox thread and draft requests', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['threads', inboxThreads.execute, 'get', { ...thread }],
+    ['drafts', inboxDrafts.execute, 'get', { ...draft }],
+  ] as const)(
+    'requires an inbox for %s',
+    async (_name, execute, operation, parameters) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { ...parameters, inboxId: locator(' ') },
+      });
+      await expect(execute.call(context, 0, operation)).rejects.toThrow(
+        'Inbox is required',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
+
   it('requires at least one thread update field', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: { ...thread, inboxThreadUpdateFields: {} },
