@@ -140,14 +140,25 @@ describe('router', () => {
     );
   });
 
-  it('runs broadcast clicked links and recipients once per input item', async () => {
-    for (const [operation, field, path] of [
-      ['listClickedLinks', 'broadcastIdClickedLinks', 'clicked-links'],
-      ['listRecipients', 'broadcastIdRecipients', 'recipients'],
+  it('runs ID-scoped list operations once per input item', async () => {
+    for (const [resource, operation, field, path] of [
+      [
+        'broadcasts',
+        'listClickedLinks',
+        'broadcastIdClickedLinks',
+        'broadcasts/bc_{i}/clicked-links',
+      ],
+      [
+        'broadcasts',
+        'listRecipients',
+        'broadcastIdRecipients',
+        'broadcasts/bc_{i}/recipients',
+      ],
+      ['segments', 'listContacts', 'segmentId', 'segments/bc_{i}/contacts'],
     ]) {
       const { context, httpRequest } = createExecuteMock({
         parameters: {
-          resource: 'broadcasts',
+          resource,
           operation,
           recipientType: 'sent',
           returnAll: false,
@@ -179,7 +190,7 @@ describe('router', () => {
         ),
       ).toEqual(
         [0, 1, 2].map(
-          (i) => `https://api.resend.com/broadcasts/bc_${i}/${path}`,
+          (i) => `https://api.resend.com/${path.replace('{i}', String(i))}`,
         ),
       );
       expect(items.map((item) => item.pairedItem)).toEqual([

@@ -13,6 +13,7 @@ export const execute = createOperationRouter(
     get,
     getMetrics,
     delete: del,
+    listContacts,
   },
-  { list, listContacts },
+  { list },
 );
