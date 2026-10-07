@@ -77,7 +77,10 @@ export async function execute(
   if (fallbackValue !== '' && fallbackValue !== undefined) {
     if (type === 'number') {
       const numericFallback = Number(fallbackValue);
-      if (Number.isNaN(numericFallback)) {
+      if (
+        String(fallbackValue).trim() === '' ||
+        !Number.isFinite(numericFallback)
+      ) {
         throw new NodeOperationError(
           this.getNode(),
           'Fallback Value must be a number for number properties',

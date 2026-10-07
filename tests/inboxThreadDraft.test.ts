@@ -249,16 +249,17 @@ describe('inbox thread and draft requests', () => {
   });
 
   it('requires at least one thread update field', async () => {
-    const { context } = createExecuteMock({
+    const { context, httpRequest } = createExecuteMock({
       parameters: { ...thread, inboxThreadUpdateFields: {} },
     });
     await expect(
       inboxThreads.execute.call(context, 0, 'update'),
     ).rejects.toThrow('At least one of Folder, Label, or Read');
+    expect(httpRequest).not.toHaveBeenCalled();
   });
 
   it('requires thread ID and reply email ID together for drafts', async () => {
-    const { context } = createExecuteMock({
+    const { context, httpRequest } = createExecuteMock({
       parameters: {
         ...inbox,
         inboxDraftFields: { subject: 'Hi', threadId: 'thr_1' },
@@ -267,15 +268,84 @@ describe('inbox thread and draft requests', () => {
     await expect(
       inboxDrafts.execute.call(context, 0, 'create'),
     ).rejects.toThrow('must be set together');
+    expect(httpRequest).not.toHaveBeenCalled();
   });
 
   it('requires content when creating a draft', async () => {
-    const { context } = createExecuteMock({
+    const { context, httpRequest } = createExecuteMock({
       parameters: { ...inbox, inboxDraftFields: {} },
     });
     await expect(
       inboxDrafts.execute.call(context, 0, 'create'),
     ).rejects.toThrow('At least one of To');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  const emails = (count: number, prefix: string) =>
+    Array.from({ length: count }, (_, i) => `${prefix}${i}@example.com`).join(
+      ',',
+    );
+
+  it('allows exactly 50 combined recipients when forwarding', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        to: emails(25, 'to'),
+        inboxForwardOptions: { cc: emails(25, 'cc') },
+      },
+      response: { id: 'ok' },
+    });
+    await inboxThreads.execute.call(context, 0, 'forward');
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: emails(30, 'to'),
+        inboxForwardOptions: { cc: emails(20, 'cc'), bcc: emails(1, 'bcc') },
+      },
+    },
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { cc: emails(26, 'cc'), bcc: emails(25, 'bcc') },
+      },
+    },
+    {
+      name: 'draft create',
+      execute: inboxDrafts.execute,
+      operation: 'create',
+      parameters: {
+        ...inbox,
+        inboxDraftFields: { to: emails(51, 'to') },
+      },
+    },
+    {
+      name: 'draft update',
+      execute: inboxDrafts.execute,
+      operation: 'update',
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: { to: emails(40, 'to'), bcc: emails(11, 'b') },
+      },
+    },
+  ])('rejects more than 50 recipients on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+    });
+    await expect(
+      testCase.execute.call(context, 0, testCase.operation),
+    ).rejects.toThrow('cannot exceed 50 recipients');
+    expect(httpRequest).not.toHaveBeenCalled();
   });
 
   it('marks operation options as sorted and scoped to the resource', () => {

@@ -32,7 +32,7 @@ export const description: INodeProperties[] = [
       { name: 'Disabled', value: 'disabled' },
       { name: 'Unchanged', value: '' },
     ],
-    default: 'enabled',
+    default: '',
     displayOptions: {
       show: {
         resource: ['automations'],
@@ -82,6 +82,26 @@ export const description: INodeProperties[] = [
   },
 ];
 
+function parseJsonField(
+  this: IExecuteFunctions,
+  value: string | object | undefined,
+  label: string,
+  index: number,
+): IDataObject | IDataObject[] | undefined {
+  if (typeof value !== 'string') {
+    return value as IDataObject | IDataObject[] | undefined;
+  }
+  try {
+    return JSON.parse(value) as IDataObject | IDataObject[];
+  } catch {
+    throw new NodeOperationError(
+      this.getNode(),
+      `${label} must be valid JSON`,
+      { itemIndex: index },
+    );
+  }
+}
+
 export async function execute(
   this: IExecuteFunctions,
   index: number,
@@ -115,14 +135,13 @@ export async function execute(
     );
   }
   if (hasSteps && hasConnections) {
-    body.steps =
-      typeof updateFields.steps === 'string'
-        ? JSON.parse(updateFields.steps)
-        : updateFields.steps;
-    body.connections =
-      typeof updateFields.connections === 'string'
-        ? JSON.parse(updateFields.connections)
-        : updateFields.connections;
+    body.steps = parseJsonField.call(this, updateFields.steps, 'Steps', index);
+    body.connections = parseJsonField.call(
+      this,
+      updateFields.connections,
+      'Connections',
+      index,
+    );
   }
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(

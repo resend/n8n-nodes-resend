@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
@@ -70,10 +71,14 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const emailAddress = this.getNodeParameter(
-    'inboxEmailAddress',
-    index,
-  ) as string;
+  const emailAddress = String(
+    this.getNodeParameter('inboxEmailAddress', index, '') ?? '',
+  ).trim();
+  if (!emailAddress) {
+    throw new NodeOperationError(this.getNode(), 'Email Address is required', {
+      itemIndex: index,
+    });
+  }
   const fields = this.getNodeParameter('inboxCreateFields', index, {}) as {
     forwarding?: boolean;
     fromName?: string;

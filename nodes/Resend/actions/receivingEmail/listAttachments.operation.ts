@@ -66,6 +66,8 @@ export async function execute(
   const items = await requestList.call(
     this,
     `/emails/receiving/${encodeURIComponent(emailId)}/attachments`,
+    undefined,
+    index,
   );
 
   return items.map((item) => ({

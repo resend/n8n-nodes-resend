@@ -222,6 +222,42 @@ describe('inbox operation behavior', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('rejects create when the email address resolves to empty', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { inboxEmailAddress: '  ', inboxCreateFields: {} },
+    });
+
+    await expect(inboxes.execute.call(context, 0, 'create')).rejects.toThrow(
+      'Email Address is required',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each(['get', 'getAgent', 'delete', 'listLabels'])(
+    'rejects %s when the inbox ID resolves to empty',
+    async (operation) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { inboxId: locator('') },
+      });
+
+      await expect(inboxes.execute.call(context, 0, operation)).rejects.toThrow(
+        'Inbox is required',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects deleteLabel when the label ID resolves to empty', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { ...inbox, inboxLabelId: locator(' ') },
+    });
+
+    await expect(
+      inboxes.execute.call(context, 0, 'deleteLabel'),
+    ).rejects.toThrow('Label is required');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('marks every inbox field as belonging to the inboxes resource', () => {
     for (const property of inboxes.descriptions) {
       expect(property.displayOptions?.show?.resource).toEqual(['inboxes']);
@@ -291,6 +327,7 @@ describe('inbox methods', () => {
       url: 'https://api.resend.com/inboxes/inbox%201/labels',
       method: 'GET',
     });
+    expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
     expect(options).toEqual([{ name: 'Urgent (l1)', value: 'l1' }]);
   });
 

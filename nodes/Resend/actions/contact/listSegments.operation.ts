@@ -65,6 +65,8 @@ export async function execute(
   const items = await requestList.call(
     this,
     `/contacts/${encodeURIComponent(contactId)}/segments`,
+    undefined,
+    index,
   );
 
   return items.map((item) => ({

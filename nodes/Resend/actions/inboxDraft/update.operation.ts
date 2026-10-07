@@ -7,6 +7,7 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 import {
+  assertRecipientLimit,
   assignRecipients,
   assignStrings,
   bccField,
@@ -69,6 +70,7 @@ export async function execute(
 
   const body: IDataObject = {};
   assignRecipients(body, fields, ['to', 'cc', 'bcc']);
+  assertRecipientLimit(this, body, index);
   assignStrings(body, fields, ['subject', 'html', 'text']);
 
   if (Object.keys(body).length === 0) {

@@ -93,6 +93,7 @@ export async function execute(
     this,
     `/automations/${encodeURIComponent(automationId)}/runs`,
     extraQs,
+    index,
   );
 
   return items.map((item) => ({

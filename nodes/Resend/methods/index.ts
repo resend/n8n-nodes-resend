@@ -27,6 +27,7 @@ type ResendTemplateDetailBody = { variables?: ResendTemplateVariable[] };
 async function loadDropdownOptions(
   loadOptionsFunctions: ILoadOptionsFunctions,
   endpoint: string,
+  { paginated = true }: { paginated?: boolean } = {},
 ): Promise<INodePropertyOptions[]> {
   let response: ResendListResponseBody<ResendDropdownItem> | undefined;
   try {
@@ -37,7 +38,7 @@ async function loadDropdownOptions(
         {
           url: `${RESEND_API_BASE}${endpoint}`,
           method: 'GET',
-          qs: { limit: 100 },
+          ...(paginated ? { qs: { limit: 100 } } : {}),
           json: true,
         },
       );
@@ -445,28 +446,12 @@ export async function getInboxLabels(
     return [];
   }
 
-  let response: ResendListResponseBody<ResendDropdownItem> | undefined;
-  try {
-    response = await this.helpers.httpRequestWithAuthentication.call(
-      this,
-      getCredentialType(this),
-      {
-        url: `${RESEND_API_BASE}/inboxes/${encodeURIComponent(inboxId)}/labels`,
-        method: 'GET',
-        json: true,
-      },
-    );
-  } catch (error) {
-    handleResendApiError(this.getNode(), error);
-  }
-
-  const items = response?.data ?? [];
-  return items
-    .filter((item) => item?.id)
-    .map((item) => ({
-      name: item.name ? `${item.name} (${item.id})` : item.id,
-      value: item.id,
-    }));
+  // The list labels endpoint is not paginated, so no limit is sent.
+  return loadDropdownOptions(
+    this,
+    `/inboxes/${encodeURIComponent(inboxId)}/labels`,
+    { paginated: false },
+  );
 }
 
 async function wrapForListSearch(

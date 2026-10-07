@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 import {
   createDynamicIdField,
@@ -135,6 +136,16 @@ export async function execute(
   }
   if (updateOptions.trackingSubdomain) {
     body.tracking_subdomain = updateOptions.trackingSubdomain;
+  }
+  if (
+    updateOptions.sending === 'disabled' &&
+    updateOptions.receiving === 'disabled'
+  ) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'Sending and Receiving cannot both be disabled. At least one capability must remain enabled.',
+      { itemIndex: index },
+    );
   }
   if (updateOptions.sending || updateOptions.receiving) {
     const capabilities: IDataObject = {};

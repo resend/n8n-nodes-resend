@@ -178,6 +178,57 @@ describe('sub-resource pagination drift', () => {
   );
 
   it.each([
+    ['email listAttachments', email.execute, 'listAttachments'],
+    [
+      'received email listAttachments',
+      receivingEmails.execute,
+      'listAttachments',
+    ],
+    ['contact getTopics', contacts.execute, 'getTopics'],
+    ['contact listSegments', contacts.execute, 'listSegments'],
+    ['automation listRuns', automations.execute, 'listRuns'],
+  ])(
+    '%s reads Return All and Limit from the current item',
+    async (_label, execute, operation) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: {
+          emailId: locator('e_1'),
+          receivedEmailId: locator('r_1'),
+          contactIdGetTopics: locator('c_1'),
+          contactIdListSegments: locator('c_1'),
+          automationId: 'auto_1',
+          automationRunStatus: [],
+        },
+        response: { data: [{ id: 'a' }, { id: 'b' }], has_more: true },
+      });
+      const perItem: Record<string, unknown[]> = {
+        returnAll: [true, true, false],
+        limit: [50, 50, 1],
+      };
+      const getNodeParameter = context.getNodeParameter;
+      context.getNodeParameter = ((
+        name: string,
+        itemIndex: number,
+        fallback?: unknown,
+      ) =>
+        name in perItem
+          ? perItem[name][itemIndex]
+          : getNodeParameter.call(
+              context,
+              name,
+              itemIndex,
+              fallback as never,
+            )) as typeof context.getNodeParameter;
+
+      const result = await execute.call(context, 2, operation);
+
+      expect(httpRequest).toHaveBeenCalledTimes(1);
+      expect(httpRequest.mock.calls[0][1].qs.limit).toBe(1);
+      expect(result).toEqual([{ json: { id: 'a' }, pairedItem: { item: 2 } }]);
+    },
+  );
+
+  it.each([
     ['received emails', receivingEmails.execute, '/emails/receiving'],
     ['templates', templates.execute, '/templates'],
     ['topics', topics.execute, '/topics'],
@@ -281,6 +332,29 @@ describe('contact drift', () => {
     );
   });
 
+  it.each([
+    ['null', null],
+    ['blank', '  '],
+    ['non finite', '1e309'],
+    ['boolean', true],
+  ])('rejects %s values for number properties', async (_label, value) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        email: 'ada@example.com',
+        contactCreateFields: {
+          properties: {
+            properties: [{ key: 'seats', type: 'number', value }],
+          },
+        },
+      },
+    });
+
+    await expect(contacts.execute.call(context, 0, 'create')).rejects.toThrow(
+      'Property "seats" must be a number',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('lists contacts of a segment through the segment endpoint', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {
@@ -332,6 +406,24 @@ describe('contact property drift', () => {
       fallback_value: 3,
     });
   });
+
+  it.each([
+    ['non finite', '1e309'],
+    ['blank', '  '],
+  ])('rejects %s numeric fallback values', async (_label, value) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactPropertyKey: 'seats',
+        contactPropertyType: 'number',
+        contactPropertyFallbackValue: value,
+      },
+    });
+
+    await expect(
+      contactProperties.execute.call(context, 0, 'create'),
+    ).rejects.toThrow('Fallback Value must be a number for number properties');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe('template drift', () => {
@@ -361,6 +453,20 @@ describe('template drift', () => {
       text: 'Count',
       variables: [{ key: 'COUNT', type: 'number', fallback_value: 2 }],
     });
+  });
+
+  it('sends an empty text to opt out of generated plain text', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        templateName: 'Welcome',
+        templateHtml: '<p>Hi</p>',
+        templateCreateFields: { text: '' },
+      },
+    });
+
+    await templates.execute.call(context, 0, 'create');
+
+    expect(httpRequest.mock.calls[0][1].body).toMatchObject({ text: '' });
   });
 
   it('maps reply to on update', async () => {
@@ -437,21 +543,73 @@ describe('automation drift', () => {
   });
 
   it('filters runs by status and paginates', async () => {
+    vi.useFakeTimers();
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        automationId: 'auto_1',
+        returnAll: true,
+        automationRunStatus: ['failed', 'running'],
+      },
+      responses: [
+        { data: [{ id: 'run_1' }], has_more: true },
+        { data: [{ id: 'run_2' }], has_more: false },
+      ],
+    });
+
+    const pending = automations.execute.call(context, 0, 'listRuns');
+    await vi.runAllTimersAsync();
+    const result = await pending;
+
+    expect(httpRequest).toHaveBeenCalledTimes(2);
+    const options = httpRequest.mock.calls[0][1];
+    expect(options.url).toBe('https://api.resend.com/automations/auto_1/runs');
+    expect(options.qs).toMatchObject({ limit: 100, status: 'failed,running' });
+    expect(httpRequest.mock.calls[1][1].qs).toMatchObject({
+      status: 'failed,running',
+      after: 'run_1',
+    });
+    expect(result.map((item) => item.json.id)).toEqual(['run_1', 'run_2']);
+  });
+
+  it('limits runs to the configured limit', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {
         automationId: 'auto_1',
         returnAll: false,
         limit: 20,
-        automationRunStatus: ['failed', 'running'],
+        automationRunStatus: [],
       },
       response: { data: [] },
     });
 
     await automations.execute.call(context, 0, 'listRuns');
 
-    const options = httpRequest.mock.calls[0][1];
-    expect(options.url).toBe('https://api.resend.com/automations/auto_1/runs');
-    expect(options.qs).toEqual({ limit: 20, status: 'failed,running' });
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 20 });
+  });
+
+  it('defaults the update status to unchanged', () => {
+    const status = automations.descriptions.find(
+      (property) => property.name === 'automationStatus',
+    );
+    expect(status?.default).toBe('');
+  });
+
+  it('rejects invalid JSON in steps or connections', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        automationId: 'auto_1',
+        automationStatus: '',
+        automationUpdateFields: { steps: '[{', connections: '[]' },
+      },
+    });
+
+    await expect(
+      automations.execute.call(context, 2, 'update'),
+    ).rejects.toMatchObject({
+      message: 'Steps must be valid JSON',
+      context: { itemIndex: 2 },
+    });
+    expect(httpRequest).not.toHaveBeenCalled();
   });
 
   it('updates the name and graph without changing the status', async () => {

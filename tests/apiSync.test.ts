@@ -25,6 +25,14 @@ interface RequestCase {
 
 const locator = (value: string) => ({ mode: 'id', value });
 
+const removedTrackingDomainOperations = [
+  'createTrackingDomain',
+  'deleteTrackingDomain',
+  'getTrackingDomain',
+  'listTrackingDomains',
+  'verifyTrackingDomain',
+];
+
 const cases: RequestCase[] = [
   {
     name: 'broadcast duplicate',
@@ -101,6 +109,18 @@ const cases: RequestCase[] = [
       preview_text: 'Preview',
       reply_to: ['a@example.com', 'b@example.com'],
     },
+  },
+  {
+    name: 'broadcast update clearing preview text',
+    execute: broadcasts.execute,
+    operation: 'update',
+    parameters: {
+      broadcastId: locator('bc_1'),
+      broadcastUpdateFields: { previewText: '' },
+    },
+    method: 'PATCH',
+    endpoint: '/broadcasts/bc_1',
+    body: { preview_text: '' },
   },
   {
     name: 'segment update',
@@ -214,13 +234,25 @@ describe('api sync validation', () => {
     )?.options as Array<{ value: string }>;
     const values = options.map((option) => option.value);
 
-    expect(values).not.toContain('createTrackingDomain');
+    for (const operation of removedTrackingDomainOperations) {
+      expect(values).not.toContain(operation);
+      await expect(
+        domains.execute.call(createExecuteMock().context, 0, operation),
+      ).rejects.toThrow(`Unsupported operation: ${operation}`);
+    }
+  });
+
+  it('rejects disabling both domain capabilities', async () => {
+    const mock = createExecuteMock({
+      parameters: {
+        domainId: locator('dom_1'),
+        domainUpdateOptions: { sending: 'disabled', receiving: 'disabled' },
+      },
+    });
+
     await expect(
-      domains.execute.call(
-        createExecuteMock().context,
-        0,
-        'listTrackingDomains',
-      ),
-    ).rejects.toThrow('Unsupported operation: listTrackingDomains');
+      domains.execute.call(mock.context, 0, 'update'),
+    ).rejects.toThrow('Sending and Receiving cannot both be disabled');
+    expect(mock.httpRequest).not.toHaveBeenCalled();
   });
 });

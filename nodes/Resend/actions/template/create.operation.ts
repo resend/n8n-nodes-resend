@@ -170,7 +170,7 @@ export const description: INodeProperties[] = [
           rows: 4,
         },
         description:
-          'Plain text version of the template. If omitted, it is generated from the HTML.',
+          'Plain text version of the template. If this field is not added, it is generated from the HTML. Add it and leave it empty to opt out of the generated plain text version.',
       },
     ],
   },

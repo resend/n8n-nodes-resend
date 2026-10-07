@@ -1,4 +1,5 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -58,16 +59,33 @@ export function labelIdField(
   });
 }
 
+function requireId(
+  context: IExecuteFunctions,
+  fieldName: string,
+  label: string,
+  index: number,
+): string {
+  const value = String(
+    resolveDynamicIdValue(context, fieldName, index) ?? '',
+  ).trim();
+  if (!value) {
+    throw new NodeOperationError(context.getNode(), `${label} is required`, {
+      itemIndex: index,
+    });
+  }
+  return value;
+}
+
 export function inboxPath(
   context: IExecuteFunctions,
   index: number,
   suffix = '',
 ): string {
-  const inboxId = resolveDynamicIdValue(context, 'inboxId', index);
+  const inboxId = requireId(context, 'inboxId', 'Inbox', index);
   return `/inboxes/${encodeURIComponent(inboxId)}${suffix}`;
 }
 
 export function labelPath(context: IExecuteFunctions, index: number): string {
-  const labelId = resolveDynamicIdValue(context, 'inboxLabelId', index);
+  const labelId = requireId(context, 'inboxLabelId', 'Label', index);
   return inboxPath(context, index, `/labels/${encodeURIComponent(labelId)}`);
 }

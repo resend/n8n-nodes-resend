@@ -208,6 +208,27 @@ export function assignRecipients(
   }
 }
 
+export const MAX_INBOX_RECIPIENTS = 50;
+
+export function assertRecipientLimit(
+  context: IExecuteFunctions,
+  body: IDataObject,
+  index: number,
+): void {
+  let total = 0;
+  for (const key of ['to', 'cc', 'bcc']) {
+    const value = body[key];
+    if (Array.isArray(value)) total += value.length;
+  }
+  if (total > MAX_INBOX_RECIPIENTS) {
+    throw new NodeOperationError(
+      context.getNode(),
+      `To, CC, and BCC combined cannot exceed ${MAX_INBOX_RECIPIENTS} recipients (got ${total})`,
+      { itemIndex: index },
+    );
+  }
+}
+
 export function assignStrings(
   body: IDataObject,
   fields: IDataObject,

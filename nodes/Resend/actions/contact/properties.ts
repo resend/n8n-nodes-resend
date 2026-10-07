@@ -43,8 +43,13 @@ export function buildContactProperties(
     if (type === 'null') {
       props[item.key] = null;
     } else if (type === 'number') {
-      const parsed = typeof raw === 'number' ? raw : Number(raw);
-      if (raw === '' || raw === undefined || Number.isNaN(parsed)) {
+      const parsed =
+        typeof raw === 'number'
+          ? raw
+          : typeof raw === 'string' && raw.trim() !== ''
+            ? Number(raw)
+            : Number.NaN;
+      if (!Number.isFinite(parsed)) {
         throw new NodeOperationError(
           this.getNode(),
           `Property "${item.key}" must be a number`,

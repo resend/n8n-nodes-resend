@@ -149,7 +149,10 @@ export async function execute(
   if (updateFields.from) body.from = updateFields.from;
   if (updateFields.html) body.html = updateFields.html;
   if (updateFields.name) body.name = updateFields.name;
-  if (updateFields.previewText) body.preview_text = updateFields.previewText;
+  // Sent even when empty so an existing preview text can be cleared.
+  if (updateFields.previewText !== undefined) {
+    body.preview_text = updateFields.previewText;
+  }
   const replyTo = normalizeEmailList(
     updateFields.replyTo as string | undefined,
   );
