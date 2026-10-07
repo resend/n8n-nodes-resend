@@ -149,114 +149,115 @@ describe('node description', () => {
   });
 });
 
-describe.each(
-  Object.entries(resourceModules),
-)('%s resource', (resource, module) => {
-  const options = operationOptions(module);
+describe.each(Object.entries(resourceModules))(
+  '%s resource',
+  (resource, module) => {
+    const options = operationOptions(module);
 
-  it('declares an operation selector scoped to the resource', () => {
-    const operationProperty = module.operations.find(
-      (property) => property.name === 'operation',
-    );
-
-    expect(operationProperty?.type).toBe('options');
-    expect(operationProperty?.noDataExpression).toBe(true);
-    expect(operationProperty?.displayOptions?.show?.resource).toEqual([
-      resource,
-    ]);
-    expect(options.length).toBeGreaterThan(0);
-  });
-
-  it('defaults to one of its own operations', () => {
-    const operationProperty = module.operations.find(
-      (property) => property.name === 'operation',
-    );
-
-    expect(options.map((option) => option.value)).toContain(
-      operationProperty?.default,
-    );
-  });
-
-  it('describes every operation for the workflow editor', () => {
-    for (const option of options) {
-      expect(
-        option.name,
-        `${resource}.${option.value} has a name`,
-      ).toBeTruthy();
-      expect(
-        option.description,
-        `${resource}.${option.value} has a description`,
-      ).toBeTruthy();
-      expect(
-        option.action,
-        `${resource}.${option.value} has an action`,
-      ).toBeTruthy();
-    }
-  });
-
-  it('lists operations alphabetically', () => {
-    const names = options.map((option) => option.name);
-
-    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
-  });
-
-  it('exports an operation module for every listed operation', () => {
-    for (const option of options) {
-      const operationModule = module[option.value] as
-        | { execute?: unknown }
-        | undefined;
-
-      expect(
-        typeof operationModule?.execute,
-        `${resource}.${option.value} is exported`,
-      ).toBe('function');
-    }
-  });
-
-  it('starts the descriptions with the operation selector', () => {
-    expect(module.descriptions[0]).toBe(module.operations[0]);
-  });
-
-  it('scopes every description property to the resource', () => {
-    for (const property of module.descriptions) {
-      expect(
-        property.displayOptions?.show?.resource,
-        `${resource}.${property.name} is scoped`,
-      ).toEqual([resource]);
-    }
-  });
-
-  it('routes every listed operation', async () => {
-    const { context } = createExecuteMock({ response: {} });
-
-    for (const option of options) {
-      let message = '';
-      try {
-        await module.execute.call(context, 0, option.value);
-      } catch (error) {
-        message = (error as Error).message;
-      }
-      expect(message, `${resource}.${option.value} is routed`).not.toContain(
-        'Unsupported operation',
+    it('declares an operation selector scoped to the resource', () => {
+      const operationProperty = module.operations.find(
+        (property) => property.name === 'operation',
       );
-    }
-  });
 
-  it('rejects an unknown operation', async () => {
-    const { context } = createExecuteMock({});
-
-    await expect(
-      module.execute.call(context, 0, 'doesNotExist'),
-    ).rejects.toThrow('Unsupported operation: doesNotExist');
-  });
-
-  it('is reachable through the router', async () => {
-    const { context } = createExecuteMock({
-      parameters: { resource, operation: 'doesNotExist' },
+      expect(operationProperty?.type).toBe('options');
+      expect(operationProperty?.noDataExpression).toBe(true);
+      expect(operationProperty?.displayOptions?.show?.resource).toEqual([
+        resource,
+      ]);
+      expect(options.length).toBeGreaterThan(0);
     });
 
-    await expect(router.call(context)).rejects.toThrow(
-      'Unsupported operation: doesNotExist',
-    );
-  });
-});
+    it('defaults to one of its own operations', () => {
+      const operationProperty = module.operations.find(
+        (property) => property.name === 'operation',
+      );
+
+      expect(options.map((option) => option.value)).toContain(
+        operationProperty?.default,
+      );
+    });
+
+    it('describes every operation for the workflow editor', () => {
+      for (const option of options) {
+        expect(
+          option.name,
+          `${resource}.${option.value} has a name`,
+        ).toBeTruthy();
+        expect(
+          option.description,
+          `${resource}.${option.value} has a description`,
+        ).toBeTruthy();
+        expect(
+          option.action,
+          `${resource}.${option.value} has an action`,
+        ).toBeTruthy();
+      }
+    });
+
+    it('lists operations alphabetically', () => {
+      const names = options.map((option) => option.name);
+
+      expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+    });
+
+    it('exports an operation module for every listed operation', () => {
+      for (const option of options) {
+        const operationModule = module[option.value] as
+          | { execute?: unknown }
+          | undefined;
+
+        expect(
+          typeof operationModule?.execute,
+          `${resource}.${option.value} is exported`,
+        ).toBe('function');
+      }
+    });
+
+    it('starts the descriptions with the operation selector', () => {
+      expect(module.descriptions[0]).toBe(module.operations[0]);
+    });
+
+    it('scopes every description property to the resource', () => {
+      for (const property of module.descriptions) {
+        expect(
+          property.displayOptions?.show?.resource,
+          `${resource}.${property.name} is scoped`,
+        ).toEqual([resource]);
+      }
+    });
+
+    it('routes every listed operation', async () => {
+      const { context } = createExecuteMock({ response: {} });
+
+      for (const option of options) {
+        let message = '';
+        try {
+          await module.execute.call(context, 0, option.value);
+        } catch (error) {
+          message = (error as Error).message;
+        }
+        expect(message, `${resource}.${option.value} is routed`).not.toContain(
+          'Unsupported operation',
+        );
+      }
+    });
+
+    it('rejects an unknown operation', async () => {
+      const { context } = createExecuteMock({});
+
+      await expect(
+        module.execute.call(context, 0, 'doesNotExist'),
+      ).rejects.toThrow('Unsupported operation: doesNotExist');
+    });
+
+    it('is reachable through the router', async () => {
+      const { context } = createExecuteMock({
+        parameters: { resource, operation: 'doesNotExist' },
+      });
+
+      await expect(router.call(context)).rejects.toThrow(
+        'Unsupported operation: doesNotExist',
+      );
+    });
+  },
+);

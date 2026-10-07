@@ -203,7 +203,6 @@ export class ResendTrigger implements INodeType {
         description: 'Select the Resend event types to listen for',
       },
     ],
-    usableAsTool: true,
   };
 
   methods = {
