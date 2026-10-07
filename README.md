@@ -58,27 +58,14 @@ The table below shows which endpoints are currently implemented:
 
 ## Migrating to v3.0.0
 
-Version 3.0.0 catches the node up with the current Resend API and contains breaking changes. Existing Resend nodes in your workflows keep **node version 1** and show a notice with these steps. New Resend nodes use **node version 2**. Nothing else differs between the two versions, so the fastest way to clear the notice is to add a new Resend node and copy your settings over.
+v3.0.0 has breaking changes. Existing Resend nodes show a notice linking here; new nodes don't.
 
-**Workflow is now Automation**
-
-Resend renamed this API from `/workflows` to `/automations` (the old endpoints return 405).
-
-1. Open the node and select the **Automation** resource.
-2. Pick the operation again and re-enter the ID in **Automation ID** (previously **Workflow ID**).
-3. **List Run Steps** and **Get Run Step** were removed because their endpoints no longer exist; run steps are returned by **Get Run**.
-
-**Tracking Domain operations removed**
-
-Resend no longer offers the `/domains/{id}/tracking-domains` endpoints, so **Create / Get / List / Delete / Verify Tracking Domain** were removed. Set the **Tracking Subdomain** option on **Domain → Create** or **Domain → Update** instead; click and open tracking use it once it is verified.
-
-**Behaviour changes to check**
-
-- **List operations run once.** Operations that list a whole collection (for example Contact → List, Email → List) now run once per execution instead of once per input item, so they no longer return duplicate rows. Lists scoped to an ID (Broadcast → List Clicked Links / List Recipients, Segment → List Contacts, Webhook → List Events / List Event Attempts, Automation → List Runs) still run once per input item.
-- **Automation → List Runs** now returns up to 50 runs unless **Return All** is on; previously it returned only the first page.
-- Lists that were silently capped at 50 (received emails, templates, topics, contact properties, events, automations, webhooks) now have **Return All** / **Limit**. The default limit is still 50.
-
-Nodes still set to a removed resource or operation fail with an error that explains what to change.
+| Change | What to do |
+| --- | --- |
+| **Workflow** resource renamed to **Automation** | Select **Automation**, pick the operation again, re-enter the ID in **Automation ID**. **List Run Steps** / **Get Run Step** are gone; use **Get Run**. |
+| **Tracking Domain** operations removed | Use the **Tracking Subdomain** option on **Domain → Create / Update**. |
+| List operations (e.g. **Contact → List**) run once per execution, not once per input item | If you need one result set per input item, put the node in a **Loop Over Items**. Lists that take an ID (e.g. **Segment → List Contacts**) still run per item. |
+| **Automation → List Runs** returns up to 50 runs | Turn on **Return All** to get every run. |
 
 ## Installation
 

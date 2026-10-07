@@ -97,7 +97,7 @@ describe('node description', () => {
 
     expect(notice.type).toBe('notice');
     expect(notice.displayOptions?.show?.['@version']).toEqual([1]);
-    expect(notice.displayName).toContain('migration guide');
+    expect(notice.displayName).toContain('#migrating-to-v300');
   });
 
   it('starts with the authentication selector after the version notice', () => {

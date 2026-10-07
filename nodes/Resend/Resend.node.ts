@@ -97,7 +97,7 @@ export class Resend implements INodeType {
     properties: [
       {
         displayName:
-          'This node uses version 1. Version 3.0 of the Resend package has breaking changes: the Workflow resource is now Automation, and the Tracking Domain operations were removed (use the Tracking Subdomain option on Domain Create/Update). Everything else keeps working. Add a new Resend node to get the latest version, and see the <a href="https://github.com/resend/n8n-nodes-resend#migrating-to-v300" target="_blank">migration guide</a>.',
+          'Resend 3.0 has breaking changes: Workflow is now Automation, Tracking Domain operations were removed, and list operations run once per execution. <a href="https://github.com/resend/n8n-nodes-resend#migrating-to-v300" target="_blank">See what to update</a>.',
         name: 'versionOneNotice',
         type: 'notice',
         default: '',
