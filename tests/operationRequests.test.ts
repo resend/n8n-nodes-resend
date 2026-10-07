@@ -1227,41 +1227,44 @@ const cases: RequestCase[] = [
   },
 ];
 
-describe.each(cases)('$resource $operation', ({
-  execute,
-  operation,
-  parameters,
-  inputData,
-  response,
-  method,
-  endpoint,
-  body,
-  noBody,
-  qs,
-}) => {
-  it(`calls ${method} ${endpoint}${noBody ? ' without a body' : ''}`, async () => {
-    const mock = createExecuteMock({
-      parameters,
-      inputData,
-      response: response ?? { id: 'created' },
+describe.each(cases)(
+  '$resource $operation',
+  ({
+    execute,
+    operation,
+    parameters,
+    inputData,
+    response,
+    method,
+    endpoint,
+    body,
+    noBody,
+    qs,
+  }) => {
+    it(`calls ${method} ${endpoint}${noBody ? ' without a body' : ''}`, async () => {
+      const mock = createExecuteMock({
+        parameters,
+        inputData,
+        response: response ?? { id: 'created' },
+      });
+
+      await execute.call(mock.context, 0, operation);
+
+      const options = mock.httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (body !== undefined) {
+        expect(options.body).toEqual(body);
+      }
+      if (noBody) {
+        expect(options).not.toHaveProperty('body');
+      }
+      if (qs !== undefined) {
+        expect(options.qs).toEqual(qs);
+      }
     });
-
-    await execute.call(mock.context, 0, operation);
-
-    const options = mock.httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (body !== undefined) {
-      expect(options.body).toEqual(body);
-    }
-    if (noBody) {
-      expect(options).not.toHaveProperty('body');
-    }
-    if (qs !== undefined) {
-      expect(options.qs).toEqual(qs);
-    }
-  });
-});
+  },
+);
 
 describe('operation results', () => {
   it('pairs single item responses with the current item', async () => {
