@@ -150,29 +150,32 @@ describe('sub-resource pagination drift', () => {
       { contactIdListSegments: locator('c_1') },
       '/contacts/c_1/segments',
     ],
-  ])('%s follows cursors and pairs with the input item', async (_label, execute, operation, parameters, endpoint) => {
-    vi.useFakeTimers();
-    const { context, httpRequest } = createExecuteMock({
-      parameters: { ...parameters, returnAll: true },
-      responses: [
-        { data: [{ id: 'a' }], has_more: true },
-        { data: [{ id: 'b' }], has_more: false },
-      ],
-    });
+  ])(
+    '%s follows cursors and pairs with the input item',
+    async (_label, execute, operation, parameters, endpoint) => {
+      vi.useFakeTimers();
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { ...parameters, returnAll: true },
+        responses: [
+          { data: [{ id: 'a' }], has_more: true },
+          { data: [{ id: 'b' }], has_more: false },
+        ],
+      });
 
-    const pending = execute.call(context, 2, operation);
-    await vi.runAllTimersAsync();
-    const result = await pending;
+      const pending = execute.call(context, 2, operation);
+      await vi.runAllTimersAsync();
+      const result = await pending;
 
-    expect(httpRequest.mock.calls[0][1].url).toBe(
-      `https://api.resend.com${endpoint}`,
-    );
-    expect(httpRequest.mock.calls[1][1].qs.after).toBe('a');
-    expect(result).toEqual([
-      { json: { id: 'a' }, pairedItem: { item: 2 } },
-      { json: { id: 'b' }, pairedItem: { item: 2 } },
-    ]);
-  });
+      expect(httpRequest.mock.calls[0][1].url).toBe(
+        `https://api.resend.com${endpoint}`,
+      );
+      expect(httpRequest.mock.calls[1][1].qs.after).toBe('a');
+      expect(result).toEqual([
+        { json: { id: 'a' }, pairedItem: { item: 2 } },
+        { json: { id: 'b' }, pairedItem: { item: 2 } },
+      ]);
+    },
+  );
 
   it.each([
     ['received emails', receivingEmails.execute, '/emails/receiving'],
@@ -181,18 +184,21 @@ describe('sub-resource pagination drift', () => {
     ['contact properties', contactProperties.execute, '/contact-properties'],
     ['events', events.execute, '/events'],
     ['automations', automations.execute, '/automations'],
-  ])('lists %s with the configured limit', async (_label, execute, endpoint) => {
-    const { context, httpRequest } = createExecuteMock({
-      parameters: { returnAll: false, limit: 5 },
-      response: { data: [], has_more: false },
-    });
+  ])(
+    'lists %s with the configured limit',
+    async (_label, execute, endpoint) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { returnAll: false, limit: 5 },
+        response: { data: [], has_more: false },
+      });
 
-    await execute.call(context, 0, 'list');
+      await execute.call(context, 0, 'list');
 
-    const options = httpRequest.mock.calls[0][1];
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    expect(options.qs).toEqual({ limit: 5 });
-  });
+      const options = httpRequest.mock.calls[0][1];
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      expect(options.qs).toEqual({ limit: 5 });
+    },
+  );
 });
 
 describe('received email drift', () => {

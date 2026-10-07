@@ -156,33 +156,28 @@ const cases: RequestCase[] = [
   },
 ];
 
-describe.each(cases)('$name', ({
-  execute,
-  operation,
-  parameters,
-  method,
-  endpoint,
-  body,
-  noBody,
-}) => {
-  it(`calls ${method} ${endpoint}`, async () => {
-    const mock = createExecuteMock({ parameters, response: { id: 'x' } });
+describe.each(cases)(
+  '$name',
+  ({ execute, operation, parameters, method, endpoint, body, noBody }) => {
+    it(`calls ${method} ${endpoint}`, async () => {
+      const mock = createExecuteMock({ parameters, response: { id: 'x' } });
 
-    await expect(execute.call(mock.context, 0, operation)).resolves.toEqual([
-      { json: { id: 'x' }, pairedItem: { item: 0 } },
-    ]);
+      await expect(execute.call(mock.context, 0, operation)).resolves.toEqual([
+        { json: { id: 'x' }, pairedItem: { item: 0 } },
+      ]);
 
-    const options = mock.httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (body !== undefined) {
-      expect(options.body).toEqual(body);
-    }
-    if (noBody) {
-      expect(options).not.toHaveProperty('body');
-    }
-  });
-});
+      const options = mock.httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (body !== undefined) {
+        expect(options.body).toEqual(body);
+      }
+      if (noBody) {
+        expect(options).not.toHaveProperty('body');
+      }
+    });
+  },
+);
 
 describe('api sync validation', () => {
   it('uses the API key credential for get usage', async () => {

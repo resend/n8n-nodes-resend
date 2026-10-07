@@ -155,37 +155,32 @@ const cases: RequestCase[] = [
   },
 ];
 
-describe.each(cases)('inboxes $operation', ({
-  operation,
-  parameters,
-  response,
-  method,
-  endpoint,
-  body,
-  qs,
-}) => {
-  it(`calls ${method} ${endpoint}`, async () => {
-    const { context, httpRequest } = createExecuteMock({
-      parameters,
-      response,
+describe.each(cases)(
+  'inboxes $operation',
+  ({ operation, parameters, response, method, endpoint, body, qs }) => {
+    it(`calls ${method} ${endpoint}`, async () => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters,
+        response,
+      });
+
+      await inboxes.execute.call(context, 0, operation);
+
+      expect(httpRequest).toHaveBeenCalledTimes(1);
+      const options = httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (body === undefined) {
+        expect(options.body).toBeUndefined();
+      } else {
+        expect(options.body).toEqual(body);
+      }
+      if (qs !== undefined) {
+        expect(options.qs).toEqual(qs);
+      }
     });
-
-    await inboxes.execute.call(context, 0, operation);
-
-    expect(httpRequest).toHaveBeenCalledTimes(1);
-    const options = httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (body === undefined) {
-      expect(options.body).toBeUndefined();
-    } else {
-      expect(options.body).toEqual(body);
-    }
-    if (qs !== undefined) {
-      expect(options.qs).toEqual(qs);
-    }
-  });
-});
+  },
+);
 
 describe('inbox operation behavior', () => {
   it('registers list as a list operation', () => {

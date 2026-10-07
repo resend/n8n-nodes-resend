@@ -108,34 +108,29 @@ const cases: RequestCase[] = [
   },
 ];
 
-describe.each(cases)('webhooks $operation', ({
-  operation,
-  parameters,
-  response,
-  method,
-  endpoint,
-  noBody,
-  qs,
-}) => {
-  it(`calls ${method} ${endpoint}`, async () => {
-    const mock = createExecuteMock({
-      parameters,
-      response: response ?? { id: 'wh_1' },
+describe.each(cases)(
+  'webhooks $operation',
+  ({ operation, parameters, response, method, endpoint, noBody, qs }) => {
+    it(`calls ${method} ${endpoint}`, async () => {
+      const mock = createExecuteMock({
+        parameters,
+        response: response ?? { id: 'wh_1' },
+      });
+
+      await webhooks.execute.call(mock.context, 0, operation);
+
+      const options = mock.httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (noBody) {
+        expect(options).not.toHaveProperty('body');
+      }
+      if (qs !== undefined) {
+        expect(options.qs).toEqual(qs);
+      }
     });
-
-    await webhooks.execute.call(mock.context, 0, operation);
-
-    const options = mock.httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (noBody) {
-      expect(options).not.toHaveProperty('body');
-    }
-    if (qs !== undefined) {
-      expect(options.qs).toEqual(qs);
-    }
-  });
-});
+  },
+);
 
 describe('webhook events', () => {
   it('paginates event listings with the after cursor', async () => {
