@@ -38,7 +38,7 @@ export const description: INodeProperties[] = [
     },
     options: webhookEventOptions,
     description:
-      'The event types that should trigger webhook notifications, such as email.sent, email.delivered, contact.created, or inbox.email.received',
+      'The event types that should trigger webhook notifications, such as email.sent, email.delivered, or contact.created',
   },
 ];
 

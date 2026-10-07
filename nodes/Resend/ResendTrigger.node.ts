@@ -142,9 +142,9 @@ export class ResendTrigger implements INodeType {
     group: ['trigger'],
     version: 1,
     description:
-      'Triggers workflows when Resend events occur, such as emails being sent, delivered, opened, or bounced, contacts or domains changing, or inbox threads receiving new emails. Includes secure webhook signature verification.',
+      'Triggers workflows when Resend events occur, such as emails being sent, delivered, opened, or bounced or contacts and domains changing. Includes secure webhook signature verification.',
     subtitle:
-      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress", added: "add", removed: "remove", assigned: "assign", unassigned: "unassign" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
+      '={{(() => { const events = $parameter["events"] ?? []; const actionLabels = { created: "create", deleted: "delete", updated: "update", sent: "send", opened: "open", clicked: "click", bounced: "bounce", complained: "complain", delivered: "deliver", delivery_delayed: "delay", failed: "fail", received: "receive", scheduled: "schedule", suppressed: "suppress", added: "add", removed: "remove" }; return events.map((event) => { const parts = event.split("."); const action = parts.pop(); const resource = parts.join("."); if (!resource || !action) { return event; } const actionLabel = actionLabels[action] ?? action.replace(/_/g, " "); return actionLabel + ": " + resource; }).join(", "); })() }}',
     defaults: {
       name: 'Resend Trigger',
     },

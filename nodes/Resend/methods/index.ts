@@ -27,7 +27,6 @@ type ResendTemplateDetailBody = { variables?: ResendTemplateVariable[] };
 async function loadDropdownOptions(
   loadOptionsFunctions: ILoadOptionsFunctions,
   endpoint: string,
-  { paginated = true }: { paginated?: boolean } = {},
 ): Promise<INodePropertyOptions[]> {
   let response: ResendListResponseBody<ResendDropdownItem> | undefined;
   try {
@@ -38,7 +37,7 @@ async function loadDropdownOptions(
         {
           url: `${RESEND_API_BASE}${endpoint}`,
           method: 'GET',
-          ...(paginated ? { qs: { limit: 100 } } : {}),
+          qs: { limit: 100 },
           json: true,
         },
       );
@@ -376,84 +375,6 @@ export async function getReceivedEmails(
     });
 }
 
-type ResendInboxItem = { id: string; name?: string; email_address?: string };
-
-export async function getInboxes(
-  this: ILoadOptionsFunctions,
-): Promise<INodePropertyOptions[]> {
-  let response: ResendListResponseBody<ResendInboxItem> | undefined;
-  try {
-    response = await this.helpers.httpRequestWithAuthentication.call(
-      this,
-      getCredentialType(this),
-      {
-        url: `${RESEND_API_BASE}/inboxes`,
-        method: 'GET',
-        qs: { limit: 100 },
-        json: true,
-      },
-    );
-  } catch (error) {
-    handleResendApiError(this.getNode(), error);
-  }
-
-  const items = response?.data ?? [];
-  return items
-    .filter((item) => item?.id)
-    .map((item) => {
-      const parts: string[] = [];
-      if (item.name && item.name !== item.email_address) {
-        parts.push(item.name);
-      }
-      if (item.email_address) {
-        parts.push(item.email_address);
-      }
-      const displayName =
-        parts.length > 0 ? `${parts.join(' - ')} (${item.id})` : item.id;
-      return { name: displayName, value: item.id };
-    });
-}
-
-function getCurrentInboxId(
-  loadOptionsFunctions: ILoadOptionsFunctions,
-): string | undefined {
-  let value: unknown = loadOptionsFunctions.getCurrentNodeParameters()?.inboxId;
-  if (value === undefined) {
-    try {
-      value = loadOptionsFunctions.getCurrentNodeParameter('inboxId');
-    } catch {
-      return undefined;
-    }
-  }
-  if (value && typeof value === 'object' && 'value' in value) {
-    value = (value as { value: unknown }).value;
-  }
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.startsWith('=') || trimmed.includes('{{')) {
-    return undefined;
-  }
-  return trimmed;
-}
-
-export async function getInboxLabels(
-  this: ILoadOptionsFunctions,
-): Promise<INodePropertyOptions[]> {
-  const inboxId = getCurrentInboxId(this);
-  if (!inboxId) {
-    return [];
-  }
-
-  // The list labels endpoint is not paginated, so no limit is sent.
-  return loadDropdownOptions(
-    this,
-    `/inboxes/${encodeURIComponent(inboxId)}/labels`,
-    { paginated: false },
-  );
-}
-
 async function wrapForListSearch(
   loadOptionsFunctions: ILoadOptionsFunctions,
   loadOptionsMethod: () => Promise<INodePropertyOptions[]>,
@@ -498,8 +419,6 @@ export const getContactPropertiesListSearch =
 export const getContactsListSearch = createListSearch(getContacts);
 export const getDomainsListSearch = createListSearch(getDomains);
 export const getEmailsListSearch = createListSearch(getEmails);
-export const getInboxLabelsListSearch = createListSearch(getInboxLabels);
-export const getInboxesListSearch = createListSearch(getInboxes);
 export const getReceivedEmailsListSearch = createListSearch(getReceivedEmails);
 export const getSegmentsListSearch = createListSearch(getSegments);
 export const getSuppressionsListSearch = createListSearch(getSuppressions);
