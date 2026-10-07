@@ -38,16 +38,16 @@ The table below shows which endpoints are currently implemented:
 <details>
 <summary><strong>View all endpoints</strong></summary>
 
-| API Resource           | Endpoint              | Status  | Operations                                                                                                                                                    |
-| ---------------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Account**            | `/oauth/revoke`       | ✅ Full | Disconnect (OAuth2 credential only)                                                                                                                           |
-| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, Share, List Attachments, Get Attachment                                                           |
+| API Resource           | Endpoint              | Status | Operations                                                                                                                                                    |
+| ---------------------- | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Account**            | `/oauth`              | ✅ Full | Disconnect (OAuth2 credential only), List Grants, Revoke Grant                                                                                                |
+| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, Share, Get Metrics, List Attachments, Get Attachment                                              |
 | **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                                   |
 | **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Create Tracking Domain, Get Tracking Domain, List Tracking Domains, Delete Tracking Domain, Verify Tracking Domain |
 | **Templates**          | `/templates`          | ✅ Full | Create, List, Get, Update, Delete, Publish, Duplicate                                                                                                         |
-| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics                                              |
-| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send, Cancel, List Clicked Links                                                                                                                       |
-| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Delete                                                                                                                                     |
+| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics, Create Import, List Imports, Get Import     |
+| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send, Cancel, List Clicked Links, List Recipients                                                                          |
+| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Delete, Get Metrics                                                                                                                        |
 | **Suppressions**       | `/suppressions`       | ✅ Full | Create, List, Get, Delete, Batch Add, Batch Remove                                                                                                            |
 | **Topics**             | `/topics`             | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
 | **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
