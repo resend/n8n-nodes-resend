@@ -5,7 +5,7 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import { apiRequest, normalizeIdList } from '../../transport';
 
 const metricOptions = [
   { name: 'Bounce Rate', value: 'bounce_rate' },
@@ -170,17 +170,6 @@ interface MetricsOptions {
   metrics?: string[];
   startDate?: string;
   timezone?: string;
-}
-
-function normalizeIdList(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const ids = value
-    .split(',')
-    .map((id) => id.trim())
-    .filter((id) => id);
-  return ids.length ? ids.join(',') : undefined;
 }
 
 export async function execute(
