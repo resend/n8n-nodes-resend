@@ -494,15 +494,19 @@ interface ListOperation {
   execute(this: IExecuteFunctions): Promise<INodeExecutionData[]>;
 }
 
-export function createOperationRouter(
-  itemOps: Record<string, ItemOperation>,
-  listOps: Record<string, ListOperation> = {},
-): (
+export type OperationRouter = ((
   this: IExecuteFunctions,
   index: number,
   operation: string,
-) => Promise<INodeExecutionData[]> {
-  return async function execute(
+) => Promise<INodeExecutionData[]>) & {
+  readonly listOperations: ReadonlySet<string>;
+};
+
+export function createOperationRouter(
+  itemOps: Record<string, ItemOperation>,
+  listOps: Record<string, ListOperation> = {},
+): OperationRouter {
+  const execute = async function (
     this: IExecuteFunctions,
     index: number,
     operation: string,
@@ -520,4 +524,8 @@ export function createOperationRouter(
       `Unsupported operation: ${operation}`,
     );
   };
+
+  return Object.assign(execute, {
+    listOperations: new Set(Object.keys(listOps)) as ReadonlySet<string>,
+  });
 }
