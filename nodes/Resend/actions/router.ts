@@ -41,22 +41,33 @@ const resourceModules: Record<string, { execute: OperationRouter }> = {
 
 const LEGACY_WORKFLOWS_RESOURCE = 'workflows';
 
+function isListOperationAt(this: IExecuteFunctions, index: number): boolean {
+  try {
+    const resource = this.getNodeParameter('resource', index) as string;
+    const operation = this.getNodeParameter('operation', index) as string;
+    return (
+      resourceModules[resource]?.execute.listOperations.has(operation) ?? false
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function router(
   this: IExecuteFunctions,
 ): Promise<INodeExecutionData[][]> {
   const items = this.getInputData();
   const returnData: INodeExecutionData[] = [];
 
-  for (let i = 0; i < items.length; i++) {
-    // List operations have no per-item input: they resolve their parameters at
-    // item index 0 and return a whole collection, so running them once per input
-    // item would repeat the same API calls and emit duplicate output rows.
-    // Because of that we let item 0 decide: `resource`/`operation` are evaluated
-    // for the first item, and if that resolves to a list operation we run it once
-    // and stop. Per-item expressions on `resource`/`operation` are therefore not
-    // honoured for list operations (they still are for item operations).
-    let isListOperation = false;
+  // List operations have no per-item input: they resolve their parameters at
+  // item index 0 and return a whole collection, so running them once per input
+  // item would repeat the same API calls and emit duplicate output rows. Item 0
+  // decides: if its `resource`/`operation` resolve to a list operation, only
+  // item 0 is executed. Otherwise every item runs with its own resolved
+  // `resource`/`operation`.
+  const itemCount = isListOperationAt.call(this, 0) ? 1 : items.length;
 
+  for (let i = 0; i < itemCount; i++) {
     try {
       const resource = this.getNodeParameter('resource', i) as string;
       const operation = this.getNodeParameter('operation', i) as string;
@@ -80,8 +91,6 @@ export async function router(
           `Unknown resource: ${resource}`,
         );
       }
-
-      isListOperation = mod.execute.listOperations.has(operation);
 
       const executionData = await mod.execute.call(this, i, operation);
       returnData.push(...executionData);
@@ -107,10 +116,6 @@ export async function router(
       }
 
       returnData.push({ json: errorData, pairedItem: { item: i } });
-    }
-
-    if (isListOperation) {
-      break;
     }
   }
 

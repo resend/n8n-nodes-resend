@@ -70,6 +70,46 @@ describe('router', () => {
     expect(items).toHaveLength(3);
   });
 
+  it('runs every item when item 0 is an item operation, even if a later item resolves to a list operation', async () => {
+    const operations = ['get', 'list', 'get'];
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        resource: 'suppressions',
+        suppressionIdentifier: { mode: 'id', value: 'sup_1' },
+        returnAll: false,
+        limit: 50,
+      },
+      inputData: threeItems,
+      responses: [
+        { id: 'sup_1' },
+        { data: [{ id: 'sup_2' }], has_more: false },
+        { id: 'sup_3' },
+      ],
+    });
+    const getNodeParameter = context.getNodeParameter.bind(context);
+    context.getNodeParameter = ((
+      name: string,
+      itemIndex: number,
+      fallbackValue?: unknown,
+    ) =>
+      name === 'operation'
+        ? operations[itemIndex]
+        : getNodeParameter(
+            name,
+            itemIndex,
+            fallbackValue,
+          )) as typeof context.getNodeParameter;
+
+    const [items] = await router.call(context);
+
+    expect(httpRequest).toHaveBeenCalledTimes(3);
+    expect(items.map((item) => item.json.id)).toEqual([
+      'sup_1',
+      'sup_2',
+      'sup_3',
+    ]);
+  });
+
   it('produces a single error item when a list operation fails with continueOnFail', async () => {
     const executeSpy = vi
       .spyOn(suppressions, 'execute')

@@ -4,7 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import { apiRequest, normalizeIdList } from '../../transport';
 
 export const description: INodeProperties[] = [
   {
@@ -91,13 +91,10 @@ export async function execute(
     qs.metrics = options.metrics.join(',');
   }
 
-  const segmentIds = (options.segmentIds ?? '')
-    .split(',')
-    .map((segmentId) => segmentId.trim())
-    .filter((segmentId) => segmentId);
+  const segmentIds = normalizeIdList(options.segmentIds);
 
-  if (segmentIds.length) {
-    qs.segment_id = segmentIds.join(',');
+  if (segmentIds) {
+    qs.segment_id = segmentIds;
   }
 
   const response = await apiRequest.call(

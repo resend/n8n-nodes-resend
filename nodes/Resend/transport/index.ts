@@ -398,6 +398,13 @@ export function normalizeEmailList(
   return [];
 }
 
+export function normalizeIdList(
+  value: string | string[] | undefined,
+): string | undefined {
+  const ids = normalizeEmailList(value);
+  return ids.length ? ids.join(',') : undefined;
+}
+
 export function parseTemplateVariables(
   executeFunctions: IExecuteFunctions,
   variablesInput:
