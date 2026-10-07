@@ -148,12 +148,8 @@ describe('webhook events', () => {
     expect(mock.httpRequest).not.toHaveBeenCalled();
   });
 
-  it('registers the list operations as list operations', () => {
-    expect([...webhooks.execute.listOperations].sort()).toEqual([
-      'list',
-      'listEventAttempts',
-      'listEvents',
-    ]);
+  it('runs webhook-scoped event lists per item and only List once', () => {
+    expect([...webhooks.execute.listOperations]).toEqual(['list']);
   });
 
   it('offers every documented webhook event type', () => {

@@ -20,6 +20,8 @@ export const execute = createOperationRouter(
     rotateSigningSecret,
     getEvent,
     replayEvent,
+    listEvents,
+    listEventAttempts,
   },
-  { list, listEvents, listEventAttempts },
+  { list },
 );
