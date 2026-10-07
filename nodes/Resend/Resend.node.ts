@@ -61,7 +61,7 @@ export class Resend implements INodeType {
       dark: 'file:resend-icon-white.svg',
     },
     group: ['output'],
-    version: 1,
+    version: [1, 2],
     usableAsTool: true,
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
@@ -95,6 +95,18 @@ export class Resend implements INodeType {
     inputs: [NodeConnectionTypes.Main],
     outputs: [NodeConnectionTypes.Main],
     properties: [
+      {
+        displayName:
+          'This node uses version 1. Version 3.0 of the Resend package has breaking changes: the Workflow resource is now Automation, and the Tracking Domain operations were removed (use the Tracking Subdomain option on Domain Create/Update). Everything else keeps working. Add a new Resend node to get the latest version, and see the <a href="https://github.com/resend/n8n-nodes-resend#migrating-to-v300" target="_blank">migration guide</a>.',
+        name: 'versionOneNotice',
+        type: 'notice',
+        default: '',
+        displayOptions: {
+          show: {
+            '@version': [1],
+          },
+        },
+      },
       {
         displayName: 'Authentication',
         name: 'authentication',

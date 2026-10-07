@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="#installation">Installation</a> |
+  <a href="#migrating-to-v300">Migrating to v3</a> |
   <a href="#credentials">Credentials</a> |
   <a href="#human-in-the-loop">Human in the Loop</a> |
   <a href="#trigger-events">Trigger Events</a> |
@@ -29,12 +30,6 @@ The official node for [n8n](https://n8n.io) that integrates with the [Resend](ht
 
 > [!WARNING]
 > Audiences are deprecated in favor of Segments and won't be supported in this node. Please use Segments for contact grouping and targeting.
-
-> [!IMPORTANT]
-> **Breaking change — Workflow is now Automation.** Resend renamed this API from `/workflows` to `/automations`, so the node's **Workflow** resource was renamed to **Automation**. Existing nodes still set to the old resource fail with an error explaining the rename; to migrate, open the node, select the **Automation** resource, pick the operation again, and re-enter the ID in **Automation ID** (previously **Workflow ID**). The `List Run Steps` and `Get Run Step` operations were removed because those endpoints no longer exist — run steps are returned inline by **Get Run**.
-
-> [!IMPORTANT]
-> **Breaking change — tracking domain operations removed.** Resend no longer exposes the `/domains/{id}/tracking-domains` endpoints, so the **Create/Get/List/Delete/Verify Tracking Domain** operations were removed. Set the **Tracking Subdomain** option on **Domain → Create** or **Domain → Update** instead.
 
 The table below shows which endpoints are currently implemented:
 
@@ -60,6 +55,30 @@ The table below shows which endpoints are currently implemented:
 | **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                            |
 
 </details>
+
+## Migrating to v3.0.0
+
+Version 3.0.0 catches the node up with the current Resend API and contains breaking changes. Existing Resend nodes in your workflows keep **node version 1** and show a notice with these steps. New Resend nodes use **node version 2**. Nothing else differs between the two versions, so the fastest way to clear the notice is to add a new Resend node and copy your settings over.
+
+**Workflow is now Automation**
+
+Resend renamed this API from `/workflows` to `/automations` (the old endpoints return 405).
+
+1. Open the node and select the **Automation** resource.
+2. Pick the operation again and re-enter the ID in **Automation ID** (previously **Workflow ID**).
+3. **List Run Steps** and **Get Run Step** were removed because their endpoints no longer exist; run steps are returned by **Get Run**.
+
+**Tracking Domain operations removed**
+
+Resend no longer offers the `/domains/{id}/tracking-domains` endpoints, so **Create / Get / List / Delete / Verify Tracking Domain** were removed. Set the **Tracking Subdomain** option on **Domain → Create** or **Domain → Update** instead; click and open tracking use it once it is verified.
+
+**Behaviour changes to check**
+
+- **List operations run once.** Operations that list a whole collection (for example Contact → List, Email → List) now run once per execution instead of once per input item, so they no longer return duplicate rows. Lists scoped to an ID (Broadcast → List Clicked Links / List Recipients, Segment → List Contacts, Webhook → List Events / List Event Attempts, Automation → List Runs) still run once per input item.
+- **Automation → List Runs** now returns up to 50 runs unless **Return All** is on; previously it returned only the first page.
+- Lists that were silently capped at 50 (received emails, templates, topics, contact properties, events, automations, webhooks) now have **Return All** / **Limit**. The default limit is still 50.
+
+Nodes still set to a removed resource or operation fail with an error that explains what to change.
 
 ## Installation
 

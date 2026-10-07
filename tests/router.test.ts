@@ -248,6 +248,23 @@ describe('router', () => {
     );
   });
 
+  it('explains the removal of the tracking domain operations', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { resource: 'domains', operation: 'listTrackingDomains' },
+    });
+
+    const error = await router.call(context).catch((thrown) => thrown);
+
+    expect(error).toBeInstanceOf(NodeOperationError);
+    expect((error as NodeOperationError).message).toContain(
+      'Tracking Domain operations were removed',
+    );
+    expect((error as NodeOperationError).description).toContain(
+      'Tracking Subdomain',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('keeps the operation error description when continuing', async () => {
     const { context } = createExecuteMock({
       parameters: { resource: 'workflows' },

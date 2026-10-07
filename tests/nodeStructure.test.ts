@@ -73,7 +73,7 @@ describe('node description', () => {
   it('declares the node identity used by n8n', () => {
     expect(node.description.name).toBe('resend');
     expect(node.description.displayName).toBe('Resend');
-    expect(node.description.version).toBe(1);
+    expect(node.description.version).toEqual([1, 2]);
     expect(node.description.usableAsTool).toBe(true);
   });
 
@@ -92,8 +92,16 @@ describe('node description', () => {
     ]);
   });
 
-  it('starts with the authentication selector', () => {
-    const [first] = node.description.properties;
+  it('shows a migration notice only on version 1 nodes', () => {
+    const [notice] = node.description.properties;
+
+    expect(notice.type).toBe('notice');
+    expect(notice.displayOptions?.show?.['@version']).toEqual([1]);
+    expect(notice.displayName).toContain('migration guide');
+  });
+
+  it('starts with the authentication selector after the version notice', () => {
+    const [, first] = node.description.properties;
 
     expect(first.name).toBe('authentication');
     expect(first.default).toBe('oAuth2');

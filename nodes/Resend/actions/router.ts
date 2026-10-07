@@ -41,6 +41,14 @@ const resourceModules: Record<string, { execute: OperationRouter }> = {
 
 const LEGACY_WORKFLOWS_RESOURCE = 'workflows';
 
+const REMOVED_TRACKING_DOMAIN_OPERATIONS = new Set([
+  'createTrackingDomain',
+  'getTrackingDomain',
+  'listTrackingDomains',
+  'deleteTrackingDomain',
+  'verifyTrackingDomain',
+]);
+
 function isListOperationAt(this: IExecuteFunctions, index: number): boolean {
   try {
     const resource = this.getNodeParameter('resource', index) as string;
@@ -89,6 +97,21 @@ export async function router(
         throw new NodeOperationError(
           this.getNode(),
           `Unknown resource: ${resource}`,
+        );
+      }
+
+      if (
+        resource === 'domains' &&
+        REMOVED_TRACKING_DOMAIN_OPERATIONS.has(operation)
+      ) {
+        throw new NodeOperationError(
+          this.getNode(),
+          'The Tracking Domain operations were removed, because Resend no longer offers the /domains/{id}/tracking-domains endpoints',
+          {
+            itemIndex: i,
+            description:
+              'Set the Tracking Subdomain option on Domain → Create or Domain → Update instead. Click and open tracking use that subdomain once it is verified.',
+          },
         );
       }
 
