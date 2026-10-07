@@ -98,6 +98,19 @@ const cases: RequestCase[] = [
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
+    operation: 'listClickedLinks',
+    parameters: {
+      ...listParameters,
+      broadcastIdClickedLinks: locator('bc 1'),
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc%201/clicked-links',
+    qs: listQuery,
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
     operation: 'send',
     parameters: {
       broadcastId: locator('bc_1'),

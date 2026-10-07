@@ -4,6 +4,7 @@ import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
 import * as list from './list.operation';
+import * as listClickedLinks from './listClickedLinks.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
 
@@ -55,6 +56,13 @@ export const operations: INodeProperties[] = [
         action: 'List all broadcasts',
       },
       {
+        name: 'List Clicked Links',
+        value: 'listClickedLinks',
+        description:
+          'Get the links clicked in a broadcast along with total and unique click counts for each URL',
+        action: 'List broadcast clicked links',
+      },
+      {
         name: 'Send',
         value: 'send',
         description:
@@ -82,7 +90,17 @@ export const descriptions: INodeProperties[] = [
   ...del.description,
   ...send.description,
   ...cancel.description,
+  ...listClickedLinks.description,
 ];
 
 export { execute } from './execute';
-export { cancel, create, del as delete, get, list, send, update };
+export {
+  cancel,
+  create,
+  del as delete,
+  get,
+  list,
+  listClickedLinks,
+  send,
+  update,
+};
