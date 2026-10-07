@@ -4,7 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { createListExecutionData, requestList } from '../../transport';
+import { requestList } from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -168,15 +168,20 @@ export const description: INodeProperties[] = [
 
 export async function execute(
   this: IExecuteFunctions,
+  index: number,
 ): Promise<INodeExecutionData[]> {
-  const broadcastId = resolveDynamicIdValue(this, 'broadcastIdRecipients', 0);
-  const recipientType = this.getNodeParameter('recipientType', 0) as string;
+  const broadcastId = resolveDynamicIdValue(
+    this,
+    'broadcastIdRecipients',
+    index,
+  );
+  const recipientType = this.getNodeParameter('recipientType', index) as string;
   const recipientEmail = this.getNodeParameter(
     'recipientEmail',
-    0,
+    index,
     '',
   ) as string;
-  const bounceType = this.getNodeParameter('bounceType', 0, '') as string;
+  const bounceType = this.getNodeParameter('bounceType', index, '') as string;
 
   const extraQs: IDataObject = { type: recipientType };
   if (recipientEmail) {
@@ -190,6 +195,7 @@ export async function execute(
     this,
     `/broadcasts/${encodeURIComponent(broadcastId)}/recipients`,
     extraQs,
+    index,
   );
-  return createListExecutionData.call(this, items);
+  return items.map((item) => ({ json: item, pairedItem: { item: index } }));
 }

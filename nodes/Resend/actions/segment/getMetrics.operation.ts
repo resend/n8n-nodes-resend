@@ -63,7 +63,7 @@ export const description: INodeProperties[] = [
         name: 'segmentIds',
         type: 'string',
         default: '',
-        placeholder: 'seg_123456,seg_789012',
+        placeholder: 'e169aa45-1ecf-4183-9955-b1499d5701d3,…',
         description:
           'Comma-separated list of segment IDs. Narrows the totals (and data, when requested) to just these segments, without double-counting contacts that belong to more than one.',
       },

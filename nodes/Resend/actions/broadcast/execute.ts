@@ -20,6 +20,8 @@ export const execute = createOperationRouter(
     duplicate,
     send,
     cancel,
+    listClickedLinks,
+    listRecipients,
   },
-  { list, listClickedLinks, listRecipients },
+  { list },
 );
