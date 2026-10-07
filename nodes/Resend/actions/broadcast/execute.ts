@@ -6,6 +6,7 @@ import * as del from './delete.operation';
 import * as get from './get.operation';
 import * as list from './list.operation';
 import * as listClickedLinks from './listClickedLinks.operation';
+import * as listRecipients from './listRecipients.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
 
@@ -18,5 +19,5 @@ export const execute = createOperationRouter(
     send,
     cancel,
   },
-  { list, listClickedLinks },
+  { list, listClickedLinks, listRecipients },
 );
