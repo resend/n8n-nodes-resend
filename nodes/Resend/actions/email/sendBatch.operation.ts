@@ -479,14 +479,12 @@ export async function execute(
     return emailObj;
   });
 
-  const qs: Record<string, string> = {};
-  if (batchOptions.validation_mode) {
-    qs.validation_mode = batchOptions.validation_mode;
-  }
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  if (batchOptions.validation_mode) {
+    headers['x-batch-validation'] = batchOptions.validation_mode;
+  }
   if (batchOptions.idempotency_key) {
     headers['Idempotency-Key'] = batchOptions.idempotency_key;
   }
@@ -500,7 +498,6 @@ export async function execute(
         url: `${RESEND_API_BASE}/emails/batch`,
         method: 'POST',
         headers,
-        qs: Object.keys(qs).length ? qs : undefined,
         body: emails,
         json: true,
       },

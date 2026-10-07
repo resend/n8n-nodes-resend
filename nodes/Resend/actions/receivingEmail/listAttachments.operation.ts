@@ -1,10 +1,9 @@
 import type {
-  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import { requestList } from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -63,27 +62,14 @@ export async function execute(
   index: number,
 ): Promise<INodeExecutionData[]> {
   const emailId = resolveDynamicIdValue(this, 'receivedEmailId', index);
-  const returnAll = this.getNodeParameter('returnAll', index, false) as boolean;
-  const limit = this.getNodeParameter('limit', index, 50) as number;
 
-  const qs: IDataObject = {};
-  if (!returnAll) {
-    qs.limit = limit;
-  }
-
-  const response = await apiRequest.call(
+  const items = await requestList.call(
     this,
-    'GET',
     `/emails/receiving/${encodeURIComponent(emailId)}/attachments`,
-    undefined,
-    qs,
   );
 
-  const items = (response as { data?: IDataObject[] }).data ?? [];
-  const inputData = this.getInputData();
-
-  return items.map((item, i) => ({
+  return items.map((item) => ({
     json: item,
-    pairedItem: { item: i < inputData.length ? i : 0 },
+    pairedItem: { item: index },
   }));
 }

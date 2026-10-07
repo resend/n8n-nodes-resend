@@ -4,6 +4,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 
 export const description: INodeProperties[] = [
@@ -73,8 +74,20 @@ export async function execute(
 
   const body: IDataObject = { key, type };
 
-  if (fallbackValue) {
-    body.fallback_value = fallbackValue;
+  if (fallbackValue !== '' && fallbackValue !== undefined) {
+    if (type === 'number') {
+      const numericFallback = Number(fallbackValue);
+      if (Number.isNaN(numericFallback)) {
+        throw new NodeOperationError(
+          this.getNode(),
+          'Fallback Value must be a number for number properties',
+          { itemIndex: index },
+        );
+      }
+      body.fallback_value = numericFallback;
+    } else {
+      body.fallback_value = fallbackValue;
+    }
   }
 
   const response = await apiRequest.call(

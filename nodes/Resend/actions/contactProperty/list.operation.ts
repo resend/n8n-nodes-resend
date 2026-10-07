@@ -5,7 +5,38 @@ import type {
 } from 'n8n-workflow';
 import { createListExecutionData, requestList } from '../../transport';
 
-export const description: INodeProperties[] = [];
+export const description: INodeProperties[] = [
+  {
+    displayName: 'Return All',
+    name: 'returnAll',
+    type: 'boolean',
+    default: false,
+    displayOptions: {
+      show: {
+        resource: ['contactProperties'],
+        operation: ['list'],
+      },
+    },
+    description: 'Whether to return all results or only up to a given limit',
+  },
+  {
+    displayName: 'Limit',
+    name: 'limit',
+    type: 'number',
+    default: 50,
+    typeOptions: {
+      minValue: 1,
+    },
+    displayOptions: {
+      show: {
+        resource: ['contactProperties'],
+        operation: ['list'],
+        returnAll: [false],
+      },
+    },
+    description: 'Max number of results to return',
+  },
+];
 
 export async function execute(
   this: IExecuteFunctions,
