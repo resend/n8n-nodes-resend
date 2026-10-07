@@ -44,7 +44,7 @@ const LEGACY_WORKFLOWS_RESOURCE = 'workflows';
 function isListOperationAt(this: IExecuteFunctions, index: number): boolean {
   try {
     const resource = this.getNodeParameter('resource', index) as string;
-    const operation = this.getNodeParameter('operation', index) as string;
+    const operation = this.getNodeParameter('operation', index, '') as string;
     return (
       resourceModules[resource]?.execute.listOperations.has(operation) ?? false
     );
@@ -70,7 +70,7 @@ export async function router(
   for (let i = 0; i < itemCount; i++) {
     try {
       const resource = this.getNodeParameter('resource', i) as string;
-      const operation = this.getNodeParameter('operation', i) as string;
+      const operation = this.getNodeParameter('operation', i, '') as string;
 
       const mod = resourceModules[resource];
       if (!mod) {

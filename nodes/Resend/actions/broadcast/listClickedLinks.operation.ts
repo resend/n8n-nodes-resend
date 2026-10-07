@@ -3,7 +3,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { createListExecutionData, requestList } from '../../transport';
+import { requestList } from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -59,12 +59,19 @@ export const description: INodeProperties[] = [
 
 export async function execute(
   this: IExecuteFunctions,
+  index: number,
 ): Promise<INodeExecutionData[]> {
-  const broadcastId = resolveDynamicIdValue(this, 'broadcastIdClickedLinks', 0);
+  const broadcastId = resolveDynamicIdValue(
+    this,
+    'broadcastIdClickedLinks',
+    index,
+  );
 
   const items = await requestList.call(
     this,
     `/broadcasts/${encodeURIComponent(broadcastId)}/clicked-links`,
+    undefined,
+    index,
   );
-  return createListExecutionData.call(this, items);
+  return items.map((item) => ({ json: item, pairedItem: { item: index } }));
 }

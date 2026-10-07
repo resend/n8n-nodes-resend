@@ -18,6 +18,8 @@ export const execute = createOperationRouter(
     delete: del,
     send,
     cancel,
+    listClickedLinks,
+    listRecipients,
   },
-  { list, listClickedLinks, listRecipients },
+  { list },
 );

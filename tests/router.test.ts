@@ -140,9 +140,82 @@ describe('router', () => {
     );
   });
 
+  it('runs broadcast clicked links and recipients once per input item', async () => {
+    for (const [operation, field, path] of [
+      ['listClickedLinks', 'broadcastIdClickedLinks', 'clicked-links'],
+      ['listRecipients', 'broadcastIdRecipients', 'recipients'],
+    ]) {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: {
+          resource: 'broadcasts',
+          operation,
+          recipientType: 'sent',
+          returnAll: false,
+          limit: 50,
+        },
+        inputData: threeItems,
+        response: { data: [{ id: 'row' }], has_more: false },
+      });
+      const getNodeParameter = context.getNodeParameter.bind(context);
+      context.getNodeParameter = ((
+        name: string,
+        itemIndex: number,
+        fallbackValue?: unknown,
+      ) =>
+        name === field
+          ? { mode: 'id', value: `bc_${itemIndex}` }
+          : getNodeParameter(
+              name,
+              itemIndex,
+              fallbackValue,
+            )) as typeof context.getNodeParameter;
+
+      const [items] = await router.call(context);
+
+      expect(httpRequest).toHaveBeenCalledTimes(3);
+      expect(
+        httpRequest.mock.calls.map(
+          (call) => (call as unknown as [string, { url: string }])[1].url,
+        ),
+      ).toEqual(
+        [0, 1, 2].map(
+          (i) => `https://api.resend.com/broadcasts/bc_${i}/${path}`,
+        ),
+      );
+      expect(items.map((item) => item.pairedItem)).toEqual([
+        { item: 0 },
+        { item: 1 },
+        { item: 2 },
+      ]);
+    }
+  });
+
+  it('pages through automation runs when returning all', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        resource: 'automations',
+        operation: 'listRuns',
+        automationId: 'auto_1',
+        returnAll: true,
+      },
+      responses: [
+        { data: [{ id: 'run_1' }], has_more: true },
+        { data: [{ id: 'run_2' }], has_more: false },
+      ],
+    });
+
+    const [items] = await router.call(context);
+
+    expect(httpRequest).toHaveBeenCalledTimes(2);
+    expect(
+      (httpRequest.mock.calls[1] as unknown as [string, { qs: unknown }])[1].qs,
+    ).toMatchObject({ after: 'run_1' });
+    expect(items.map((item) => item.json.id)).toEqual(['run_1', 'run_2']);
+  });
+
   it('explains the rename for the legacy workflows resource', async () => {
     const { context } = createExecuteMock({
-      parameters: { resource: 'workflows', operation: 'list' },
+      parameters: { resource: 'workflows' },
     });
 
     const error = await router.call(context).catch((thrown) => thrown);
@@ -158,7 +231,7 @@ describe('router', () => {
 
   it('keeps the operation error description when continuing', async () => {
     const { context } = createExecuteMock({
-      parameters: { resource: 'workflows', operation: 'list' },
+      parameters: { resource: 'workflows' },
       continueOnFail: true,
     });
 

@@ -315,9 +315,14 @@ export async function requestList(
   this: IExecuteFunctions,
   endpoint: string,
   extraQs?: IDataObject,
+  itemIndex = 0,
 ): Promise<IDataObject[]> {
-  const returnAll = this.getNodeParameter('returnAll', 0, false) as boolean;
-  const limit = this.getNodeParameter('limit', 0, 50) as number;
+  const returnAll = this.getNodeParameter(
+    'returnAll',
+    itemIndex,
+    false,
+  ) as boolean;
+  const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
   const targetLimit = returnAll ? Number.POSITIVE_INFINITY : (limit ?? 50);
   const pageSize = Math.min(targetLimit, 100);
@@ -339,7 +344,7 @@ export async function requestList(
         },
       );
     } catch (error) {
-      handleResendApiError(this.getNode(), error);
+      handleResendApiError(this.getNode(), error, itemIndex);
     }
   };
 
