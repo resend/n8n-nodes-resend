@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="#installation">Installation</a> |
+  <a href="#migrating-to-v300">Migrating to v3</a> |
   <a href="#credentials">Credentials</a> |
   <a href="#human-in-the-loop">Human in the Loop</a> |
   <a href="#trigger-events">Trigger Events</a> |
@@ -29,12 +30,6 @@ The official node for [n8n](https://n8n.io) that integrates with the [Resend](ht
 
 > [!WARNING]
 > Audiences are deprecated in favor of Segments and won't be supported in this node. Please use Segments for contact grouping and targeting.
-
-> [!IMPORTANT]
-> **Breaking change — Workflow is now Automation.** Resend renamed this API from `/workflows` to `/automations`, so the node's **Workflow** resource was renamed to **Automation**. Existing nodes still set to the old resource fail with an error explaining the rename; to migrate, open the node, select the **Automation** resource, pick the operation again, and re-enter the ID in **Automation ID** (previously **Workflow ID**). The `List Run Steps` and `Get Run Step` operations were removed because those endpoints no longer exist — run steps are returned inline by **Get Run**.
-
-> [!IMPORTANT]
-> **Breaking change — tracking domain operations removed.** Resend no longer exposes the `/domains/{id}/tracking-domains` endpoints, so the **Create/Get/List/Delete/Verify Tracking Domain** operations were removed. Set the **Tracking Subdomain** option on **Domain → Create** or **Domain → Update** instead.
 
 The table below shows which endpoints are currently implemented:
 
@@ -60,6 +55,17 @@ The table below shows which endpoints are currently implemented:
 | **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                            |
 
 </details>
+
+## Migrating to v3.0.0
+
+v3.0.0 has breaking changes. Existing Resend nodes show a notice linking here; new nodes don't.
+
+| Change | What to do |
+| --- | --- |
+| **Workflow** resource renamed to **Automation** | Select **Automation**, pick the operation again, re-enter the ID in **Automation ID**. **List Run Steps** / **Get Run Step** are gone; use **Get Run**. |
+| **Tracking Domain** operations removed | Use the **Tracking Subdomain** option on **Domain → Create / Update**. |
+| List operations (e.g. **Contact → List**) run once per execution, not once per input item | If you need one result set per input item, put the node in a **Loop Over Items**. Lists that take an ID (e.g. **Segment → List Contacts**) still run per item. |
+| **Automation → List Runs** returns up to 50 runs | Turn on **Return All** to get every run. |
 
 ## Installation
 

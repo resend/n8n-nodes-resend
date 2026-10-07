@@ -61,7 +61,7 @@ export class Resend implements INodeType {
       dark: 'file:resend-icon-white.svg',
     },
     group: ['output'],
-    version: 1,
+    version: [1, 2],
     usableAsTool: true,
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
@@ -95,6 +95,18 @@ export class Resend implements INodeType {
     inputs: [NodeConnectionTypes.Main],
     outputs: [NodeConnectionTypes.Main],
     properties: [
+      {
+        displayName:
+          'Resend 3.0 has breaking changes: Workflow is now Automation, Tracking Domain operations were removed, and list operations run once per execution. <a href="https://github.com/resend/n8n-nodes-resend#migrating-to-v300" target="_blank">See what to update</a>.',
+        name: 'versionOneNotice',
+        type: 'notice',
+        default: '',
+        displayOptions: {
+          show: {
+            '@version': [1],
+          },
+        },
+      },
       {
         displayName: 'Authentication',
         name: 'authentication',
