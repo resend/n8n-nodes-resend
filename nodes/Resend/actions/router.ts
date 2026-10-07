@@ -12,6 +12,9 @@ import * as contactProperties from './contactProperty';
 import * as domains from './domain';
 import * as email from './email';
 import * as events from './event';
+import * as inboxes from './inbox';
+import * as inboxDrafts from './inboxDraft';
+import * as inboxThreads from './inboxThread';
 import * as logs from './log';
 import * as receivingEmails from './receivingEmail';
 import * as segments from './segment';
@@ -36,6 +39,9 @@ const resourceModules: Record<string, { execute: typeof email.execute }> = {
   receivingEmails,
   workflows,
   events,
+  inboxes,
+  inboxThreads,
+  inboxDrafts,
   logs,
 };
 

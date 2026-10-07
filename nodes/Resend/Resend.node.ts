@@ -11,6 +11,9 @@ import * as contactProperties from './actions/contactProperty';
 import * as domains from './actions/domain';
 import * as email from './actions/email';
 import * as events from './actions/event';
+import * as inboxes from './actions/inbox';
+import * as inboxDrafts from './actions/inboxDraft';
+import * as inboxThreads from './actions/inboxThread';
 import * as logs from './actions/log';
 import * as receivingEmails from './actions/receivingEmail';
 import { router } from './actions/router';
@@ -31,6 +34,10 @@ import {
   getDomainsListSearch,
   getEmails,
   getEmailsListSearch,
+  getInboxes,
+  getInboxesListSearch,
+  getInboxLabels,
+  getInboxLabelsListSearch,
   getReceivedEmails,
   getReceivedEmailsListSearch,
   getSegments,
@@ -66,7 +73,7 @@ export class Resend implements INodeType {
     description:
       'Send emails, manage contacts, create broadcasts, handle templates, domains, segments, topics, and webhooks using the Resend email platform',
     subtitle:
-      '={{(() => { const resourceLabels = { account: "account", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", workflows: "workflow", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step", batchAdd: "batch add", batchRemove: "batch remove" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
+      '={{(() => { const resourceLabels = { account: "account", broadcasts: "broadcast", contacts: "contact", contactProperties: "contact property", domains: "domain", email: "email", logs: "log", receivingEmails: "received email", inboxes: "inbox", inboxThreads: "inbox thread", inboxDrafts: "inbox draft", workflows: "workflow", events: "event", segments: "segment", suppressions: "suppression", templates: "template", topics: "topic", webhooks: "webhook" }; const operationLabels = { retrieve: "get", sendBatch: "send batch", listAttachments: "list attachments", getAttachment: "get attachment", addToSegment: "add to segment", listSegments: "list segments", removeFromSegment: "remove from segment", getTopics: "get topics", updateTopics: "update topics", listRuns: "list runs", getRun: "get run", listRunSteps: "list run steps", getRunStep: "get run step", batchAdd: "batch add", batchRemove: "batch remove", getAgent: "get agent settings", updateAgent: "update agent settings", createLabel: "create label", listLabels: "list labels", updateLabel: "update label", deleteLabel: "delete label", listEmails: "list emails", getEmail: "get email" }; const resource = $parameter["resource"]; const operation = $parameter["operation"]; const resourceLabel = resourceLabels[resource] ?? resource; const operationLabel = operationLabels[operation] ?? operation; return operationLabel + ": " + resourceLabel; })() }}',
     defaults: {
       name: 'Resend',
     },
@@ -163,6 +170,23 @@ export class Resend implements INodeType {
               'Create, send, retrieve, update, or delete events for triggering workflows (private alpha)',
           },
           {
+            name: 'Inbox',
+            value: 'inboxes',
+            description:
+              'Create, update, delete, or list inboxes, manage their labels, and configure the inbox AI agent (beta)',
+          },
+          {
+            name: 'Inbox Draft',
+            value: 'inboxDrafts',
+            description: 'Create, edit, and send unsent inbox drafts (beta)',
+          },
+          {
+            name: 'Inbox Thread',
+            value: 'inboxThreads',
+            description:
+              'Read, organize, reply to, and forward inbox conversation threads (beta)',
+          },
+          {
             name: 'Log',
             value: 'logs',
             description:
@@ -228,6 +252,9 @@ export class Resend implements INodeType {
       ...receivingEmails.descriptions,
       ...workflows.descriptions,
       ...events.descriptions,
+      ...inboxes.descriptions,
+      ...inboxThreads.descriptions,
+      ...inboxDrafts.descriptions,
       ...logs.descriptions,
     ],
   };
@@ -239,6 +266,8 @@ export class Resend implements INodeType {
       getContacts,
       getDomains,
       getEmails,
+      getInboxes,
+      getInboxLabels,
       getReceivedEmails,
       getSegments,
       getSuppressions,
@@ -253,6 +282,8 @@ export class Resend implements INodeType {
       getContacts: getContactsListSearch,
       getDomains: getDomainsListSearch,
       getEmails: getEmailsListSearch,
+      getInboxes: getInboxesListSearch,
+      getInboxLabels: getInboxLabelsListSearch,
       getReceivedEmails: getReceivedEmailsListSearch,
       getSegments: getSegmentsListSearch,
       getSuppressions: getSuppressionsListSearch,

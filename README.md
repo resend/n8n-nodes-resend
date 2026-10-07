@@ -50,6 +50,9 @@ The table below shows which endpoints are currently implemented:
 | **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
 | **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
 | **Events**             | `/events`             | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
+| **Inboxes** (beta)     | `/inboxes`            | ✅ Full | Create, List, Get, Update, Delete, Get Agent Settings, Update Agent Settings, Create Label, List Labels, Update Label, Delete Label                           |
+| **Inbox Threads** (beta) | `/inboxes/{id}/threads` | ✅ Full | List, Get, Update, Delete, List Emails, Get Email, Reply, Forward                                                                                             |
+| **Inbox Drafts** (beta) | `/inboxes/{id}/drafts` | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
 | **Workflows**          | `/workflows`          | ✅ Full | Create, List, Get, Update, Delete, List Runs, Get Run, List Run Steps, Get Run Step                                                                           |
 | **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                                |
 
