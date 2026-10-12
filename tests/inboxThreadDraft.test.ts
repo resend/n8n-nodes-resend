@@ -55,6 +55,55 @@ const cases: RequestCase[] = [
     },
   },
   {
+    name: 'thread search',
+    execute: inboxThreads.execute,
+    operation: 'search',
+    parameters: {
+      ...inbox,
+      ...list,
+      inboxThreadSearchQuery: ' invoice -draft ',
+      inboxThreadSearchFilters: {
+        from: 'isabella@example.com, carolina@example.com',
+        to: 'support@example.com',
+        cc: 'cc@example.com',
+        bcc: 'bcc@example.com',
+        hasAttachment: 'true',
+        startDate: '2026-09-01',
+        endDate: ' 2026-09-30 ',
+        folders: ['inbox', 'sent'],
+        labels: ['lbl_1'],
+        read: 'true',
+      },
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads/search`,
+    qs: {
+      limit: 10,
+      query: 'invoice -draft',
+      from: 'isabella@example.com,carolina@example.com',
+      to: 'support@example.com',
+      cc: 'cc@example.com',
+      bcc: 'bcc@example.com',
+      has_attachment: 'true',
+      start_date: '2026-09-01',
+      end_date: '2026-09-30',
+      folders: 'inbox,sent',
+      labels: 'lbl_1',
+      read: 'true',
+    },
+  },
+  {
+    name: 'thread search without filters',
+    execute: inboxThreads.execute,
+    operation: 'search',
+    parameters: { ...inbox, ...list },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads/search`,
+    qs: { limit: 10 },
+  },
+  {
     name: 'thread get',
     execute: inboxThreads.execute,
     operation: 'get',
@@ -305,6 +354,36 @@ describe('inbox thread and draft requests', () => {
     await expect(
       inboxThreads.execute.call(context, 0, 'update'),
     ).rejects.toThrow('at most 10 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a search query over 256 characters', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchQuery: 'a'.repeat(257),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('Query must be at most 256 characters');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects more than 20 search senders', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchFilters: {
+          from: Array.from({ length: 21 }, (_, i) => `s${i}`).join(','),
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('From accepts at most 20 values');
     expect(httpRequest).not.toHaveBeenCalled();
   });
 

@@ -7,6 +7,7 @@ import * as getEmail from './getEmail.operation';
 import * as list from './list.operation';
 import * as listEmails from './listEmails.operation';
 import * as reply from './reply.operation';
+import * as search from './search.operation';
 import * as update from './update.operation';
 
 export { execute } from './execute';
@@ -18,6 +19,7 @@ export {
   list,
   listEmails,
   reply,
+  search,
   update,
 };
 
@@ -77,6 +79,13 @@ export const operations: INodeProperties[] = [
         action: 'Reply to an inbox thread email',
       },
       {
+        name: 'Search',
+        value: 'search',
+        description:
+          'Find threads by the text of their emails, who sent or received them, whether they have attachments, and their dates',
+        action: 'Search inbox threads',
+      },
+      {
         name: 'Update',
         value: 'update',
         description:
@@ -98,4 +107,5 @@ export const descriptions: INodeProperties[] = [
   ...getEmail.description,
   ...reply.description,
   ...forward.description,
+  ...search.description,
 ];
