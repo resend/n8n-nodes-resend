@@ -37,6 +37,22 @@ export const description: INodeProperties[] = [
     options: [
       bccField,
       ccField,
+      {
+        displayName: 'Clear Fields',
+        name: 'clearFields',
+        type: 'multiOptions',
+        default: [],
+        options: [
+          { name: 'BCC', value: 'bcc' },
+          { name: 'CC', value: 'cc' },
+          { name: 'HTML', value: 'html' },
+          { name: 'Subject', value: 'subject' },
+          { name: 'Text', value: 'text' },
+          { name: 'To', value: 'to' },
+        ],
+        description:
+          'Fields to clear on the draft. Overrides a value set for the same field.',
+      },
       htmlField,
       {
         displayName: 'Subject',
@@ -72,11 +88,16 @@ export async function execute(
   assignRecipients(body, fields, ['to', 'cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, fields, ['subject', 'html', 'text']);
+  if (Array.isArray(fields.clearFields)) {
+    for (const key of fields.clearFields as string[]) {
+      body[key] = null;
+    }
+  }
 
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'At least one of To, CC, BCC, Subject, HTML, or Text must be set',
+      'At least one of To, CC, BCC, Subject, HTML, Text, or Clear Fields must be set',
       { itemIndex: index },
     );
   }

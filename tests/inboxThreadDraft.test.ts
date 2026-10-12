@@ -481,6 +481,23 @@ describe('inbox thread and draft requests', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('clears draft fields with null', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          subject: 'Kept?',
+          clearFields: ['subject', 'cc'],
+        },
+      },
+    });
+    await inboxDrafts.execute.call(context, 0, 'update');
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      subject: null,
+      cc: null,
+    });
+  });
+
   it('runs inbox-scoped lists once per item', () => {
     expect([...inboxThreads.execute.listOperations]).toEqual([]);
     expect([...inboxDrafts.execute.listOperations]).toEqual([]);
