@@ -127,11 +127,11 @@ const cases: RequestCase[] = [
     parameters: {
       ...inbox,
       inboxLabelName: 'Urgent',
-      inboxLabelCreateFields: { color: 'crimson' },
+      inboxLabelCreateFields: { color: '#e5484d' },
     },
     method: 'POST',
     endpoint: '/inboxes/inbox%201/labels',
-    body: { name: 'Urgent', color: 'crimson' },
+    body: { name: 'Urgent', color: '#e5484d' },
   },
   {
     operation: 'listLabels',
@@ -142,10 +142,10 @@ const cases: RequestCase[] = [
   },
   {
     operation: 'updateLabel',
-    parameters: { ...label, inboxLabelUpdateFields: { color: 'orange' } },
+    parameters: { ...label, inboxLabelUpdateFields: { color: '#F76B15' } },
     method: 'PATCH',
     endpoint: '/inboxes/inbox%201/labels/label%2F1',
-    body: { color: 'orange' },
+    body: { color: '#F76B15' },
   },
   {
     operation: 'deleteLabel',
@@ -217,6 +217,39 @@ describe('inbox operation behavior', () => {
     );
     expect(httpRequest).not.toHaveBeenCalled();
   });
+
+  it('clears the from name with an empty string', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxUpdateFields: { clearFromName: true, fromName: 'Ignored' },
+      },
+      response: { object: 'inbox', id: 'inbox 1' },
+    });
+
+    await inboxes.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ from_name: '' });
+  });
+
+  it.each(['createLabel', 'updateLabel'])(
+    'rejects %s with a color that is not #RRGGBB',
+    async (operation) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: {
+          ...label,
+          inboxLabelName: 'Urgent',
+          inboxLabelCreateFields: { color: 'crimson' },
+          inboxLabelUpdateFields: { color: '#FFF' },
+        },
+      });
+
+      await expect(inboxes.execute.call(context, 0, operation)).rejects.toThrow(
+        'Color must be a #RRGGBB hex color',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects create when the email address resolves to empty', async () => {
     const { context, httpRequest } = createExecuteMock({

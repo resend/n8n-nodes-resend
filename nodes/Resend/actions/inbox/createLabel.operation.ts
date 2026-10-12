@@ -5,7 +5,12 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
-import { inboxIdField, inboxPath, LABEL_COLOR_OPTIONS } from './fields';
+import {
+  inboxIdField,
+  inboxPath,
+  labelColorOption,
+  readLabelColor,
+} from './fields';
 
 export const description: INodeProperties[] = [
   inboxIdField('createLabel', 'The inbox to create the label in'),
@@ -37,14 +42,9 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
-      {
-        displayName: 'Color',
-        name: 'color',
-        type: 'options',
-        default: 'cyan',
-        options: LABEL_COLOR_OPTIONS,
-        description: 'The color of the label',
-      },
+      labelColorOption(
+        'The color of the label, as a #RRGGBB hex color. It is stored in uppercase. When omitted, a random color from the dashboard palette is used.',
+      ),
     ],
   },
 ];
@@ -60,8 +60,9 @@ export async function execute(
 
   const body: IDataObject = { name };
 
-  if (fields.color) {
-    body.color = fields.color;
+  const color = readLabelColor(this, fields.color, index);
+  if (color) {
+    body.color = color;
   }
 
   const response = await apiRequest.call(

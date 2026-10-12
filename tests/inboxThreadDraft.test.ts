@@ -39,15 +39,20 @@ const cases: RequestCase[] = [
       ...inbox,
       ...list,
       inboxThreadFilters: {
-        folder: 'archive',
-        label: locator('lbl_1'),
-        query: ' refund ',
+        folders: ['inbox', 'archive'],
+        labels: ['lbl_1', 'lbl_2'],
+        read: 'false',
       },
     },
     response: { data: [] },
     method: 'GET',
     endpoint: `${base}/threads`,
-    qs: { limit: 10, folder: 'archive', label: 'lbl_1', query: 'refund' },
+    qs: {
+      limit: 10,
+      folders: 'inbox,archive',
+      labels: 'lbl_1,lbl_2',
+      read: 'false',
+    },
   },
   {
     name: 'thread get',
@@ -66,12 +71,18 @@ const cases: RequestCase[] = [
       inboxThreadUpdateFields: {
         read: false,
         folder: 'spam',
-        labelId: locator('lbl_2'),
+        addLabelIds: ['lbl_2'],
+        removeLabelIds: 'lbl_3, lbl_4',
       },
     },
     method: 'PATCH',
     endpoint: `${base}/threads/thr%2F1`,
-    body: { read: false, folder: 'spam', label_id: 'lbl_2' },
+    body: {
+      read: false,
+      folder: 'spam',
+      add_label_ids: ['lbl_2'],
+      remove_label_ids: ['lbl_3', 'lbl_4'],
+    },
   },
   {
     name: 'thread delete',
@@ -262,8 +273,53 @@ describe('inbox thread and draft requests', () => {
     });
     await expect(
       inboxThreads.execute.call(context, 0, 'update'),
-    ).rejects.toThrow('At least one of Folder, Label, or Read');
+    ).rejects.toThrow('At least one of Add Labels, Folder, Read');
     expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a label that is both added and removed', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...thread,
+        inboxThreadUpdateFields: {
+          addLabelIds: ['lbl_1'],
+          removeLabelIds: ['lbl_1'],
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'update'),
+    ).rejects.toThrow('cannot be both added and removed');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects more than 10 label IDs to add', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...thread,
+        inboxThreadUpdateFields: {
+          addLabelIds: Array.from({ length: 11 }, (_, i) => `lbl_${i}`),
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'update'),
+    ).rejects.toThrow('at most 10 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('runs inbox-scoped lists once per item', () => {
+    expect([...inboxThreads.execute.listOperations]).toEqual([]);
+    expect([...inboxDrafts.execute.listOperations]).toEqual([]);
+  });
+
+  it('pairs listed threads with the item that scoped them', async () => {
+    const { context } = createExecuteMock({
+      parameters: { ...inbox, ...list },
+      response: { data: [{ id: 't1' }], has_more: false },
+    });
+    const result = await inboxThreads.execute.call(context, 3, 'list');
+    expect(result).toEqual([{ json: { id: 't1' }, pairedItem: { item: 3 } }]);
   });
 
   it('requires thread ID and reply email ID together for drafts', async () => {

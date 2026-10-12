@@ -61,7 +61,7 @@ export const operations: INodeProperties[] = [
       {
         name: 'List',
         value: 'list',
-        description: 'List the threads in one folder of an inbox',
+        description: 'List the threads in an inbox, most recently active first',
         action: 'List inbox threads',
       },
       {
@@ -80,7 +80,7 @@ export const operations: INodeProperties[] = [
         name: 'Update',
         value: 'update',
         description:
-          'Mark a thread read or unread, move it to another folder, or apply a label',
+          'Mark a thread read or unread, move it to a folder, or add and remove labels',
         action: 'Update an inbox thread',
       },
     ],

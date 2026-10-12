@@ -4,7 +4,7 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { normalizeEmailList } from '../../transport';
+import { normalizeEmailList, normalizeIdList } from '../../transport';
 import { createDynamicIdField } from '../../utils/dynamicFields';
 import { inboxPath } from '../inbox/fields';
 
@@ -232,27 +232,71 @@ export function assignStrings(
   }
 }
 
-export function createLabelOption(
-  name: string,
-  displayName: string,
-  description: string,
-): INodeProperties {
-  const field = createDynamicIdField({
-    fieldName: name,
-    resourceName: 'inboxLabel',
-    displayName,
-    description,
-  });
-  delete field.displayOptions;
-  delete field.required;
-  return field;
-}
+export const THREAD_FOLDER_OPTIONS = [
+  { name: 'Archive', value: 'archive' },
+  { name: 'Inbox', value: 'inbox' },
+  { name: 'Sent', value: 'sent' },
+  { name: 'Spam', value: 'spam' },
+  { name: 'Trash', value: 'trash' },
+];
 
-export function extractLocatorValue(value: unknown): string {
-  if (value && typeof value === 'object' && 'value' in value) {
-    return String((value as { value: unknown }).value ?? '').trim();
+export const threadFilterOptions: INodeProperties[] = [
+  {
+    displayName: 'Folders',
+    name: 'folders',
+    type: 'multiOptions',
+    default: [],
+    options: THREAD_FOLDER_OPTIONS,
+    description:
+      'A thread is returned when any of its emails is in one of the folders. Defaults to Inbox, or to Inbox, Archive, and Sent when Label Names or IDs is set. Spam and Trash are only included when you name them.',
+  },
+  {
+    displayName: 'Label Names or IDs',
+    name: 'labels',
+    type: 'multiOptions',
+    default: [],
+    typeOptions: {
+      loadOptionsMethod: 'getInboxLabels',
+      loadOptionsDependsOn: ['inboxId.value'],
+    },
+    description:
+      'Returns threads with any of these labels. Up to 50 IDs. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+  },
+  {
+    displayName: 'Read',
+    name: 'read',
+    type: 'options',
+    default: 'true',
+    options: [
+      {
+        name: 'Read',
+        value: 'true',
+        description: 'Threads where every email is read',
+      },
+      {
+        name: 'Unread',
+        value: 'false',
+        description: 'Threads with at least one unread email',
+      },
+    ],
+    description: 'Filter threads by their read state',
+  },
+];
+
+export function buildThreadFilterQuery(filters: IDataObject): IDataObject {
+  const qs: IDataObject = {};
+  const folders = normalizeIdList(filters.folders as string | string[]);
+  if (folders) {
+    qs.folders = folders;
   }
-  return typeof value === 'string' ? value.trim() : '';
+  const labels = normalizeIdList(filters.labels as string | string[]);
+  if (labels) {
+    qs.labels = labels;
+  }
+  if (filters.read !== undefined && filters.read !== '') {
+    qs.read = String(filters.read);
+  }
+  return qs;
 }
 
 export const htmlField: INodeProperties = {
