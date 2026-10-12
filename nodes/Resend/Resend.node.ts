@@ -191,18 +191,18 @@ export class Resend implements INodeType {
             name: 'Inbox',
             value: 'inboxes',
             description:
-              'Create, update, delete, or list inboxes, manage their labels, and configure the inbox AI agent (beta)',
+              'Create, update, delete, or list inboxes, manage their labels, and configure the inbox AI agent',
           },
           {
             name: 'Inbox Draft',
             value: 'inboxDrafts',
-            description: 'Create, edit, and send unsent inbox drafts (beta)',
+            description: 'Create, edit, and send unsent inbox drafts',
           },
           {
             name: 'Inbox Thread',
             value: 'inboxThreads',
             description:
-              'Read, organize, reply to, and forward inbox conversation threads (beta)',
+              'Read, organize, reply to, and forward inbox conversation threads',
           },
           {
             name: 'Log',
