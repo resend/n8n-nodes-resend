@@ -387,6 +387,100 @@ describe('inbox thread and draft requests', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('sends reply all and attachments on a reply', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        text: 'See attached',
+        inboxReplyOptions: {
+          replyAll: true,
+          attachments: {
+            attachments: [
+              { attachmentType: 'binaryData', binaryPropertyName: 'file' },
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://example.com/a.pdf',
+                filename: 'a.pdf',
+                content_type: 'application/pdf',
+              },
+            ],
+          },
+        },
+      },
+      inputData: [
+        {
+          json: {},
+          binary: {
+            file: {
+              data: Buffer.from('hello').toString('base64'),
+              mimeType: 'text/plain',
+              fileName: 'note.txt',
+            },
+          },
+        },
+      ],
+      response: { id: 'em_2' },
+    });
+
+    await inboxThreads.execute.call(context, 0, 'reply');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      text: 'See attached',
+      reply_all: true,
+      attachments: [
+        { content: 'aGVsbG8=', filename: 'note.txt' },
+        {
+          path: 'https://example.com/a.pdf',
+          filename: 'a.pdf',
+          content_type: 'application/pdf',
+        },
+      ],
+    });
+  });
+
+  it('sends attachments on a forward', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: {
+          attachments: {
+            attachments: [
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://example.com/b.csv',
+              },
+            ],
+          },
+        },
+      },
+      response: { id: 'em_3' },
+    });
+
+    await inboxThreads.execute.call(context, 0, 'forward');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      to: ['x@example.com'],
+      attachments: [{ path: 'https://example.com/b.csv' }],
+    });
+  });
+
+  it('rejects a binary attachment that is missing from the item', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: {
+          attachments: { attachments: [{ attachmentType: 'binaryData' }] },
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'reply'),
+    ).rejects.toThrow('Binary property "data" not found');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('runs inbox-scoped lists once per item', () => {
     expect([...inboxThreads.execute.listOperations]).toEqual([]);
     expect([...inboxDrafts.execute.listOperations]).toEqual([]);

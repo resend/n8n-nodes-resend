@@ -10,7 +10,9 @@ import {
   assertRecipientLimit,
   assignRecipients,
   assignStrings,
+  attachmentsField,
   bccField,
+  buildAttachments,
   ccField,
   createInboxField,
   getThreadEmailPath,
@@ -63,8 +65,19 @@ export const description: INodeProperties[] = [
     default: {},
     displayOptions: { show },
     options: [
+      attachmentsField(
+        'Files to attach, as on Email → Send. Up to 10 files. The content of all files can total at most 25 MB. A URL file counts toward the 10 files only, because it is fetched when the email is sent.',
+      ),
       bccField,
       ccField,
+      {
+        displayName: 'Reply All',
+        name: 'replyAll',
+        type: 'boolean',
+        default: false,
+        description:
+          'Whether to reply to everyone on the original email. The other To and CC recipients of the email are copied in CC. The inbox address is always excluded.',
+      },
       {
         displayName: 'Subject',
         name: 'subject',
@@ -102,6 +115,13 @@ export async function execute(
   assignRecipients(body, options, ['cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, options, ['subject']);
+  if (options.replyAll === true) {
+    body.reply_all = true;
+  }
+  const attachments = await buildAttachments(this, options.attachments, index);
+  if (attachments) {
+    body.attachments = attachments;
+  }
 
   const response = await apiRequest.call(
     this,

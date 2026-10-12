@@ -10,7 +10,9 @@ import {
   assertRecipientLimit,
   assignRecipients,
   assignStrings,
+  attachmentsField,
   bccField,
+  buildAttachments,
   ccField,
   createInboxField,
   getThreadEmailPath,
@@ -49,6 +51,9 @@ export const description: INodeProperties[] = [
     default: {},
     displayOptions: { show },
     options: [
+      attachmentsField(
+        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have up to 10 files and at most 25 MB of content. A URL file counts toward the 10 files only.',
+      ),
       bccField,
       ccField,
       {
@@ -107,6 +112,10 @@ export async function execute(
   assignRecipients(body, options, ['cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, options, ['html', 'text', 'subject']);
+  const attachments = await buildAttachments(this, options.attachments, index);
+  if (attachments) {
+    body.attachments = attachments;
+  }
 
   const response = await apiRequest.call(
     this,

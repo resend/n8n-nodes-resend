@@ -338,3 +338,162 @@ export const bccField: INodeProperties = {
   description:
     'BCC recipient email addresses. Comma-separated for multiple addresses.',
 };
+
+export const attachmentsField = (description: string): INodeProperties => ({
+  displayName: 'Attachments',
+  name: 'attachments',
+  type: 'fixedCollection',
+  default: { attachments: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  description,
+  options: [
+    {
+      name: 'attachments',
+      displayName: 'Attachment',
+      values: [
+        {
+          displayName: 'Attachment Type',
+          name: 'attachmentType',
+          type: 'options',
+          default: 'binaryData',
+          options: [
+            {
+              name: 'Binary Data',
+              value: 'binaryData',
+              description:
+                'Use binary file data from a previous node in the workflow',
+            },
+            {
+              name: 'Remote URL',
+              value: 'url',
+              description:
+                'Resend fetches the file from a public URL when the email is sent',
+            },
+          ],
+        },
+        {
+          displayName: 'Binary Property',
+          name: 'binaryPropertyName',
+          type: 'string',
+          default: 'data',
+          placeholder: 'data',
+          description:
+            'The name of the binary property that holds the file data',
+          displayOptions: {
+            show: {
+              attachmentType: ['binaryData'],
+            },
+          },
+        },
+        {
+          displayName: 'Content ID',
+          name: 'content_id',
+          type: 'string',
+          default: '',
+          placeholder: 'image-1',
+          description:
+            'Content ID to embed the file inline in the HTML body with a cid: reference',
+        },
+        {
+          displayName: 'Content Type',
+          name: 'content_type',
+          type: 'string',
+          default: '',
+          placeholder: 'application/pdf',
+          description: 'The MIME type of the file',
+        },
+        {
+          displayName: 'File Name',
+          name: 'filename',
+          type: 'string',
+          default: '',
+          placeholder: 'document.pdf',
+          description:
+            'The name of the attached file. Defaults to the binary file name for binary data.',
+        },
+        {
+          displayName: 'File URL',
+          name: 'fileUrl',
+          type: 'string',
+          default: '',
+          placeholder: 'https://example.com/file.pdf',
+          description: 'The public URL of the file',
+          displayOptions: {
+            show: {
+              attachmentType: ['url'],
+            },
+          },
+        },
+      ],
+    },
+  ],
+});
+
+interface AttachmentInput {
+  attachmentType?: 'binaryData' | 'url';
+  binaryPropertyName?: string;
+  content_id?: string;
+  content_type?: string;
+  filename?: string;
+  fileUrl?: string;
+}
+
+export async function buildAttachments(
+  context: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): Promise<IDataObject[] | undefined> {
+  const inputs = (value as { attachments?: AttachmentInput[] } | undefined)
+    ?.attachments;
+  if (!Array.isArray(inputs) || inputs.length === 0) {
+    return undefined;
+  }
+
+  const attachments: IDataObject[] = [];
+  for (const input of inputs) {
+    const entry: IDataObject = {};
+    if (input.attachmentType === 'url') {
+      const fileUrl = String(input.fileUrl ?? '').trim();
+      if (!fileUrl) {
+        throw new NodeOperationError(
+          context.getNode(),
+          'File URL is required for URL attachments',
+          { itemIndex: index },
+        );
+      }
+      entry.path = fileUrl;
+      if (input.filename) {
+        entry.filename = input.filename;
+      }
+    } else {
+      const propertyName = input.binaryPropertyName || 'data';
+      const binary = context.getInputData()[index]?.binary?.[propertyName];
+      if (!binary) {
+        throw new NodeOperationError(
+          context.getNode(),
+          `Binary property "${propertyName}" not found in item ${index}`,
+          { itemIndex: index },
+        );
+      }
+      const buffer = await context.helpers.getBinaryDataBuffer(
+        index,
+        propertyName,
+      );
+      entry.content = buffer.toString('base64');
+      const filename = input.filename || binary.fileName;
+      if (filename) {
+        entry.filename = filename;
+      }
+    }
+    if (input.content_type) {
+      entry.content_type = input.content_type;
+    }
+    if (input.content_id) {
+      entry.content_id = input.content_id;
+    }
+    attachments.push(entry);
+  }
+  return attachments;
+}
