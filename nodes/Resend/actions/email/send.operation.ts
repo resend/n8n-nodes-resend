@@ -22,7 +22,6 @@ export const description: INodeProperties[] = [
     displayName: 'From',
     name: 'from',
     type: 'string',
-    required: true,
     default: '',
     placeholder: 'you@example.com',
     displayOptions: {
@@ -32,7 +31,7 @@ export const description: INodeProperties[] = [
       },
     },
     description:
-      'The sender email address that will appear in the "From" field. Must be from a verified domain. To include a display name, use format "Your Name &lt;sender@domain.com&gt;". Example: "Support Team &lt;support@company.com&gt;".',
+      'The sender email address that will appear in the "From" field. Must be from a verified domain. To include a display name, use format "Your Name &lt;sender@domain.com&gt;". Example: "Support Team &lt;support@company.com&gt;". Optional when using a template that defines a default sender.',
   },
   {
     displayName: 'To',
@@ -54,7 +53,6 @@ export const description: INodeProperties[] = [
     displayName: 'Subject',
     name: 'subject',
     type: 'string',
-    required: true,
     default: '',
     placeholder: 'Hello from n8n!',
     displayOptions: {
@@ -64,7 +62,7 @@ export const description: INodeProperties[] = [
       },
     },
     description:
-      'The email subject line that recipients will see. Keep it concise and descriptive.',
+      'The email subject line that recipients will see. Optional when using a template that defines a default subject.',
   },
   {
     displayName: 'Use Template',
@@ -252,7 +250,7 @@ export const description: INodeProperties[] = [
           multipleValues: true,
         },
         description:
-          'Add file attachments to the email. Can be binary data from previous nodes or remote URLs. Note: Attachments are not supported with scheduled emails.',
+          'Add file attachments to the email. Can be binary data from previous nodes or remote URLs.',
         options: [
           {
             name: 'attachments',
@@ -406,7 +404,7 @@ export const description: INodeProperties[] = [
         type: 'string',
         default: '',
         description:
-          'Schedule the email to be sent at a future time. Accepts natural language like "in 1 hour" or ISO 8601 format "2024-12-25T09:00:00Z". Note: Cannot use attachments with scheduled emails.',
+          'Schedule the email to be sent at a future time. Accepts natural language like "in 1 hour" or ISO 8601 format "2024-12-25T09:00:00Z".',
       },
       {
         displayName: 'Tags',
@@ -461,6 +459,8 @@ interface AttachmentInput {
   binaryPropertyName?: string;
   filename?: string;
   fileUrl?: string;
+  content_id?: string;
+  content_type?: string;
   contentId?: string;
   contentType?: string;
 }
@@ -502,11 +502,23 @@ export async function execute(
     {},
   ) as AdditionalOptions;
 
+  if (!useTemplate && (!from || !subject)) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'From and Subject are required unless sending with a template.',
+      { itemIndex: index },
+    );
+  }
+
   const requestBody: Record<string, unknown> = {
-    from,
     to: normalizeEmailList(toValue),
-    subject,
   };
+  if (from) {
+    requestBody.from = from;
+  }
+  if (subject) {
+    requestBody.subject = subject;
+  }
 
   if (useTemplate) {
     const templateId = resolveDynamicIdValue(this, 'emailTemplateId', index);
@@ -622,22 +634,11 @@ export async function execute(
     requestBody.scheduled_at = additionalOptions.scheduledAt;
   }
 
-  if (
-    additionalOptions.attachments?.attachments?.length &&
-    additionalOptions.scheduledAt
-  ) {
-    throw new NodeOperationError(
-      this.getNode(),
-      'Attachments cannot be used with scheduled emails. Please remove either the attachments or the scheduled time.',
-      { itemIndex: index },
-    );
-  }
-
   if (additionalOptions.attachments?.attachments?.length) {
     requestBody.attachments = additionalOptions.attachments.attachments
       .map((attachment) => {
-        const contentId = attachment.contentId;
-        const contentType = attachment.contentType;
+        const contentId = attachment.content_id ?? attachment.contentId;
+        const contentType = attachment.content_type ?? attachment.contentType;
 
         if (attachment.attachmentType === 'binaryData') {
           const binaryPropertyName = attachment.binaryPropertyName || 'data';

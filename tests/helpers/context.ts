@@ -116,6 +116,14 @@ export function createExecuteMock(
       httpRequestWithAuthentication: httpRequest,
       returnJsonArray: (items: unknown[]) =>
         (items as Array<Record<string, unknown>>).map((json) => ({ json })),
+      getBinaryDataBuffer: async (itemIndex: number, propertyName: string) => {
+        const binary = (options.inputData ?? [{ json: {} }])[itemIndex]
+          ?.binary?.[propertyName];
+        if (!binary) {
+          throw new Error(`Binary property "${propertyName}" not found`);
+        }
+        return Buffer.from(binary.data, 'base64');
+      },
     },
   } as unknown as IExecuteFunctions;
 

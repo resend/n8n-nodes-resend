@@ -5,6 +5,11 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
+import {
+  buildContactProperties,
+  type ContactPropertyItem,
+  createPropertyTypeOptions,
+} from './properties';
 
 export const description: INodeProperties[] = [
   {
@@ -75,6 +80,15 @@ export const description: INodeProperties[] = [
                 default: '',
                 description:
                   'The property name. Example: "company", "role", "plan".',
+              },
+              {
+                displayName: 'Type',
+                name: 'type',
+                type: 'options',
+                default: 'string',
+                options: createPropertyTypeOptions,
+                description:
+                  'The type to send the value as. Must match the type of the contact property.',
               },
               {
                 displayName: 'Value',
@@ -182,11 +196,6 @@ export const description: INodeProperties[] = [
   },
 ];
 
-interface PropertyItem {
-  key: string;
-  value: string;
-}
-
 interface SegmentItem {
   id: string;
 }
@@ -209,7 +218,7 @@ export async function execute(
     firstName?: string;
     lastName?: string;
     unsubscribed?: boolean;
-    properties?: { properties: PropertyItem[] };
+    properties?: { properties: ContactPropertyItem[] };
     segments?: { segments: SegmentItem[] };
     topics?: { topics: TopicItem[] };
   };
@@ -227,11 +236,11 @@ export async function execute(
   }
 
   if (createFields.properties?.properties?.length) {
-    const props: Record<string, string> = {};
-    for (const p of createFields.properties.properties) {
-      props[p.key] = p.value;
-    }
-    body.properties = props;
+    body.properties = buildContactProperties.call(
+      this,
+      createFields.properties.properties,
+      index,
+    );
   }
 
   if (createFields.segments?.segments?.length) {
