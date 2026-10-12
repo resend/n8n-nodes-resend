@@ -51,7 +51,7 @@ export const operations: INodeProperties[] = [
         name: 'Send',
         value: 'send',
         description:
-          'Send a draft. The draft must have at least one recipient.',
+          'Send a draft from the inbox address. The draft must have at least one To recipient.',
         action: 'Send an inbox draft',
       },
       {
