@@ -593,7 +593,9 @@ describe('inbox thread and draft requests', () => {
       inputData: [
         {
           json: {},
-          binary: { file: { data: 'aGVsbG8=', fileName: 'note' } },
+          binary: {
+            file: { data: 'aGVsbG8=', mimeType: '', fileName: 'note' },
+          },
         },
       ],
     });
