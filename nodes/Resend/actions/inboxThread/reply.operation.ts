@@ -76,7 +76,7 @@ export const description: INodeProperties[] = [
         type: 'boolean',
         default: false,
         description:
-          'Whether to reply to everyone on the original email. The other To and CC recipients of the email are copied in CC. The inbox address is always excluded.',
+          'Whether to reply to everyone on the original email. For a received email, the reply goes to its Reply-To or its sender and copies its other To and CC addresses. For a sent email, it goes to its Reply-To when that is not the inbox address, else to its To, and copies its CC. The inbox address and duplicates are excluded.',
       },
       {
         displayName: 'Subject',

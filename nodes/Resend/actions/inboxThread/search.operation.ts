@@ -79,7 +79,11 @@ export const description: INodeProperties[] = [
         description:
           'Matches emails sent on or before this date. Same formats as Start Date. A date covers that whole day. A timestamp is used as given.',
       },
-      ...threadFilterOptions.slice(0, 1),
+      {
+        ...threadFilterOptions[0],
+        description:
+          'A thread is returned when any of its emails is in one of the folders. When an email filter or the query is set, the matching email itself must be in one of the folders, and for Sent it must be an email the inbox sent. Defaults to Inbox, or to Inbox, Archive, and Sent when Label Names or IDs is set. Spam and Trash are only included when you name them.',
+      },
       addressOption(
         'from',
         'From',

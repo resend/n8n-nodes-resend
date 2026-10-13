@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
           { name: 'Mark as Spam', value: 'mark_as_spam' },
         ],
         description:
-          'Actions the agent is allowed to take. Replaces the whole set; leave empty to disable all actions.',
+          'Actions the agent is allowed to take. Replaces the whole set. Duplicates are removed. Leave empty to disable all actions.',
       },
       {
         displayName: 'Instructions',

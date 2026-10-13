@@ -52,7 +52,7 @@ export const description: INodeProperties[] = [
     displayOptions: { show },
     options: [
       attachmentsField(
-        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have up to 10 files and at most 25 MB of content. A URL file counts toward the 10 files only.',
+        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have up to 10 files and at most 25 MB of content. A URL file counts toward the 10 files only. An original attachment that was sent from a URL cannot be forwarded, and the request returns an error.',
       ),
       bccField,
       ccField,

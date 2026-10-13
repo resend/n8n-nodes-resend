@@ -19,6 +19,8 @@ export const description: INodeProperties[] = [
     type: 'collection',
     placeholder: 'Add Field',
     default: {},
+    description:
+      'Changes apply in this order: read, folder, added labels, removed labels. They are not atomic, so a label that does not exist leaves the earlier changes applied.',
     displayOptions: {
       show: {
         resource: ['inboxThreads'],

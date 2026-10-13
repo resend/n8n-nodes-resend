@@ -36,7 +36,7 @@ export const description: INodeProperties[] = [
     },
     options: [
       draftAttachmentsField(
-        'Files to store on the draft, from binary data. Each one needs a file name and a content type. A draft can carry up to 10 files and 25 MB in total.',
+        'Files to store on the draft, from binary data. Each one needs a file name and a content type. The files of a draft can total at most 25 MB. An empty file or a blocked file type returns an error.',
       ),
       bccField,
       ccField,
@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
         type: 'string',
         default: '',
         description:
-          'The ID of the thread email this draft replies to. Must be set together with Thread ID.',
+          'The ID of the thread email this draft replies to. Must be set together with Thread ID. When the email already has an unsent reply draft, the API returns that draft and ignores every other field except Attachments, which replace its attachments.',
       },
       {
         displayName: 'Subject',
