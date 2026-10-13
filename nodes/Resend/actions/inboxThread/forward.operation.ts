@@ -13,8 +13,10 @@ import {
   attachmentsField,
   bccField,
   buildAttachments,
+  buildCustomHeaders,
   ccField,
   createInboxField,
+  customHeadersField,
   getThreadEmailPath,
   idempotencyHeaders,
   idempotencyKeyField,
@@ -58,6 +60,7 @@ export const description: INodeProperties[] = [
       ),
       bccField,
       ccField,
+      customHeadersField,
       {
         displayName: 'HTML Note',
         name: 'html',
@@ -120,6 +123,10 @@ export async function execute(
   const attachments = await buildAttachments(this, options.attachments, index);
   if (attachments) {
     body.attachments = attachments;
+  }
+  const headers = buildCustomHeaders(options.headers);
+  if (headers) {
+    body.headers = headers;
   }
 
   const response = await apiRequest.call(

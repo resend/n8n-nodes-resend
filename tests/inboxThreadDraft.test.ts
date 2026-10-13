@@ -656,6 +656,66 @@ describe('inbox thread and draft requests', () => {
     expect(options.body?.idempotencyKey).toBeUndefined();
   });
 
+  const customHeaders = {
+    headers: [
+      { name: 'X-Ticket-Id', value: '4821' },
+      { name: '', value: 'skipped' },
+    ],
+  };
+
+  it.each([
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { headers: customHeaders },
+      },
+    },
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: { headers: customHeaders },
+      },
+    },
+    {
+      name: 'draft send',
+      execute: inboxDrafts.execute,
+      operation: 'send',
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { headers: customHeaders },
+      },
+    },
+  ])('sends custom headers in the body on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+      response: { id: 'ok' },
+    });
+    await testCase.execute.call(context, 0, testCase.operation);
+    expect(httpRequest.mock.calls[0][1].body.headers).toEqual({
+      'X-Ticket-Id': '4821',
+    });
+  });
+
+  it('sends no body on draft send without headers', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { headers: { headers: [] } },
+      },
+      response: { id: 'ok' },
+    });
+    await inboxDrafts.execute.call(context, 0, 'send');
+    expect(httpRequest.mock.calls[0][1].body).toBeUndefined();
+  });
+
   it('sends no Idempotency-Key header without a key', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: draft,

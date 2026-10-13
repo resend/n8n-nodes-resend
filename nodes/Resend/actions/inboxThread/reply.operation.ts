@@ -13,8 +13,10 @@ import {
   attachmentsField,
   bccField,
   buildAttachments,
+  buildCustomHeaders,
   ccField,
   createInboxField,
+  customHeadersField,
   getThreadEmailPath,
   idempotencyHeaders,
   idempotencyKeyField,
@@ -72,6 +74,7 @@ export const description: INodeProperties[] = [
       ),
       bccField,
       ccField,
+      customHeadersField,
       idempotencyKeyField(
         'A unique key to ensure the reply is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
       ),
@@ -126,6 +129,10 @@ export async function execute(
   const attachments = await buildAttachments(this, options.attachments, index);
   if (attachments) {
     body.attachments = attachments;
+  }
+  const headers = buildCustomHeaders(options.headers);
+  if (headers) {
+    body.headers = headers;
   }
 
   const response = await apiRequest.call(

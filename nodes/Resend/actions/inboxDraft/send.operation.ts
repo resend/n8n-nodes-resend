@@ -6,7 +6,9 @@ import type {
 } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 import {
+  buildCustomHeaders,
   createInboxField,
+  customHeadersField,
   draftIdField,
   getDraftPath,
   idempotencyHeaders,
@@ -29,6 +31,7 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
+      customHeadersField,
       idempotencyKeyField(
         'A unique key to ensure the draft is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
       ),
@@ -46,11 +49,13 @@ export async function execute(
     {},
   ) as IDataObject;
 
+  const headers = buildCustomHeaders(options.headers);
+
   const response = await apiRequest.call(
     this,
     'POST',
     `${getDraftPath(this, index)}/send`,
-    undefined,
+    headers ? { headers } : undefined,
     undefined,
     idempotencyHeaders(options),
   );

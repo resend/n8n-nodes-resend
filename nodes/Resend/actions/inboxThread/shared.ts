@@ -606,3 +606,54 @@ export function idempotencyHeaders(
     ? { 'Idempotency-Key': key }
     : undefined;
 }
+
+export const customHeadersField: INodeProperties = {
+  displayName: 'Headers',
+  name: 'headers',
+  type: 'fixedCollection',
+  default: { headers: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  options: [
+    {
+      name: 'headers',
+      displayName: 'Header',
+      values: [
+        {
+          displayName: 'Name',
+          name: 'name',
+          type: 'string',
+          required: true,
+          default: '',
+        },
+        {
+          displayName: 'Value',
+          name: 'value',
+          type: 'string',
+          default: '',
+        },
+      ],
+    },
+  ],
+  description:
+    'Custom email headers to include in the message. Useful for tracking or custom metadata. Resend sets In-Reply-To, References, and Reply-To, so they cannot be set here. Sending one of them, in any letter case, returns an error.',
+};
+
+export function buildCustomHeaders(
+  value: unknown,
+): Record<string, string> | undefined {
+  const inputs = (
+    value as { headers?: Array<{ name?: string; value?: string }> } | undefined
+  )?.headers;
+  if (!Array.isArray(inputs)) {
+    return undefined;
+  }
+  const headers: Record<string, string> = {};
+  for (const header of inputs) {
+    if (header.name) {
+      headers[header.name] = header.value ?? '';
+    }
+  }
+  return Object.keys(headers).length ? headers : undefined;
+}
