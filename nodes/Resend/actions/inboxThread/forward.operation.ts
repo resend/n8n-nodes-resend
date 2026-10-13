@@ -56,7 +56,7 @@ export const description: INodeProperties[] = [
     displayOptions: { show },
     options: [
       attachmentsField(
-        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have up to 10 files and at most 25 MB of content. A URL file counts toward the 10 files only. An original attachment that was sent from a URL cannot be forwarded, and the request returns an error.',
+        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have up to 10 files and at most 25 MB of content. A URL file counts toward the 10 files only. The request returns an error for an original attachment that was sent from a URL, an empty file, a blocked file type, or a URL that is not http or https or points to localhost.',
       ),
       bccField,
       ccField,
@@ -72,7 +72,7 @@ export const description: INodeProperties[] = [
         description: 'An HTML note sent above the quoted original',
       },
       idempotencyKeyField(
-        'A unique key to ensure the forward is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+        'A unique key to ensure the forward is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
       ),
       {
         displayName: 'Subject',

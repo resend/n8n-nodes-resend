@@ -44,7 +44,7 @@ export const description: INodeProperties[] = [
       ccField,
       htmlField,
       idempotencyKeyField(
-        'A unique key to ensure the draft is created only once. Useful for retries to prevent duplicate drafts. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+        'A unique key to ensure the draft is created only once. Useful for retries to prevent duplicate drafts. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
       ),
       {
         displayName: 'Reply To Email ID',

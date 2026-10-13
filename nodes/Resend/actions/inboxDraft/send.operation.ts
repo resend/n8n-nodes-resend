@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
     options: [
       customHeadersField,
       idempotencyKeyField(
-        'A unique key to ensure the draft is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+        'A unique key to ensure the draft is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
       ),
     ],
   },

@@ -637,7 +637,7 @@ export const customHeadersField: INodeProperties = {
     },
   ],
   description:
-    'Custom email headers to include in the message. Useful for tracking or custom metadata. Resend sets In-Reply-To, References, and Reply-To, so they cannot be set here. Sending one of them, in any letter case, returns an error.',
+    'Custom email headers to include in the message. Useful for tracking or custom metadata. Resend sets In-Reply-To, References, and Reply-To, so they cannot be set here. Sending one of them, in any letter case, returns an error. Header names cannot be empty, and names and values cannot contain line breaks or null characters.',
 };
 
 export function buildCustomHeaders(
