@@ -606,6 +606,67 @@ describe('inbox thread and draft requests', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it.each([
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'draft create',
+      execute: inboxDrafts.execute,
+      operation: 'create',
+      parameters: {
+        ...inbox,
+        inboxDraftFields: { subject: 'Hi', idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'draft send',
+      execute: inboxDrafts.execute,
+      operation: 'send',
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+  ])('sends the Idempotency-Key header on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+      response: { id: 'ok' },
+    });
+    await testCase.execute.call(context, 0, testCase.operation);
+    const options = httpRequest.mock.calls[0][1];
+    expect(options.headers['Idempotency-Key']).toBe('key-1');
+    expect(options.body?.idempotencyKey).toBeUndefined();
+  });
+
+  it('sends no Idempotency-Key header without a key', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: draft,
+      response: { id: 'ok' },
+    });
+    await inboxDrafts.execute.call(context, 0, 'send');
+    expect(httpRequest.mock.calls[0][1].headers).not.toHaveProperty(
+      'Idempotency-Key',
+    );
+  });
+
   it('runs inbox-scoped lists once per item', () => {
     expect([...inboxThreads.execute.listOperations]).toEqual([]);
     expect([...inboxDrafts.execute.listOperations]).toEqual([]);

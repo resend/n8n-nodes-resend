@@ -17,6 +17,8 @@ import {
   draftAttachmentsField,
   getInboxPath,
   htmlField,
+  idempotencyHeaders,
+  idempotencyKeyField,
   textField,
 } from '../inboxThread/shared';
 
@@ -41,6 +43,9 @@ export const description: INodeProperties[] = [
       bccField,
       ccField,
       htmlField,
+      idempotencyKeyField(
+        'A unique key to ensure the draft is created only once. Useful for retries to prevent duplicate drafts. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
       {
         displayName: 'Reply To Email ID',
         name: 'replyToEmailId',
@@ -127,6 +132,8 @@ export async function execute(
     'POST',
     `${getInboxPath(this, index)}/drafts`,
     body,
+    undefined,
+    idempotencyHeaders(fields),
   );
 
   return [{ json: response, pairedItem: { item: index } }];

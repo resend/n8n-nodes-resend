@@ -16,6 +16,8 @@ import {
   ccField,
   createInboxField,
   getThreadEmailPath,
+  idempotencyHeaders,
+  idempotencyKeyField,
   threadEmailIdField,
   threadIdField,
 } from './shared';
@@ -66,6 +68,9 @@ export const description: INodeProperties[] = [
         },
         description: 'An HTML note sent above the quoted original',
       },
+      idempotencyKeyField(
+        'A unique key to ensure the forward is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
       {
         displayName: 'Subject',
         name: 'subject',
@@ -122,6 +127,8 @@ export async function execute(
     'POST',
     `${getThreadEmailPath(this, index)}/forward`,
     body,
+    undefined,
+    idempotencyHeaders(options),
   );
 
   return [{ json: response, pairedItem: { item: index } }];

@@ -16,6 +16,8 @@ import {
   ccField,
   createInboxField,
   getThreadEmailPath,
+  idempotencyHeaders,
+  idempotencyKeyField,
   threadEmailIdField,
   threadIdField,
 } from './shared';
@@ -70,6 +72,9 @@ export const description: INodeProperties[] = [
       ),
       bccField,
       ccField,
+      idempotencyKeyField(
+        'A unique key to ensure the reply is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
       {
         displayName: 'Reply All',
         name: 'replyAll',
@@ -128,6 +133,8 @@ export async function execute(
     'POST',
     `${getThreadEmailPath(this, index)}/reply`,
     body,
+    undefined,
+    idempotencyHeaders(options),
   );
 
   return [{ json: response, pairedItem: { item: index } }];

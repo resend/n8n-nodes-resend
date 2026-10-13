@@ -589,3 +589,20 @@ export async function buildDraftAttachments(
   }
   return attachments;
 }
+
+export const idempotencyKeyField = (description: string): INodeProperties => ({
+  displayName: 'Idempotency Key',
+  name: 'idempotencyKey',
+  type: 'string',
+  default: '',
+  description,
+});
+
+export function idempotencyHeaders(
+  options: IDataObject,
+): Record<string, string> | undefined {
+  const key = options.idempotencyKey;
+  return typeof key === 'string' && key
+    ? { 'Idempotency-Key': key }
+    : undefined;
+}

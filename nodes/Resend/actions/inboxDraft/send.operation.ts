@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -8,21 +9,50 @@ import {
   createInboxField,
   draftIdField,
   getDraftPath,
+  idempotencyHeaders,
+  idempotencyKeyField,
 } from '../inboxThread/shared';
 
 export const description: INodeProperties[] = [
   createInboxField('inboxDrafts', ['send']),
   draftIdField(['send']),
+  {
+    displayName: 'Additional Options',
+    name: 'inboxDraftSendOptions',
+    type: 'collection',
+    placeholder: 'Add Option',
+    default: {},
+    displayOptions: {
+      show: {
+        resource: ['inboxDrafts'],
+        operation: ['send'],
+      },
+    },
+    options: [
+      idempotencyKeyField(
+        'A unique key to ensure the draft is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first response. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
+    ],
+  },
 ];
 
 export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
+  const options = this.getNodeParameter(
+    'inboxDraftSendOptions',
+    index,
+    {},
+  ) as IDataObject;
+
   const response = await apiRequest.call(
     this,
     'POST',
     `${getDraftPath(this, index)}/send`,
+    undefined,
+    undefined,
+    idempotencyHeaders(options),
   );
 
   return [{ json: response, pairedItem: { item: index } }];
