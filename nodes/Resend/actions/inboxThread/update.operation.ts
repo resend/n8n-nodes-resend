@@ -69,7 +69,7 @@ export const description: INodeProperties[] = [
           loadOptionsDependsOn: ['inboxId.value'],
         },
         description:
-          'Labels to remove from the thread. Between 1 and 10 IDs. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+          'Labels to remove from the thread. Between 1 and 10 IDs. The labels themselves are kept. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
       },
     ],
   },
