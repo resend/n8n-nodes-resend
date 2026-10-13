@@ -498,6 +498,112 @@ describe('inbox thread and draft requests', () => {
     });
   });
 
+  const textBinary = {
+    file: {
+      data: Buffer.from('hello').toString('base64'),
+      mimeType: 'text/plain',
+      fileName: 'note.txt',
+    },
+  };
+
+  it('stores binary attachments on a new draft', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: {
+            attachments: [
+              { binaryPropertyName: 'file' },
+              {
+                binaryPropertyName: 'file',
+                filename: 'renamed.csv',
+                content_type: 'text/csv',
+              },
+            ],
+          },
+        },
+      },
+      inputData: [{ json: {}, binary: textBinary }],
+      response: { object: 'inbox_draft', id: 'dr_1' },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'create');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          content: 'aGVsbG8=',
+          filename: 'note.txt',
+          content_type: 'text/plain',
+        },
+        {
+          content: 'aGVsbG8=',
+          filename: 'renamed.csv',
+          content_type: 'text/csv',
+        },
+      ],
+    });
+  });
+
+  it('replaces draft attachments on update', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'file' }] },
+        },
+      },
+      inputData: [{ json: {}, binary: textBinary }],
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          content: 'aGVsbG8=',
+          filename: 'note.txt',
+          content_type: 'text/plain',
+        },
+      ],
+    });
+  });
+
+  it('removes every draft attachment with an empty array', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: { clearFields: ['attachments'] },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ attachments: [] });
+  });
+
+  it('rejects a draft attachment without a content type', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'file' }] },
+        },
+      },
+      inputData: [
+        {
+          json: {},
+          binary: { file: { data: 'aGVsbG8=', fileName: 'note' } },
+        },
+      ],
+    });
+
+    await expect(
+      inboxDrafts.execute.call(context, 0, 'create'),
+    ).rejects.toThrow('need a File Name and a Content Type');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('runs inbox-scoped lists once per item', () => {
     expect([...inboxThreads.execute.listOperations]).toEqual([]);
     expect([...inboxDrafts.execute.listOperations]).toEqual([]);

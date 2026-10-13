@@ -11,8 +11,10 @@ import {
   assignRecipients,
   assignStrings,
   bccField,
+  buildDraftAttachments,
   ccField,
   createInboxField,
+  draftAttachmentsField,
   getInboxPath,
   htmlField,
   textField,
@@ -33,6 +35,9 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
+      draftAttachmentsField(
+        'Files to store on the draft, from binary data. Each one needs a file name and a content type. A draft can carry up to 10 files and 25 MB in total.',
+      ),
       bccField,
       ccField,
       htmlField,
@@ -86,11 +91,19 @@ export async function execute(
   assignRecipients(body, fields, ['to', 'cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, fields, ['subject', 'html', 'text']);
+  const attachments = await buildDraftAttachments(
+    this,
+    fields.attachments,
+    index,
+  );
+  if (attachments) {
+    body.attachments = attachments;
+  }
 
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'At least one of To, CC, BCC, Subject, HTML, or Text must be set',
+      'At least one of To, CC, BCC, Subject, HTML, Text, or Attachments must be set',
       { itemIndex: index },
     );
   }

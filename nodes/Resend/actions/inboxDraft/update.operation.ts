@@ -11,8 +11,10 @@ import {
   assignRecipients,
   assignStrings,
   bccField,
+  buildDraftAttachments,
   ccField,
   createInboxField,
+  draftAttachmentsField,
   draftIdField,
   getDraftPath,
   htmlField,
@@ -35,6 +37,9 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
+      draftAttachmentsField(
+        'Files to store on the draft, from binary data. They replace every attachment on the draft. Each one needs a file name and a content type. A draft can carry up to 10 files and 25 MB in total.',
+      ),
       bccField,
       ccField,
       {
@@ -43,6 +48,7 @@ export const description: INodeProperties[] = [
         type: 'multiOptions',
         default: [],
         options: [
+          { name: 'Attachments', value: 'attachments' },
           { name: 'BCC', value: 'bcc' },
           { name: 'CC', value: 'cc' },
           { name: 'HTML', value: 'html' },
@@ -51,7 +57,7 @@ export const description: INodeProperties[] = [
           { name: 'To', value: 'to' },
         ],
         description:
-          'Fields to clear on the draft. Overrides a value set for the same field.',
+          'Fields to clear on the draft. Attachments removes every attachment. Overrides a value set for the same field.',
       },
       htmlField,
       {
@@ -88,16 +94,24 @@ export async function execute(
   assignRecipients(body, fields, ['to', 'cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, fields, ['subject', 'html', 'text']);
+  const attachments = await buildDraftAttachments(
+    this,
+    fields.attachments,
+    index,
+  );
+  if (attachments) {
+    body.attachments = attachments;
+  }
   if (Array.isArray(fields.clearFields)) {
     for (const key of fields.clearFields as string[]) {
-      body[key] = null;
+      body[key] = key === 'attachments' ? [] : null;
     }
   }
 
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'At least one of To, CC, BCC, Subject, HTML, Text, or Clear Fields must be set',
+      'At least one of To, CC, BCC, Subject, HTML, Text, Attachments, or Clear Fields must be set',
       { itemIndex: index },
     );
   }

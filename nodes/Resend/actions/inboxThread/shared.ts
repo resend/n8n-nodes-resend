@@ -497,3 +497,95 @@ export async function buildAttachments(
   }
   return attachments;
 }
+
+export const draftAttachmentsField = (
+  description: string,
+): INodeProperties => ({
+  displayName: 'Attachments',
+  name: 'attachments',
+  type: 'fixedCollection',
+  default: { attachments: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  description,
+  options: [
+    {
+      name: 'attachments',
+      displayName: 'Attachment',
+      values: [
+        {
+          displayName: 'Binary Property',
+          name: 'binaryPropertyName',
+          type: 'string',
+          default: 'data',
+          placeholder: 'data',
+          description:
+            'The name of the binary property that holds the file data',
+        },
+        {
+          displayName: 'Content Type',
+          name: 'content_type',
+          type: 'string',
+          default: '',
+          placeholder: 'application/pdf',
+          description:
+            'The MIME type of the file. Defaults to the MIME type of the binary data.',
+        },
+        {
+          displayName: 'File Name',
+          name: 'filename',
+          type: 'string',
+          default: '',
+          placeholder: 'document.pdf',
+          description:
+            'The name of the attached file. Defaults to the binary file name.',
+        },
+      ],
+    },
+  ],
+});
+
+export async function buildDraftAttachments(
+  context: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): Promise<IDataObject[] | undefined> {
+  const inputs = (value as { attachments?: AttachmentInput[] } | undefined)
+    ?.attachments;
+  if (!Array.isArray(inputs) || inputs.length === 0) {
+    return undefined;
+  }
+
+  const attachments: IDataObject[] = [];
+  for (const input of inputs) {
+    const propertyName = input.binaryPropertyName || 'data';
+    const binary = context.getInputData()[index]?.binary?.[propertyName];
+    if (!binary) {
+      throw new NodeOperationError(
+        context.getNode(),
+        `Binary property "${propertyName}" not found in item ${index}`,
+        { itemIndex: index },
+      );
+    }
+    const filename = input.filename || binary.fileName;
+    const contentType = input.content_type || binary.mimeType;
+    if (!filename || !contentType) {
+      throw new NodeOperationError(
+        context.getNode(),
+        'Draft attachments need a File Name and a Content Type',
+        { itemIndex: index },
+      );
+    }
+    const buffer = await context.helpers.getBinaryDataBuffer(
+      index,
+      propertyName,
+    );
+    attachments.push({
+      content: buffer.toString('base64'),
+      filename,
+      content_type: contentType,
+    });
+  }
+  return attachments;
+}
