@@ -1,23 +1,31 @@
 import type { INodeProperties } from 'n8n-workflow';
 
+import * as addLabels from './addLabels.operation';
 import * as del from './delete.operation';
 import * as forward from './forward.operation';
 import * as get from './get.operation';
 import * as getEmail from './getEmail.operation';
 import * as list from './list.operation';
 import * as listEmails from './listEmails.operation';
+import * as removeLabel from './removeLabel.operation';
 import * as reply from './reply.operation';
+import * as search from './search.operation';
+import * as setLabels from './setLabels.operation';
 import * as update from './update.operation';
 
 export { execute } from './execute';
 export {
+  addLabels,
   del as delete,
   forward,
   get,
   getEmail,
   list,
   listEmails,
+  removeLabel,
   reply,
+  search,
+  setLabels,
   update,
 };
 
@@ -33,6 +41,13 @@ export const operations: INodeProperties[] = [
       },
     },
     options: [
+      {
+        name: 'Add Labels',
+        value: 'addLabels',
+        description:
+          'Apply one or more labels to a thread. Labels already on the thread stay on it.',
+        action: 'Add labels to an inbox thread',
+      },
       {
         name: 'Delete',
         value: 'delete',
@@ -61,7 +76,7 @@ export const operations: INodeProperties[] = [
       {
         name: 'List',
         value: 'list',
-        description: 'List the threads in one folder of an inbox',
+        description: 'List the threads in an inbox, most recently active first',
         action: 'List inbox threads',
       },
       {
@@ -71,16 +86,35 @@ export const operations: INodeProperties[] = [
         action: 'List inbox thread emails',
       },
       {
+        name: 'Remove Label',
+        value: 'removeLabel',
+        description: 'Take one label off a thread. The label itself is kept.',
+        action: 'Remove a label from an inbox thread',
+      },
+      {
         name: 'Reply',
         value: 'reply',
         description: 'Send a reply to an email in a thread',
         action: 'Reply to an inbox thread email',
       },
       {
+        name: 'Search',
+        value: 'search',
+        description:
+          'Find threads by the text of their emails, who sent or received them, whether they have attachments, and their dates',
+        action: 'Search inbox threads',
+      },
+      {
+        name: 'Set Labels',
+        value: 'setLabels',
+        description:
+          'Replace every label on a thread with the given labels, in one atomic change',
+        action: 'Set the labels of an inbox thread',
+      },
+      {
         name: 'Update',
         value: 'update',
-        description:
-          'Mark a thread read or unread, move it to another folder, or apply a label',
+        description: 'Mark a thread read or unread, or move it to a folder',
         action: 'Update an inbox thread',
       },
     ],
@@ -98,4 +132,8 @@ export const descriptions: INodeProperties[] = [
   ...getEmail.description,
   ...reply.description,
   ...forward.description,
+  ...search.description,
+  ...addLabels.description,
+  ...setLabels.description,
+  ...removeLabel.description,
 ];

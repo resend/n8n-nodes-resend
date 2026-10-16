@@ -9,6 +9,11 @@ import {
   createDynamicIdField,
   resolveDynamicIdValue,
 } from '../../utils/dynamicFields';
+import {
+  buildContactProperties,
+  type ContactPropertyItem,
+  updatePropertyTypeOptions,
+} from './properties';
 
 export const description: INodeProperties[] = [
   {
@@ -120,6 +125,15 @@ export const description: INodeProperties[] = [
                 default: '',
               },
               {
+                displayName: 'Type',
+                name: 'type',
+                type: 'options',
+                default: 'string',
+                options: updatePropertyTypeOptions,
+                description:
+                  'The type to send the value as. Must match the type of the contact property.',
+              },
+              {
                 displayName: 'Value',
                 name: 'value',
                 type: 'string',
@@ -132,11 +146,6 @@ export const description: INodeProperties[] = [
     ],
   },
 ];
-
-interface PropertyItem {
-  key: string;
-  value: string;
-}
 
 export async function execute(
   this: IExecuteFunctions,
@@ -151,7 +160,7 @@ export async function execute(
     firstName?: string;
     lastName?: string;
     unsubscribed?: boolean;
-    properties?: { properties: PropertyItem[] };
+    properties?: { properties: ContactPropertyItem[] };
   };
 
   let identifier: string;
@@ -174,11 +183,11 @@ export async function execute(
   }
 
   if (updateFields.properties?.properties?.length) {
-    const props: Record<string, string> = {};
-    for (const p of updateFields.properties.properties) {
-      props[p.key] = p.value;
-    }
-    body.properties = props;
+    body.properties = buildContactProperties.call(
+      this,
+      updateFields.properties.properties,
+      index,
+    );
   }
 
   const response = await apiRequest.call(

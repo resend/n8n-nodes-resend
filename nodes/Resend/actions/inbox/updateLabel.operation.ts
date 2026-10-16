@@ -8,9 +8,10 @@ import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 import {
   inboxIdField,
-  LABEL_COLOR_OPTIONS,
+  labelColorOption,
   labelIdField,
   labelPath,
+  readLabelColor,
 } from './fields';
 
 export const description: INodeProperties[] = [
@@ -29,14 +30,9 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
-      {
-        displayName: 'Color',
-        name: 'color',
-        type: 'options',
-        default: 'cyan',
-        options: LABEL_COLOR_OPTIONS,
-        description: 'The new color of the label',
-      },
+      labelColorOption(
+        'A new color for the label, as a #RRGGBB hex color. It is stored in uppercase.',
+      ),
       {
         displayName: 'Name',
         name: 'name',
@@ -62,8 +58,9 @@ export async function execute(
   if (fields.name) {
     body.name = fields.name;
   }
-  if (fields.color) {
-    body.color = fields.color;
+  const color = readLabelColor(this, fields.color, index);
+  if (color) {
+    body.color = color;
   }
 
   if (Object.keys(body).length === 0) {

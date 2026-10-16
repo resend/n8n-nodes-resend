@@ -2,24 +2,24 @@ import type { INodeProperties } from 'n8n-workflow';
 
 import * as create from './create.operation';
 import * as del from './delete.operation';
+import * as duplicate from './duplicate.operation';
 import * as get from './get.operation';
 import * as getRun from './getRun.operation';
-import * as getRunStep from './getRunStep.operation';
 import * as list from './list.operation';
-import * as listRunSteps from './listRunSteps.operation';
 import * as listRuns from './listRuns.operation';
+import * as stop from './stop.operation';
 import * as update from './update.operation';
 
 export { execute } from './execute';
 export {
   create,
   del as delete,
+  duplicate,
   get,
   getRun,
-  getRunStep,
   list,
-  listRunSteps,
   listRuns,
+  stop,
   update,
 };
 
@@ -31,63 +31,64 @@ export const operations: INodeProperties[] = [
     noDataExpression: true,
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
       },
     },
     options: [
       {
         name: 'Create',
         value: 'create',
-        description: 'Create a new workflow to automate email sequences',
-        action: 'Create a workflow',
+        description: 'Create a new automation to automate email sequences',
+        action: 'Create an automation',
       },
       {
         name: 'Delete',
         value: 'delete',
-        description: 'Remove an existing workflow',
-        action: 'Delete a workflow',
+        description: 'Remove an existing automation',
+        action: 'Delete an automation',
+      },
+      {
+        name: 'Duplicate',
+        value: 'duplicate',
+        description: 'Create a copy of an existing automation',
+        action: 'Duplicate an automation',
       },
       {
         name: 'Get',
         value: 'get',
-        description: 'Retrieve a single workflow with its steps and edges',
-        action: 'Get workflow details',
+        description:
+          'Retrieve a single automation with its steps and connections',
+        action: 'Get automation details',
       },
       {
         name: 'Get Run',
         value: 'getRun',
-        description: 'Retrieve a single workflow run',
-        action: 'Get a workflow run',
-      },
-      {
-        name: 'Get Run Step',
-        value: 'getRunStep',
-        description: 'Retrieve a single workflow run step',
-        action: 'Get a workflow run step',
+        description: 'Retrieve a single automation run',
+        action: 'Get an automation run',
       },
       {
         name: 'List',
         value: 'list',
-        description: 'Retrieve a list of workflows',
-        action: 'List all workflows',
-      },
-      {
-        name: 'List Run Steps',
-        value: 'listRunSteps',
-        description: 'Retrieve a list of workflow run steps',
-        action: 'List workflow run steps',
+        description: 'Retrieve a list of automations',
+        action: 'List all automations',
       },
       {
         name: 'List Runs',
         value: 'listRuns',
-        description: 'Retrieve a list of workflow runs',
-        action: 'List workflow runs',
+        description: 'Retrieve a list of automation runs',
+        action: 'List automation runs',
+      },
+      {
+        name: 'Stop',
+        value: 'stop',
+        description: 'Stop a running automation and disable it',
+        action: 'Stop an automation',
       },
       {
         name: 'Update',
         value: 'update',
-        description: 'Update an existing workflow (enable or disable)',
-        action: 'Update a workflow',
+        description: 'Update an existing automation (enable or disable)',
+        action: 'Update an automation',
       },
     ],
     default: 'list',
@@ -101,8 +102,8 @@ export const descriptions: INodeProperties[] = [
   ...list.description,
   ...update.description,
   ...del.description,
+  ...duplicate.description,
+  ...stop.description,
   ...listRuns.description,
   ...getRun.description,
-  ...listRunSteps.description,
-  ...getRunStep.description,
 ];

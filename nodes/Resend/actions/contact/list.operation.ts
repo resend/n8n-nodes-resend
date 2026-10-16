@@ -1,5 +1,4 @@
 import type {
-  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -62,10 +61,9 @@ export async function execute(
   this: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   const segmentId = resolveDynamicIdValue(this, 'segmentIdFilter', 0);
-  const extraQs: IDataObject = {};
-  if (segmentId) {
-    extraQs.segment_id = segmentId;
-  }
-  const items = await requestList.call(this, '/contacts', extraQs);
+  const endpoint = segmentId
+    ? `/segments/${encodeURIComponent(segmentId)}/contacts`
+    : '/contacts';
+  const items = await requestList.call(this, endpoint);
   return createListExecutionData.call(this, items);
 }

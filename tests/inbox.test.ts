@@ -95,16 +95,16 @@ const cases: RequestCase[] = [
       ...inbox,
       inboxAgentUpdateFields: {
         instructions: 'Escalate legal threats.',
-        tone: 'friendly',
-        enabledActions: ['draft_reply', 'add_labels'],
+        tone: 'concise_casual',
+        actions: ['draft_reply', 'archive', 'move_to_trash'],
       },
     },
     method: 'PATCH',
     endpoint: '/inboxes/inbox%201/agent',
     body: {
       instructions: 'Escalate legal threats.',
-      tone: 'friendly',
-      enabled_actions: ['draft_reply', 'add_labels'],
+      tone: 'concise_casual',
+      actions: ['draft_reply', 'archive', 'move_to_trash'],
     },
   },
   {
@@ -115,23 +115,23 @@ const cases: RequestCase[] = [
         clearInstructions: true,
         instructions: 'ignored',
         clearTone: true,
-        enabledActions: [],
+        actions: [],
       },
     },
     method: 'PATCH',
     endpoint: '/inboxes/inbox%201/agent',
-    body: { instructions: null, tone: null, enabled_actions: [] },
+    body: { instructions: null, tone: null, actions: [] },
   },
   {
     operation: 'createLabel',
     parameters: {
       ...inbox,
       inboxLabelName: 'Urgent',
-      inboxLabelCreateFields: { color: 'crimson' },
+      inboxLabelCreateFields: { color: '#e5484d' },
     },
     method: 'POST',
     endpoint: '/inboxes/inbox%201/labels',
-    body: { name: 'Urgent', color: 'crimson' },
+    body: { name: 'Urgent', color: '#e5484d' },
   },
   {
     operation: 'listLabels',
@@ -142,10 +142,10 @@ const cases: RequestCase[] = [
   },
   {
     operation: 'updateLabel',
-    parameters: { ...label, inboxLabelUpdateFields: { color: 'orange' } },
+    parameters: { ...label, inboxLabelUpdateFields: { color: '#F76B15' } },
     method: 'PATCH',
     endpoint: '/inboxes/inbox%201/labels/label%2F1',
-    body: { color: 'orange' },
+    body: { color: '#F76B15' },
   },
   {
     operation: 'deleteLabel',
@@ -155,37 +155,32 @@ const cases: RequestCase[] = [
   },
 ];
 
-describe.each(cases)('inboxes $operation', ({
-  operation,
-  parameters,
-  response,
-  method,
-  endpoint,
-  body,
-  qs,
-}) => {
-  it(`calls ${method} ${endpoint}`, async () => {
-    const { context, httpRequest } = createExecuteMock({
-      parameters,
-      response,
+describe.each(cases)(
+  'inboxes $operation',
+  ({ operation, parameters, response, method, endpoint, body, qs }) => {
+    it(`calls ${method} ${endpoint}`, async () => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters,
+        response,
+      });
+
+      await inboxes.execute.call(context, 0, operation);
+
+      expect(httpRequest).toHaveBeenCalledTimes(1);
+      const options = httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (body === undefined) {
+        expect(options.body).toBeUndefined();
+      } else {
+        expect(options.body).toEqual(body);
+      }
+      if (qs !== undefined) {
+        expect(options.qs).toEqual(qs);
+      }
     });
-
-    await inboxes.execute.call(context, 0, operation);
-
-    expect(httpRequest).toHaveBeenCalledTimes(1);
-    const options = httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (body === undefined) {
-      expect(options.body).toBeUndefined();
-    } else {
-      expect(options.body).toEqual(body);
-    }
-    if (qs !== undefined) {
-      expect(options.qs).toEqual(qs);
-    }
-  });
-});
+  },
+);
 
 describe('inbox operation behavior', () => {
   it('returns each label as a separate item paired with the input', async () => {
@@ -223,6 +218,39 @@ describe('inbox operation behavior', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('clears the from name with an empty string', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxUpdateFields: { clearFromName: true, fromName: 'Ignored' },
+      },
+      response: { object: 'inbox', id: 'inbox 1' },
+    });
+
+    await inboxes.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ from_name: '' });
+  });
+
+  it.each(['createLabel', 'updateLabel'])(
+    'rejects %s with a color that is not #RRGGBB',
+    async (operation) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: {
+          ...label,
+          inboxLabelName: 'Urgent',
+          inboxLabelCreateFields: { color: 'crimson' },
+          inboxLabelUpdateFields: { color: '#FFF' },
+        },
+      });
+
+      await expect(inboxes.execute.call(context, 0, operation)).rejects.toThrow(
+        'Color must be a #RRGGBB hex color',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
+
   it('rejects create when the email address resolves to empty', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: { inboxEmailAddress: '  ', inboxCreateFields: {} },
@@ -234,21 +262,19 @@ describe('inbox operation behavior', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
-  it.each([
-    'get',
-    'getAgent',
-    'delete',
-    'listLabels',
-  ])('rejects %s when the inbox ID resolves to empty', async (operation) => {
-    const { context, httpRequest } = createExecuteMock({
-      parameters: { inboxId: locator('') },
-    });
+  it.each(['get', 'getAgent', 'delete', 'listLabels'])(
+    'rejects %s when the inbox ID resolves to empty',
+    async (operation) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { inboxId: locator('') },
+      });
 
-    await expect(inboxes.execute.call(context, 0, operation)).rejects.toThrow(
-      'Inbox is required',
-    );
-    expect(httpRequest).not.toHaveBeenCalled();
-  });
+      await expect(inboxes.execute.call(context, 0, operation)).rejects.toThrow(
+        'Inbox is required',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects deleteLabel when the label ID resolves to empty', async () => {
     const { context, httpRequest } = createExecuteMock({

@@ -9,49 +9,49 @@ import { apiRequest } from '../../transport';
 export const description: INodeProperties[] = [
   {
     displayName: 'Name',
-    name: 'workflowName',
+    name: 'automationName',
     type: 'string',
     required: true,
     default: '',
     placeholder: 'Welcome series',
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['create'],
       },
     },
-    description: 'The name of the workflow',
+    description: 'The name of the automation',
   },
   {
     displayName: 'Steps (JSON)',
-    name: 'workflowSteps',
+    name: 'automationSteps',
     type: 'json',
     required: true,
     default:
-      '[\n  {\n    "ref": "trigger",\n    "type": "trigger",\n    "config": { "eventName": "user.created" }\n  }\n]',
+      '[\n  {\n    "key": "trigger",\n    "type": "trigger",\n    "config": { "event_name": "user.created" }\n  }\n]',
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['create'],
       },
     },
     description:
-      "An array of step objects that define the workflow's actions. Must include at least one trigger step. Step types: trigger, send_email, delay, wait_for_event, condition.",
+      "An array of step objects that define the automation's actions. Must include at least one trigger step. Step types: trigger, send_email, delay, wait_for_event, condition, contact_update, contact_delete, add_to_segment.",
   },
   {
-    displayName: 'Edges (JSON)',
-    name: 'workflowEdges',
+    displayName: 'Connections (JSON)',
+    name: 'automationConnections',
     type: 'json',
     required: true,
     default: '[]',
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['create'],
       },
     },
     description:
-      'An array of edge objects that define connections between steps. Can be an empty array for single-step workflows.',
+      'An array of connection objects that define the links between steps. Can be an empty array for single-step automations.',
   },
   {
     displayName: 'Additional Options',
@@ -61,7 +61,7 @@ export const description: INodeProperties[] = [
     default: {},
     displayOptions: {
       show: {
-        resource: ['workflows'],
+        resource: ['automations'],
         operation: ['create'],
       },
     },
@@ -75,7 +75,7 @@ export const description: INodeProperties[] = [
           { name: 'Disabled', value: 'disabled' },
         ],
         default: 'disabled',
-        description: 'The status of the workflow. Defaults to disabled.',
+        description: 'The status of the automation. Defaults to disabled.',
       },
     ],
   },
@@ -85,11 +85,11 @@ export async function execute(
   this: IExecuteFunctions,
   index: number,
 ): Promise<INodeExecutionData[]> {
-  const name = this.getNodeParameter('workflowName', index) as string;
-  const steps = this.getNodeParameter('workflowSteps', index) as
+  const name = this.getNodeParameter('automationName', index) as string;
+  const steps = this.getNodeParameter('automationSteps', index) as
     | string
     | object;
-  const edges = this.getNodeParameter('workflowEdges', index) as
+  const connections = this.getNodeParameter('automationConnections', index) as
     | string
     | object;
   const additionalOptions = this.getNodeParameter(
@@ -103,14 +103,15 @@ export async function execute(
   const body: IDataObject = {
     name,
     steps: typeof steps === 'string' ? JSON.parse(steps) : steps,
-    edges: typeof edges === 'string' ? JSON.parse(edges) : edges,
+    connections:
+      typeof connections === 'string' ? JSON.parse(connections) : connections,
   };
 
   if (additionalOptions.status) {
     body.status = additionalOptions.status;
   }
 
-  const response = await apiRequest.call(this, 'POST', '/workflows', body);
+  const response = await apiRequest.call(this, 'POST', '/automations', body);
 
   return [{ json: response, pairedItem: { item: index } }];
 }

@@ -10,10 +10,16 @@ import {
   assertRecipientLimit,
   assignRecipients,
   assignStrings,
+  attachmentsField,
   bccField,
+  buildAttachments,
+  buildCustomHeaders,
   ccField,
   createInboxField,
+  customHeadersField,
   getThreadEmailPath,
+  idempotencyHeaders,
+  idempotencyKeyField,
   threadEmailIdField,
   threadIdField,
 } from './shared';
@@ -49,8 +55,12 @@ export const description: INodeProperties[] = [
     default: {},
     displayOptions: { show },
     options: [
+      attachmentsField(
+        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have at most 25 MB of content. A URL file does not count toward the 25 MB. The request returns an error for an original attachment that was sent from a URL, an empty file, a blocked file type, or a URL that is not http or https or points to localhost.',
+      ),
       bccField,
       ccField,
+      customHeadersField,
       {
         displayName: 'HTML Note',
         name: 'html',
@@ -61,6 +71,9 @@ export const description: INodeProperties[] = [
         },
         description: 'An HTML note sent above the quoted original',
       },
+      idempotencyKeyField(
+        'A unique key to ensure the forward is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
       {
         displayName: 'Subject',
         name: 'subject',
@@ -107,12 +120,22 @@ export async function execute(
   assignRecipients(body, options, ['cc', 'bcc']);
   assertRecipientLimit(this, body, index);
   assignStrings(body, options, ['html', 'text', 'subject']);
+  const attachments = await buildAttachments(this, options.attachments, index);
+  if (attachments) {
+    body.attachments = attachments;
+  }
+  const headers = buildCustomHeaders(options.headers);
+  if (headers) {
+    body.headers = headers;
+  }
 
   const response = await apiRequest.call(
     this,
     'POST',
     `${getThreadEmailPath(this, index)}/forward`,
     body,
+    undefined,
+    idempotencyHeaders(options),
   );
 
   return [{ json: response, pairedItem: { item: index } }];

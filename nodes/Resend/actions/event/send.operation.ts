@@ -99,7 +99,7 @@ export async function execute(
   const body: IDataObject = { event };
 
   if (identifyBy === 'contactId') {
-    body.contactId = this.getNodeParameter('contactId', index) as string;
+    body.contact_id = this.getNodeParameter('contactId', index) as string;
   } else {
     body.email = this.getNodeParameter('contactEmail', index) as string;
   }

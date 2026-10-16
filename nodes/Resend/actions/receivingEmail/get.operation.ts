@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeProperties,
@@ -25,6 +26,41 @@ export const description: INodeProperties[] = [
       },
     },
   }),
+  {
+    displayName: 'Options',
+    name: 'receivedEmailOptions',
+    type: 'collection',
+    placeholder: 'Add Option',
+    default: {},
+    displayOptions: {
+      show: {
+        resource: ['receivingEmails'],
+        operation: ['get'],
+      },
+    },
+    options: [
+      {
+        displayName: 'HTML Format',
+        name: 'htmlFormat',
+        type: 'options',
+        default: 'data_uri',
+        options: [
+          {
+            name: 'CID References',
+            value: 'cid',
+            description:
+              'Keep the original cid: references that match attachment content IDs',
+          },
+          {
+            name: 'Data URI',
+            value: 'data_uri',
+            description: 'Inline images as base64 data: URIs',
+          },
+        ],
+        description: 'How inline images are returned inside the HTML body',
+      },
+    ],
+  },
 ];
 
 export async function execute(
@@ -33,10 +69,20 @@ export async function execute(
 ): Promise<INodeExecutionData[]> {
   const emailId = resolveDynamicIdValue(this, 'receivedEmailId', index);
 
+  const options = this.getNodeParameter('receivedEmailOptions', index, {}) as {
+    htmlFormat?: string;
+  };
+  const qs: IDataObject = {};
+  if (options.htmlFormat) {
+    qs.html_format = options.htmlFormat;
+  }
+
   const response = await apiRequest.call(
     this,
     'GET',
     `/emails/receiving/${encodeURIComponent(emailId)}`,
+    undefined,
+    qs,
   );
 
   return [{ json: response, pairedItem: { item: index } }];

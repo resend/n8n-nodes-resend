@@ -3,11 +3,13 @@ import type { INodeProperties } from 'n8n-workflow';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as get from './get.operation';
+import * as getMetrics from './getMetrics.operation';
 import * as list from './list.operation';
 import * as listContacts from './listContacts.operation';
+import * as update from './update.operation';
 
 export { execute } from './execute';
-export { create, del as delete, get, list, listContacts };
+export { create, del as delete, get, getMetrics, list, listContacts, update };
 
 export const operations: INodeProperties[] = [
   {
@@ -43,6 +45,13 @@ export const operations: INodeProperties[] = [
         action: 'Get segment details',
       },
       {
+        name: 'Get Metrics',
+        value: 'getMetrics',
+        description:
+          'Retrieve contact count metrics for the account, optionally broken down by segment',
+        action: 'Get segment metrics',
+      },
+      {
         name: 'List',
         value: 'list',
         description:
@@ -55,6 +64,12 @@ export const operations: INodeProperties[] = [
         description: 'Get all contacts belonging to a specific segment',
         action: 'List segment contacts',
       },
+      {
+        name: 'Update',
+        value: 'update',
+        description: 'Rename an existing segment',
+        action: 'Update a segment',
+      },
     ],
     default: 'list',
   },
@@ -64,7 +79,9 @@ export const descriptions: INodeProperties[] = [
   ...operations,
   ...create.description,
   ...get.description,
+  ...getMetrics.description,
   ...list.description,
   ...listContacts.description,
+  ...update.description,
   ...del.description,
 ];

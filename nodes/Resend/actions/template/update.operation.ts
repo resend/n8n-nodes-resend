@@ -4,7 +4,11 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { apiRequest } from '../../transport';
+import {
+  apiRequest,
+  normalizeEmailList,
+  parseTemplateVariables,
+} from '../../transport';
 import {
   createDynamicIdField,
   resolveDynamicIdValue,
@@ -158,12 +162,6 @@ export const description: INodeProperties[] = [
   },
 ];
 
-interface TemplateVariable {
-  key: string;
-  type: string;
-  fallbackValue?: string;
-}
-
 export async function execute(
   this: IExecuteFunctions,
   index: number,
@@ -184,18 +182,24 @@ export async function execute(
   };
   const templateVariables = this.getNodeParameter('templateVariables', index, {
     variables: [],
-  }) as { variables: TemplateVariable[] };
+  }) as {
+    variables: Array<{ key: string; type: string; fallbackValue?: unknown }>;
+  };
 
-  const body: IDataObject = { ...updateFields };
+  const { replyTo, ...fields } = updateFields;
+  const body: IDataObject = { ...fields };
+  if (replyTo !== undefined) {
+    body.reply_to = normalizeEmailList(replyTo);
+  }
 
-  if (templateVariables.variables && templateVariables.variables.length > 0) {
-    body.variables = templateVariables.variables.map((v) => {
-      const variable: Record<string, unknown> = { key: v.key, type: v.type };
-      if (v.fallbackValue) {
-        variable.fallbackValue = v.fallbackValue;
-      }
-      return variable;
-    });
+  const variables = parseTemplateVariables(
+    this,
+    templateVariables,
+    'fallback_value',
+    index,
+  );
+  if (variables) {
+    body.variables = variables;
   }
 
   const response = await apiRequest.call(
