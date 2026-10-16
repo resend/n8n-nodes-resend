@@ -18,7 +18,7 @@ export function createInboxField(
     displayName: 'Inbox',
     required: true,
     description:
-      'Select an inbox or enter an ID directly. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+      'Select an inbox or enter its ID or email address directly. Choose from the list, or specify an ID or email address using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
     displayOptions: {
       show: {
         resource: [resource],
@@ -656,4 +656,43 @@ export function buildCustomHeaders(
     }
   }
   return Object.keys(headers).length ? headers : undefined;
+}
+
+export const threadLabelIdsField = (
+  operation: string,
+  description: string,
+): INodeProperties => ({
+  displayName: 'Label Names or IDs',
+  name: 'inboxThreadLabelIds',
+  type: 'multiOptions',
+  default: [],
+  typeOptions: {
+    loadOptionsMethod: 'getInboxLabels',
+    loadOptionsDependsOn: ['inboxId.value'],
+  },
+  description: `${description} Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>`,
+  displayOptions: {
+    show: {
+      resource: ['inboxThreads'],
+      operation: [operation],
+    },
+  },
+});
+
+export function getThreadLabelIds(
+  context: IExecuteFunctions,
+  index: number,
+): string[] {
+  return normalizeEmailList(
+    context.getNodeParameter('inboxThreadLabelIds', index, []) as
+      | string
+      | string[],
+  );
+}
+
+export function getThreadLabelsPath(
+  context: IExecuteFunctions,
+  index: number,
+): string {
+  return `${getThreadPath(context, index)}/labels`;
 }

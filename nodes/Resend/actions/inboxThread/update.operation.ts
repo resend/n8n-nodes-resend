@@ -5,10 +5,8 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { apiRequest, normalizeEmailList } from '../../transport';
+import { apiRequest } from '../../transport';
 import { createInboxField, getThreadPath, threadIdField } from './shared';
-
-const MAX_LABEL_CHANGES = 10;
 
 export const description: INodeProperties[] = [
   createInboxField('inboxThreads', ['update']),
@@ -20,7 +18,7 @@ export const description: INodeProperties[] = [
     placeholder: 'Add Field',
     default: {},
     description:
-      'Changes apply in this order: read, folder, added labels, removed labels. They are not atomic, so a label that does not exist leaves the earlier changes applied.',
+      'Changes apply in this order: read, then folder. They are not atomic. To change the labels of a thread, use the Add Labels, Set Labels, or Remove Label operations.',
     displayOptions: {
       show: {
         resource: ['inboxThreads'],
@@ -28,18 +26,6 @@ export const description: INodeProperties[] = [
       },
     },
     options: [
-      {
-        displayName: 'Add Label Names or IDs',
-        name: 'addLabelIds',
-        type: 'multiOptions',
-        default: [],
-        typeOptions: {
-          loadOptionsMethod: 'getInboxLabels',
-          loadOptionsDependsOn: ['inboxId.value'],
-        },
-        description:
-          'Labels to apply to the thread. Between 1 and 10 IDs. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-      },
       {
         displayName: 'Folder',
         name: 'folder',
@@ -61,38 +47,9 @@ export const description: INodeProperties[] = [
         default: true,
         description: 'Whether to mark every email in the thread as read',
       },
-      {
-        displayName: 'Remove Label Names or IDs',
-        name: 'removeLabelIds',
-        type: 'multiOptions',
-        default: [],
-        typeOptions: {
-          loadOptionsMethod: 'getInboxLabels',
-          loadOptionsDependsOn: ['inboxId.value'],
-        },
-        description:
-          'Labels to remove from the thread. Between 1 and 10 IDs. The labels themselves are kept. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-      },
     ],
   },
 ];
-
-function readLabelIds(
-  context: IExecuteFunctions,
-  value: unknown,
-  label: string,
-  index: number,
-): string[] {
-  const ids = normalizeEmailList(value as string | string[] | undefined);
-  if (ids.length > MAX_LABEL_CHANGES) {
-    throw new NodeOperationError(
-      context.getNode(),
-      `${label} accepts at most ${MAX_LABEL_CHANGES} label IDs (got ${ids.length})`,
-      { itemIndex: index },
-    );
-  }
-  return ids;
-}
 
 export async function execute(
   this: IExecuteFunctions,
@@ -103,10 +60,8 @@ export async function execute(
     index,
     {},
   ) as {
-    addLabelIds?: unknown;
     folder?: string;
     read?: boolean;
-    removeLabelIds?: unknown;
   };
 
   const body: IDataObject = {};
@@ -116,38 +71,10 @@ export async function execute(
   if (updateFields.folder) {
     body.folder = updateFields.folder;
   }
-  const addLabelIds = readLabelIds(
-    this,
-    updateFields.addLabelIds,
-    'Add Labels',
-    index,
-  );
-  if (addLabelIds.length) {
-    body.add_label_ids = addLabelIds;
-  }
-  const removeLabelIds = readLabelIds(
-    this,
-    updateFields.removeLabelIds,
-    'Remove Labels',
-    index,
-  );
-  if (removeLabelIds.length) {
-    body.remove_label_ids = removeLabelIds;
-  }
-
-  const overlap = addLabelIds.find((id) => removeLabelIds.includes(id));
-  if (overlap) {
-    throw new NodeOperationError(
-      this.getNode(),
-      `A label ID cannot be both added and removed in the same request (${overlap})`,
-      { itemIndex: index },
-    );
-  }
-
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'At least one of Add Labels, Folder, Read, or Remove Labels must be set',
+      'At least one of Folder or Read must be set',
       { itemIndex: index },
     );
   }

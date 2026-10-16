@@ -120,8 +120,6 @@ const cases: RequestCase[] = [
       inboxThreadUpdateFields: {
         read: false,
         folder: 'spam',
-        addLabelIds: ['lbl_2'],
-        removeLabelIds: 'lbl_3, lbl_4',
       },
     },
     method: 'PATCH',
@@ -129,9 +127,42 @@ const cases: RequestCase[] = [
     body: {
       read: false,
       folder: 'spam',
-      add_label_ids: ['lbl_2'],
-      remove_label_ids: ['lbl_3', 'lbl_4'],
     },
+  },
+  {
+    name: 'thread add labels',
+    execute: inboxThreads.execute,
+    operation: 'addLabels',
+    parameters: { ...thread, inboxThreadLabelIds: ['lbl_1', 'lbl_2'] },
+    method: 'POST',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: ['lbl_1', 'lbl_2'] },
+  },
+  {
+    name: 'thread set labels from a comma-separated expression',
+    execute: inboxThreads.execute,
+    operation: 'setLabels',
+    parameters: { ...thread, inboxThreadLabelIds: 'lbl_3, lbl_4' },
+    method: 'PUT',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: ['lbl_3', 'lbl_4'] },
+  },
+  {
+    name: 'thread set labels to none',
+    execute: inboxThreads.execute,
+    operation: 'setLabels',
+    parameters: { ...thread, inboxThreadLabelIds: [] },
+    method: 'PUT',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: [] },
+  },
+  {
+    name: 'thread remove label',
+    execute: inboxThreads.execute,
+    operation: 'removeLabel',
+    parameters: { ...thread, inboxThreadLabelId: 'lbl 5' },
+    method: 'DELETE',
+    endpoint: `${base}/threads/thr%2F1/labels/lbl%205`,
   },
   {
     name: 'thread delete',
@@ -322,38 +353,43 @@ describe('inbox thread and draft requests', () => {
     });
     await expect(
       inboxThreads.execute.call(context, 0, 'update'),
-    ).rejects.toThrow('At least one of Add Labels, Folder, Read');
+    ).rejects.toThrow('At least one of Folder or Read');
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
-  it('rejects a label that is both added and removed', async () => {
+  it('rejects adding no labels', async () => {
     const { context, httpRequest } = createExecuteMock({
-      parameters: {
-        ...thread,
-        inboxThreadUpdateFields: {
-          addLabelIds: ['lbl_1'],
-          removeLabelIds: ['lbl_1'],
-        },
-      },
+      parameters: { ...thread, inboxThreadLabelIds: [] },
     });
     await expect(
-      inboxThreads.execute.call(context, 0, 'update'),
-    ).rejects.toThrow('cannot be both added and removed');
+      inboxThreads.execute.call(context, 0, 'addLabels'),
+    ).rejects.toThrow('between 1 and 10 label IDs');
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
-  it('rejects more than 10 label IDs to add', async () => {
+  it('rejects adding more than 10 labels', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {
         ...thread,
-        inboxThreadUpdateFields: {
-          addLabelIds: Array.from({ length: 11 }, (_, i) => `lbl_${i}`),
-        },
+        inboxThreadLabelIds: Array.from({ length: 11 }, (_, i) => `lbl_${i}`),
       },
     });
     await expect(
-      inboxThreads.execute.call(context, 0, 'update'),
-    ).rejects.toThrow('at most 10 label IDs');
+      inboxThreads.execute.call(context, 0, 'addLabels'),
+    ).rejects.toThrow('between 1 and 10 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects setting more than 100 labels', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...thread,
+        inboxThreadLabelIds: Array.from({ length: 101 }, (_, i) => `lbl_${i}`),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'setLabels'),
+    ).rejects.toThrow('at most 100 label IDs');
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
