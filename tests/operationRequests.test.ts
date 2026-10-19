@@ -1,6 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { describe, expect, it } from 'vitest';
 import * as account from '../nodes/Resend/actions/account';
+import * as automations from '../nodes/Resend/actions/automation';
 import * as broadcasts from '../nodes/Resend/actions/broadcast';
 import * as contacts from '../nodes/Resend/actions/contact';
 import * as contactProperties from '../nodes/Resend/actions/contactProperty';
@@ -14,7 +15,6 @@ import * as suppressions from '../nodes/Resend/actions/suppression';
 import * as templates from '../nodes/Resend/actions/template';
 import * as topics from '../nodes/Resend/actions/topic';
 import * as webhooks from '../nodes/Resend/actions/webhook';
-import * as workflows from '../nodes/Resend/actions/workflow';
 import { createExecuteMock, type ParameterMap } from './helpers/context';
 
 type ResourceExecute = (
@@ -28,18 +28,51 @@ interface RequestCase {
   execute: ResourceExecute;
   operation: string;
   parameters?: ParameterMap;
+  inputData?: INodeExecutionData[];
   response?: unknown;
   method: string;
   endpoint: string;
   body?: unknown;
+  noBody?: boolean;
   qs?: unknown;
 }
+
+const csvBinary = (fileName = 'contacts.csv'): INodeExecutionData[] => [
+  {
+    json: {},
+    binary: {
+      data: {
+        data: Buffer.from('email\nada@example.com').toString('base64'),
+        mimeType: 'text/csv',
+        fileName,
+      },
+    },
+  },
+];
 
 const locator = (value: string) => ({ mode: 'id', value });
 const listParameters = { returnAll: false, limit: 50 };
 const listQuery = { limit: 50 };
 
 const cases: RequestCase[] = [
+  {
+    resource: 'account',
+    execute: account.execute,
+    operation: 'listGrants',
+    parameters: listParameters,
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/oauth/grants',
+    qs: listQuery,
+  },
+  {
+    resource: 'account',
+    execute: account.execute,
+    operation: 'revokeGrant',
+    parameters: { oauthGrantId: 'grant 1' },
+    method: 'DELETE',
+    endpoint: '/oauth/grants/grant%201',
+  },
   {
     resource: 'broadcasts',
     execute: broadcasts.execute,
@@ -94,6 +127,54 @@ const cases: RequestCase[] = [
     method: 'GET',
     endpoint: '/broadcasts',
     qs: listQuery,
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
+    operation: 'listClickedLinks',
+    parameters: {
+      ...listParameters,
+      broadcastIdClickedLinks: locator('bc 1'),
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc%201/clicked-links',
+    qs: listQuery,
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
+    operation: 'listRecipients',
+    parameters: {
+      ...listParameters,
+      broadcastIdRecipients: locator('bc 1'),
+      recipientType: 'sent',
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc%201/recipients',
+    qs: { limit: 50, type: 'sent' },
+  },
+  {
+    resource: 'broadcasts',
+    execute: broadcasts.execute,
+    operation: 'listRecipients',
+    parameters: {
+      ...listParameters,
+      broadcastIdRecipients: locator('bc_1'),
+      recipientType: 'bounced',
+      recipientEmail: 'carter@example.com',
+      bounceType: 'permanent',
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/broadcasts/bc_1/recipients',
+    qs: {
+      limit: 50,
+      type: 'bounced',
+      email: 'carter@example.com',
+      bounce_type: 'permanent',
+    },
   },
   {
     resource: 'broadcasts',
@@ -221,8 +302,8 @@ const cases: RequestCase[] = [
     parameters: { ...listParameters, segmentIdFilter: locator('seg_1') },
     response: { data: [] },
     method: 'GET',
-    endpoint: '/contacts',
-    qs: { limit: 50, segment_id: 'seg_1' },
+    endpoint: '/segments/seg_1/contacts',
+    qs: listQuery,
   },
   {
     resource: 'contacts',
@@ -278,7 +359,45 @@ const cases: RequestCase[] = [
     },
     method: 'PATCH',
     endpoint: '/contacts/c_1/topics',
-    body: { topics: [{ id: 'topic_1', subscription: 'opted_out' }] },
+    body: [{ id: 'topic_1', subscription: 'opted_out' }],
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'createImport',
+    parameters: {
+      contactImportBinaryProperty: 'data',
+      contactImportFields: {
+        columnMap: '{"email":"Email"}',
+        onConflict: 'upsert',
+        segments: { segments: [{ id: 'seg_1' }] },
+        topics: { topics: [{ id: 'topic_1', subscription: 'opt_in' }] },
+      },
+    },
+    inputData: csvBinary(),
+    method: 'POST',
+    endpoint: '/contacts/imports',
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'listImports',
+    parameters: {
+      ...listParameters,
+      contactImportFilters: { status: 'completed' },
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: '/contacts/imports',
+    qs: { limit: 50, status: 'completed' },
+  },
+  {
+    resource: 'contacts',
+    execute: contacts.execute,
+    operation: 'getImport',
+    parameters: { contactImportId: 'imp 1' },
+    method: 'GET',
+    endpoint: '/contacts/imports/imp%201',
   },
   {
     resource: 'contactProperties',
@@ -450,48 +569,6 @@ const cases: RequestCase[] = [
     qs: listQuery,
   },
   {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'createTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingSubdomain: 'links' },
-    method: 'POST',
-    endpoint: '/domains/dom_1/tracking-domains',
-    body: { subdomain: 'links' },
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'getTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'GET',
-    endpoint: '/domains/dom_1/tracking-domains/td_1',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'listTrackingDomains',
-    parameters: { domainId: locator('dom_1') },
-    response: { data: [] },
-    method: 'GET',
-    endpoint: '/domains/dom_1/tracking-domains',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'verifyTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'POST',
-    endpoint: '/domains/dom_1/tracking-domains/td_1/verify',
-  },
-  {
-    resource: 'domains',
-    execute: domains.execute,
-    operation: 'deleteTrackingDomain',
-    parameters: { domainId: locator('dom_1'), trackingDomainId: 'td_1' },
-    method: 'DELETE',
-    endpoint: '/domains/dom_1/tracking-domains/td_1',
-  },
-  {
     resource: 'email',
     execute: email.execute,
     operation: 'list',
@@ -508,6 +585,51 @@ const cases: RequestCase[] = [
     parameters: { emailId: locator('e_1'), attachmentId: 'att_1' },
     method: 'GET',
     endpoint: '/emails/e_1/attachments/att_1',
+  },
+  {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'share',
+    parameters: { emailIdShare: locator('e 1'), expiresIn: '2 hours' },
+    method: 'POST',
+    endpoint: '/emails/e%201/share',
+    body: { expires_in: '2 hours' },
+  },
+  {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'share',
+    parameters: { emailIdShare: locator('e_1'), expiresIn: '' },
+    method: 'POST',
+    endpoint: '/emails/e_1/share',
+    noBody: true,
+  },
+  {
+    resource: 'email',
+    execute: email.execute,
+    operation: 'getMetrics',
+    parameters: {
+      metricsOptions: {
+        startDate: '2026-07-01T00:00:00.000Z',
+        endDate: '2026-07-08T00:00:00.000Z',
+        timezone: 'America/New_York',
+        granularity: 'daily',
+        metrics: ['sent', 'delivered', 'open_rate'],
+        dimensions: ['period', 'domain'],
+        domainIds: 'dom_1, dom_2',
+      },
+    },
+    method: 'GET',
+    endpoint: '/emails/metrics',
+    qs: {
+      start_date: '2026-07-01T00:00:00.000Z',
+      end_date: '2026-07-08T00:00:00.000Z',
+      timezone: 'America/New_York',
+      granularity: 'daily',
+      metrics: 'sent,delivered,open_rate',
+      dimensions: 'period,domain',
+      domain_id: 'dom_1,dom_2',
+    },
   },
   {
     resource: 'events',
@@ -558,7 +680,7 @@ const cases: RequestCase[] = [
     },
     method: 'POST',
     endpoint: '/events/send',
-    body: { event: 'signup', contactId: 'c_1', payload: { plan: 'pro' } },
+    body: { event: 'signup', contact_id: 'c_1', payload: { plan: 'pro' } },
   },
   {
     resource: 'events',
@@ -681,6 +803,26 @@ const cases: RequestCase[] = [
   {
     resource: 'segments',
     execute: segments.execute,
+    operation: 'getMetrics',
+    parameters: {
+      segmentMetricsOptions: {
+        dimensions: ['segment'],
+        metrics: ['all_contacts', 'subscribers', 'unsubscribers'],
+        segmentIds: 'seg_1, seg_2',
+      },
+    },
+    response: { object: 'metrics' },
+    method: 'GET',
+    endpoint: '/segments/metrics',
+    qs: {
+      dimensions: 'segment',
+      metrics: 'all_contacts,subscribers,unsubscribers',
+      segment_id: 'seg_1,seg_2',
+    },
+  },
+  {
+    resource: 'segments',
+    execute: segments.execute,
     operation: 'listContacts',
     parameters: { ...listParameters, segmentId: locator('seg_1') },
     response: { data: [] },
@@ -777,7 +919,7 @@ const cases: RequestCase[] = [
       subject: 'Welcome',
       html: '<p>Hi {{name}}</p>',
       variables: [
-        { key: 'name', type: 'string', fallbackValue: 'friend' },
+        { key: 'name', type: 'string', fallback_value: 'friend' },
         { key: 'plan', type: 'string' },
       ],
     },
@@ -849,7 +991,7 @@ const cases: RequestCase[] = [
     endpoint: '/topics',
     body: {
       name: 'Product updates',
-      defaultSubscription: 'opted_in',
+      default_subscription: 'opted_in',
       description: 'News',
       visibility: 'public',
     },
@@ -955,124 +1097,132 @@ const cases: RequestCase[] = [
     qs: listQuery,
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'create',
     parameters: {
-      workflowName: 'Onboarding',
-      workflowSteps: '[{"id":"s1"}]',
-      workflowEdges: '[]',
-      additionalOptions: { status: 'draft' },
+      automationName: 'Onboarding',
+      automationSteps: '[{"key":"s1"}]',
+      automationConnections: '[]',
+      additionalOptions: { status: 'disabled' },
     },
     method: 'POST',
-    endpoint: '/workflows',
+    endpoint: '/automations',
     body: {
       name: 'Onboarding',
-      steps: [{ id: 's1' }],
-      edges: [],
-      status: 'draft',
+      steps: [{ key: 's1' }],
+      connections: [],
+      status: 'disabled',
     },
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'get',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     method: 'GET',
-    endpoint: '/workflows/wf_1',
+    endpoint: '/automations/auto_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'delete',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     method: 'DELETE',
-    endpoint: '/workflows/wf_1',
+    endpoint: '/automations/auto_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'update',
-    parameters: { workflowId: 'wf_1', workflowStatus: 'live' },
+    parameters: { automationId: 'auto_1', automationStatus: 'enabled' },
     method: 'PATCH',
-    endpoint: '/workflows/wf_1',
-    body: { status: 'live' },
+    endpoint: '/automations/auto_1',
+    body: { status: 'enabled' },
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'list',
     parameters: listParameters,
     response: { data: [] },
     method: 'GET',
-    endpoint: '/workflows',
+    endpoint: '/automations',
     qs: listQuery,
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'listRuns',
-    parameters: { workflowId: 'wf_1' },
+    parameters: { automationId: 'auto_1' },
     response: { data: [] },
     method: 'GET',
-    endpoint: '/workflows/wf_1/runs',
+    endpoint: '/automations/auto_1/runs',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
+    resource: 'automations',
+    execute: automations.execute,
     operation: 'getRun',
-    parameters: { workflowId: 'wf_1', runId: 'run_1' },
+    parameters: { automationId: 'auto_1', runId: 'run_1' },
     method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1',
+    endpoint: '/automations/auto_1/runs/run_1',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
-    operation: 'listRunSteps',
-    parameters: { workflowId: 'wf_1', runId: 'run_1' },
-    response: { data: [] },
-    method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1/steps',
+    resource: 'automations',
+    execute: automations.execute,
+    operation: 'duplicate',
+    parameters: { automationId: 'auto_1' },
+    method: 'POST',
+    endpoint: '/automations/auto_1/duplicate',
   },
   {
-    resource: 'workflows',
-    execute: workflows.execute,
-    operation: 'getRunStep',
-    parameters: { workflowId: 'wf_1', runId: 'run_1', stepId: 'step_1' },
-    method: 'GET',
-    endpoint: '/workflows/wf_1/runs/run_1/steps/step_1',
+    resource: 'automations',
+    execute: automations.execute,
+    operation: 'stop',
+    parameters: { automationId: 'auto_1' },
+    method: 'POST',
+    endpoint: '/automations/auto_1/stop',
   },
 ];
 
-describe.each(cases)('$resource $operation', ({
-  execute,
-  operation,
-  parameters,
-  response,
-  method,
-  endpoint,
-  body,
-  qs,
-}) => {
-  it(`calls ${method} ${endpoint}`, async () => {
-    const mock = createExecuteMock({
-      parameters,
-      response: response ?? { id: 'created' },
+describe.each(cases)(
+  '$resource $operation',
+  ({
+    execute,
+    operation,
+    parameters,
+    inputData,
+    response,
+    method,
+    endpoint,
+    body,
+    noBody,
+    qs,
+  }) => {
+    it(`calls ${method} ${endpoint}${noBody ? ' without a body' : ''}`, async () => {
+      const mock = createExecuteMock({
+        parameters,
+        inputData,
+        response: response ?? { id: 'created' },
+      });
+
+      await execute.call(mock.context, 0, operation);
+
+      const options = mock.httpRequest.mock.calls[0][1];
+      expect(options.method).toBe(method);
+      expect(options.url).toBe(`https://api.resend.com${endpoint}`);
+      if (body !== undefined) {
+        expect(options.body).toEqual(body);
+      }
+      if (noBody) {
+        expect(options).not.toHaveProperty('body');
+      }
+      if (qs !== undefined) {
+        expect(options.qs).toEqual(qs);
+      }
     });
-
-    await execute.call(mock.context, 0, operation);
-
-    const options = mock.httpRequest.mock.calls[0][1];
-    expect(options.method).toBe(method);
-    expect(options.url).toBe(`https://api.resend.com${endpoint}`);
-    if (body !== undefined) {
-      expect(options.body).toEqual(body);
-    }
-    if (qs !== undefined) {
-      expect(options.qs).toEqual(qs);
-    }
-  });
-});
+  },
+);
 
 describe('operation results', () => {
   it('pairs single item responses with the current item', async () => {
@@ -1088,32 +1238,19 @@ describe('operation results', () => {
 
   it('unwraps nested list responses', async () => {
     const { context } = createExecuteMock({
-      parameters: { workflowId: 'wf_1' },
+      parameters: { automationId: 'auto_1' },
       response: { data: [{ id: 'run_1' }, { id: 'run_2' }] },
     });
 
     await expect(
-      workflows.execute.call(context, 1, 'listRuns'),
+      automations.execute.call(context, 1, 'listRuns'),
     ).resolves.toEqual([
       { json: { id: 'run_1' }, pairedItem: { item: 1 } },
       { json: { id: 'run_2' }, pairedItem: { item: 1 } },
     ]);
   });
 
-  it('returns the raw response when a nested list is empty', async () => {
-    const { context } = createExecuteMock({
-      parameters: { domainId: locator('dom_1') },
-      response: { message: 'no tracking domains' },
-    });
-
-    await expect(
-      domains.execute.call(context, 0, 'listTrackingDomains'),
-    ).resolves.toEqual([
-      { json: { message: 'no tracking domains' }, pairedItem: { item: 0 } },
-    ]);
-  });
-
-  it('omits the limit when returning all sub-resources', async () => {
+  it('requests full pages when returning all sub-resources', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: { contactIdGetTopics: locator('c_1'), returnAll: true },
       response: { data: [] },
@@ -1121,7 +1258,62 @@ describe('operation results', () => {
 
     await contacts.execute.call(context, 0, 'getTopics');
 
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 100 });
+  });
+
+  it('requests email metrics without a query when no option is set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { metricsOptions: {} },
+      response: { object: 'metrics', totals: { sent: 1 } },
+    });
+
+    await expect(email.execute.call(context, 2, 'getMetrics')).resolves.toEqual(
+      [
+        {
+          json: { object: 'metrics', totals: { sent: 1 } },
+          pairedItem: { item: 2 },
+        },
+      ],
+    );
     expect(httpRequest.mock.calls[0][1]).not.toHaveProperty('qs');
+  });
+
+  it('sends the email metric filter as comma separated ids', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          emailIds: ' e_1 , e_2 ',
+          dimensions: ['period', 'email'],
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      email_id: 'e_1,e_2',
+      dimensions: 'period,email',
+    });
+  });
+
+  it('sends the broadcast metric filter as comma separated ids', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          broadcastIds: ' bc_1 , bc_2 ',
+          dimensions: ['period', 'broadcast'],
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      broadcast_id: 'bc_1,bc_2',
+      dimensions: 'period,broadcast',
+    });
   });
 });
 
@@ -1196,6 +1388,74 @@ describe('operation validation', () => {
       suppressions.execute.call(context, 0, 'batchRemove'),
     ).rejects.toThrow('at most 100 entries per request');
   });
+
+  it('rejects combining the email and broadcast metric dimensions', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { dimensions: ['email', 'broadcast'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email" and "Broadcast" dimensions cannot be combined',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects combining the email and broadcast metric id filters', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { emailIds: 'e_1', broadcastIds: 'bc_1' },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email IDs" and "Broadcast IDs" filters cannot be combined',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects the email metric id filter with the broadcast dimension', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { emailIds: 'e_1', dimensions: ['broadcast'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Email IDs" filter cannot be combined with the "Broadcast" dimension',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects the broadcast metric id filter with the email dimension', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: { broadcastIds: 'bc_1', dimensions: ['email'] },
+      },
+    });
+
+    await expect(email.execute.call(context, 0, 'getMetrics')).rejects.toThrow(
+      'The "Broadcast IDs" filter cannot be combined with the "Email" dimension',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('ignores blank metric id filters when checking conflicts', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        metricsOptions: {
+          emailIds: 'e_1',
+          broadcastIds: ' , ',
+        },
+      },
+      response: { object: 'metrics' },
+    });
+
+    await email.execute.call(context, 0, 'getMetrics');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ email_id: 'e_1' });
+  });
 });
 
 describe('account disconnect', () => {
@@ -1257,5 +1517,193 @@ describe('account disconnect', () => {
     ).rejects.toThrow(
       'No active Resend OAuth connection was found to disconnect.',
     );
+  });
+});
+
+describe('contact imports', () => {
+  const importParameters = {
+    contactImportBinaryProperty: 'data',
+    contactImportFields: {
+      columnMap: '{"email":"Email"}',
+      fileName: 'people.csv',
+      onConflict: 'upsert',
+      segments: { segments: [{ id: 'seg_1' }] },
+      topics: { topics: [{ id: 'topic_1', subscription: 'opt_in' }] },
+    },
+  };
+
+  it('uploads the CSV file and its options as multipart form data', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: importParameters,
+      inputData: csvBinary(),
+      response: { object: 'contact_import', id: 'imp_1' },
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).resolves.toEqual([
+      {
+        json: { object: 'contact_import', id: 'imp_1' },
+        pairedItem: { item: 0 },
+      },
+    ]);
+
+    const options = httpRequest.mock.calls[0][1];
+    expect(options.headers).not.toHaveProperty('Content-Type');
+
+    const form = options.body as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.get('column_map')).toBe('{"email":"Email"}');
+    expect(form.get('on_conflict')).toBe('upsert');
+    expect(form.get('segments')).toBe('[{"id":"seg_1"}]');
+    expect(form.get('topics')).toBe(
+      '[{"id":"topic_1","subscription":"opt_in"}]',
+    );
+
+    const file = form.get('file') as File;
+    expect(file.name).toBe('people.csv');
+    expect(file.type).toBe('text/csv');
+    await expect(file.text()).resolves.toBe('email\nada@example.com');
+  });
+
+  it('falls back to the binary file name and sends only the file', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields: {},
+      },
+      inputData: csvBinary('audience.csv'),
+    });
+
+    await contacts.execute.call(context, 0, 'createImport');
+
+    const form = httpRequest.mock.calls[0][1].body as FormData;
+    expect([...form.keys()]).toEqual(['file']);
+    expect((form.get('file') as File).name).toBe('audience.csv');
+  });
+
+  const rejectsImport = async (
+    contactImportFields: Record<string, unknown>,
+    message: string,
+  ) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields,
+      },
+      inputData: csvBinary(),
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).rejects.toThrow(message);
+    expect(httpRequest).not.toHaveBeenCalled();
+  };
+
+  it('rejects a column map that is not valid JSON', async () => {
+    await rejectsImport(
+      { columnMap: 'not json' },
+      'Column Map must be valid JSON',
+    );
+  });
+
+  it.each([
+    ['an array', '[{"email":"Email"}]'],
+    ['null', 'null'],
+    ['a string', '"Email"'],
+    ['a number', '42'],
+    ['a boolean', 'true'],
+  ])('rejects a column map that parses to %s', async (_label, columnMap) => {
+    await rejectsImport(
+      { columnMap },
+      'Column Map must be a JSON object mapping contact fields to CSV column names',
+    );
+  });
+
+  it('rejects a non-object column map passed as a resolved value', async () => {
+    await rejectsImport(
+      { columnMap: ['Email'] },
+      'Column Map must be a JSON object mapping contact fields to CSV column names',
+    );
+  });
+
+  it('accepts a column map supplied as an already-parsed object', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'data',
+        contactImportFields: { columnMap: { email: 'Email' } },
+      },
+      inputData: csvBinary(),
+    });
+
+    await contacts.execute.call(context, 0, 'createImport');
+
+    const form = httpRequest.mock.calls[0][1].body as FormData;
+    expect(form.get('column_map')).toBe('{"email":"Email"}');
+  });
+
+  it.each([
+    ['Segments', 'segments'],
+    ['Topics', 'topics'],
+  ])('rejects %s that is not an array', async (fieldName, key) => {
+    await rejectsImport(
+      { [key]: { [key]: 'seg_1' } },
+      `${fieldName} must be an array of objects`,
+    );
+  });
+
+  it.each([
+    ['a missing ID', {}],
+    ['a blank ID', { id: '   ' }],
+    ['a non-string ID', { id: 42 }],
+    ['a non-object entry', 'seg_1'],
+  ])('rejects a segment with %s', async (_label, entry) => {
+    await rejectsImport(
+      { segments: { segments: [entry] } },
+      'Every entry in Segments must be an object with a non-empty "id"',
+    );
+  });
+
+  it('rejects a topic with a missing ID', async () => {
+    await rejectsImport(
+      { topics: { topics: [{ subscription: 'opt_in' }] } },
+      'Every entry in Topics must be an object with a non-empty "id"',
+    );
+  });
+
+  it.each([
+    ['is missing', {}],
+    ['is not one of the allowed values', { subscription: 'subscribed' }],
+    ['is not a string', { subscription: true }],
+  ])('rejects a topic whose subscription %s', async (_label, extra) => {
+    await rejectsImport(
+      { topics: { topics: [{ id: 'topic_1', ...extra }] } },
+      'Topic "topic_1" must have a subscription of either "opt_in" or "opt_out"',
+    );
+  });
+
+  it('rejects a missing binary property', async () => {
+    const { context } = createExecuteMock({
+      parameters: {
+        contactImportBinaryProperty: 'csv',
+        contactImportFields: {},
+      },
+      inputData: csvBinary(),
+    });
+
+    await expect(
+      contacts.execute.call(context, 0, 'createImport'),
+    ).rejects.toThrow('Binary property "csv" not found in item 0');
+  });
+
+  it('omits the status filter when no filter is set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { returnAll: false, limit: 50 },
+      response: { data: [] },
+    });
+
+    await contacts.execute.call(context, 0, 'listImports');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 50 });
   });
 });

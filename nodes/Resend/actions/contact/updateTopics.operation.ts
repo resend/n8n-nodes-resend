@@ -102,12 +102,10 @@ export async function execute(
     topics: TopicItem[];
   };
 
-  const body: IDataObject = {
-    topics: topicsInput.topics.map((t) => ({
-      id: t.id,
-      subscription: t.subscription,
-    })),
-  };
+  const body: IDataObject[] = topicsInput.topics.map((t) => ({
+    id: t.id,
+    subscription: t.subscription,
+  }));
 
   const response = await apiRequest.call(
     this,

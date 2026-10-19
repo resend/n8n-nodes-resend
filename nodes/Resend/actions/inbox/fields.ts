@@ -5,19 +5,37 @@ import {
   resolveDynamicIdValue,
 } from '../../utils/dynamicFields';
 
-export const LABEL_COLOR_OPTIONS = [
-  { name: 'Bronze', value: 'bronze' },
-  { name: 'Crimson', value: 'crimson' },
-  { name: 'Cyan', value: 'cyan' },
-  { name: 'Grass', value: 'grass' },
-  { name: 'Iris', value: 'iris' },
-  { name: 'Lime', value: 'lime' },
-  { name: 'Mauve', value: 'mauve' },
-  { name: 'Orange', value: 'orange' },
-  { name: 'Plum', value: 'plum' },
-  { name: 'Teal', value: 'teal' },
-  { name: 'Yellow', value: 'yellow' },
-];
+const LABEL_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
+export function labelColorOption(description: string): INodeProperties {
+  return {
+    displayName: 'Color',
+    name: 'color',
+    type: 'color',
+    default: '',
+    placeholder: '#E5484D',
+    description,
+  };
+}
+
+export function readLabelColor(
+  context: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): string | undefined {
+  const color = typeof value === 'string' ? value.trim() : '';
+  if (!color) {
+    return undefined;
+  }
+  if (!LABEL_COLOR_PATTERN.test(color)) {
+    throw new NodeOperationError(
+      context.getNode(),
+      `Color must be a #RRGGBB hex color, such as #E5484D (got "${color}")`,
+      { itemIndex: index },
+    );
+  }
+  return color;
+}
 
 export function inboxIdField(
   operation: string,

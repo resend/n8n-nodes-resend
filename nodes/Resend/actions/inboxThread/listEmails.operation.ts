@@ -3,7 +3,7 @@ import type {
   INodeExecutionData,
   INodeProperties,
 } from 'n8n-workflow';
-import { createListExecutionData, requestList } from '../../transport';
+import { requestList } from '../../transport';
 import {
   createInboxField,
   createListFields,
@@ -19,10 +19,13 @@ export const description: INodeProperties[] = [
 
 export async function execute(
   this: IExecuteFunctions,
+  index: number,
 ): Promise<INodeExecutionData[]> {
   const items = await requestList.call(
     this,
-    `${getThreadPath(this, 0)}/emails`,
+    `${getThreadPath(this, index)}/emails`,
+    undefined,
+    index,
   );
-  return createListExecutionData.call(this, items);
+  return items.map((item) => ({ json: item, pairedItem: { item: index } }));
 }

@@ -80,7 +80,7 @@ export const description: INodeProperties[] = [
         type: 'boolean',
         default: false,
         description:
-          'Whether to track clicks within the body of each HTML email sent from this domain',
+          'Whether to track clicks within the body of each HTML email sent from this domain. Only applied once a tracking subdomain is configured and verified.',
       },
       {
         displayName: 'Custom Return Path',
@@ -96,7 +96,7 @@ export const description: INodeProperties[] = [
         type: 'boolean',
         default: false,
         description:
-          'Whether to track the open rate of each email sent from this domain',
+          'Whether to track the open rate of each email sent from this domain. Only applied once a tracking subdomain is configured and verified.',
       },
       {
         displayName: 'Region',
@@ -124,6 +124,15 @@ export const description: INodeProperties[] = [
         description:
           'TLS setting for email delivery. Opportunistic attempts secure connection but falls back to unencrypted. Enforced requires TLS.',
       },
+      {
+        displayName: 'Tracking Subdomain',
+        name: 'trackingSubdomain',
+        type: 'string',
+        default: '',
+        placeholder: 'links',
+        description:
+          'Custom subdomain for click and open tracking (e.g., "links" on example.com produces a CNAME record for links.example.com)',
+      },
     ],
   },
 ];
@@ -143,6 +152,7 @@ export async function execute(
     openTracking?: boolean;
     clickTracking?: boolean;
     tls?: string;
+    trackingSubdomain?: string;
     capabilities?: {
       capabilitiesValues?: {
         sending?: string;
@@ -167,6 +177,9 @@ export async function execute(
   }
   if (additionalOptions.tls) {
     body.tls = additionalOptions.tls;
+  }
+  if (additionalOptions.trackingSubdomain) {
+    body.tracking_subdomain = additionalOptions.trackingSubdomain;
   }
   if (additionalOptions.capabilities?.capabilitiesValues) {
     const caps = additionalOptions.capabilities.capabilitiesValues;

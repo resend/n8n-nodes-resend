@@ -6,13 +6,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
-import {
-  createInboxField,
-  createLabelOption,
-  extractLocatorValue,
-  getThreadPath,
-  threadIdField,
-} from './shared';
+import { createInboxField, getThreadPath, threadIdField } from './shared';
 
 export const description: INodeProperties[] = [
   createInboxField('inboxThreads', ['update']),
@@ -23,6 +17,8 @@ export const description: INodeProperties[] = [
     type: 'collection',
     placeholder: 'Add Field',
     default: {},
+    description:
+      'Changes apply in this order: read, then folder. They are not atomic. To change the labels of a thread, use the Add Labels, Set Labels, or Remove Label operations.',
     displayOptions: {
       show: {
         resource: ['inboxThreads'],
@@ -41,19 +37,15 @@ export const description: INodeProperties[] = [
           { name: 'Spam', value: 'spam' },
           { name: 'Trash', value: 'trash' },
         ],
-        description: 'Move the thread to this folder',
+        description:
+          'Move the thread to this folder. Sent is assigned automatically and cannot be set. Moving a thread out of Trash restores it.',
       },
-      createLabelOption(
-        'labelId',
-        'Label',
-        'Apply this label to the thread. Choose from the list, or specify a label ID.',
-      ),
       {
         displayName: 'Read',
         name: 'read',
         type: 'boolean',
         default: true,
-        description: 'Whether to mark every message in the thread as read',
+        description: 'Whether to mark every email in the thread as read',
       },
     ],
   },
@@ -67,7 +59,10 @@ export async function execute(
     'inboxThreadUpdateFields',
     index,
     {},
-  ) as { folder?: string; labelId?: unknown; read?: boolean };
+  ) as {
+    folder?: string;
+    read?: boolean;
+  };
 
   const body: IDataObject = {};
   if (typeof updateFields.read === 'boolean') {
@@ -76,15 +71,10 @@ export async function execute(
   if (updateFields.folder) {
     body.folder = updateFields.folder;
   }
-  const labelId = extractLocatorValue(updateFields.labelId);
-  if (labelId) {
-    body.label_id = labelId;
-  }
-
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'At least one of Folder, Label, or Read must be set',
+      'At least one of Folder or Read must be set',
       { itemIndex: index },
     );
   }

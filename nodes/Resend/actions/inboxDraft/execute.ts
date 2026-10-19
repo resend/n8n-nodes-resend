@@ -7,13 +7,11 @@ import * as list from './list.operation';
 import * as send from './send.operation';
 import * as update from './update.operation';
 
-export const execute = createOperationRouter(
-  {
-    create,
-    delete: del,
-    get,
-    send,
-    update,
-  },
-  { list },
-);
+export const execute = createOperationRouter({
+  create,
+  delete: del,
+  get,
+  list,
+  send,
+  update,
+});

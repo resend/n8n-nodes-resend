@@ -24,6 +24,14 @@ export const description: INodeProperties[] = [
     },
     options: [
       {
+        displayName: 'Clear From Name',
+        name: 'clearFromName',
+        type: 'boolean',
+        default: false,
+        description:
+          'Whether to remove the current from name. Overrides the From Name field.',
+      },
+      {
         displayName: 'From Name',
         name: 'fromName',
         type: 'string',
@@ -50,6 +58,7 @@ export async function execute(
   index: number,
 ): Promise<INodeExecutionData[]> {
   const fields = this.getNodeParameter('inboxUpdateFields', index, {}) as {
+    clearFromName?: boolean;
     fromName?: string;
     name?: string;
   };
@@ -59,14 +68,16 @@ export async function execute(
   if (fields.name) {
     body.name = fields.name;
   }
-  if (fields.fromName) {
+  if (fields.clearFromName) {
+    body.from_name = '';
+  } else if (fields.fromName) {
     body.from_name = fields.fromName;
   }
 
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(
       this.getNode(),
-      'Set at least one of Name or From Name to update the inbox',
+      'Set at least one of Name, From Name, or Clear From Name to update the inbox',
       { itemIndex: index },
     );
   }

@@ -4,7 +4,7 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { normalizeEmailList } from '../../transport';
+import { normalizeEmailList, normalizeIdList } from '../../transport';
 import { createDynamicIdField } from '../../utils/dynamicFields';
 import { inboxPath } from '../inbox/fields';
 
@@ -18,7 +18,7 @@ export function createInboxField(
     displayName: 'Inbox',
     required: true,
     description:
-      'Select an inbox or enter an ID directly. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+      'Select an inbox or enter its ID or email address directly. Choose from the list, or specify an ID or email address using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
     displayOptions: {
       show: {
         resource: [resource],
@@ -232,27 +232,71 @@ export function assignStrings(
   }
 }
 
-export function createLabelOption(
-  name: string,
-  displayName: string,
-  description: string,
-): INodeProperties {
-  const field = createDynamicIdField({
-    fieldName: name,
-    resourceName: 'inboxLabel',
-    displayName,
-    description,
-  });
-  delete field.displayOptions;
-  delete field.required;
-  return field;
-}
+export const THREAD_FOLDER_OPTIONS = [
+  { name: 'Archive', value: 'archive' },
+  { name: 'Inbox', value: 'inbox' },
+  { name: 'Sent', value: 'sent' },
+  { name: 'Spam', value: 'spam' },
+  { name: 'Trash', value: 'trash' },
+];
 
-export function extractLocatorValue(value: unknown): string {
-  if (value && typeof value === 'object' && 'value' in value) {
-    return String((value as { value: unknown }).value ?? '').trim();
+export const threadFilterOptions: INodeProperties[] = [
+  {
+    displayName: 'Folders',
+    name: 'folders',
+    type: 'multiOptions',
+    default: [],
+    options: THREAD_FOLDER_OPTIONS,
+    description:
+      'A thread is returned when any of its emails is in one of the folders. Defaults to Inbox, or to Inbox, Archive, and Sent when Label Names or IDs is set. Spam and Trash are only included when you name them.',
+  },
+  {
+    displayName: 'Label Names or IDs',
+    name: 'labels',
+    type: 'multiOptions',
+    default: [],
+    typeOptions: {
+      loadOptionsMethod: 'getInboxLabels',
+      loadOptionsDependsOn: ['inboxId.value'],
+    },
+    description:
+      'Returns threads with any of these labels. Up to 50 IDs. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+  },
+  {
+    displayName: 'Read',
+    name: 'read',
+    type: 'options',
+    default: 'true',
+    options: [
+      {
+        name: 'Read',
+        value: 'true',
+        description: 'Threads where every email is read',
+      },
+      {
+        name: 'Unread',
+        value: 'false',
+        description: 'Threads with at least one unread email',
+      },
+    ],
+    description: 'Filter threads by their read state',
+  },
+];
+
+export function buildThreadFilterQuery(filters: IDataObject): IDataObject {
+  const qs: IDataObject = {};
+  const folders = normalizeIdList(filters.folders as string | string[]);
+  if (folders) {
+    qs.folders = folders;
   }
-  return typeof value === 'string' ? value.trim() : '';
+  const labels = normalizeIdList(filters.labels as string | string[]);
+  if (labels) {
+    qs.labels = labels;
+  }
+  if (filters.read !== undefined && filters.read !== '') {
+    qs.read = String(filters.read);
+  }
+  return qs;
 }
 
 export const htmlField: INodeProperties = {
@@ -294,3 +338,361 @@ export const bccField: INodeProperties = {
   description:
     'BCC recipient email addresses. Comma-separated for multiple addresses.',
 };
+
+export const attachmentsField = (description: string): INodeProperties => ({
+  displayName: 'Attachments',
+  name: 'attachments',
+  type: 'fixedCollection',
+  default: { attachments: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  description,
+  options: [
+    {
+      name: 'attachments',
+      displayName: 'Attachment',
+      values: [
+        {
+          displayName: 'Attachment Type',
+          name: 'attachmentType',
+          type: 'options',
+          default: 'binaryData',
+          options: [
+            {
+              name: 'Binary Data',
+              value: 'binaryData',
+              description:
+                'Use binary file data from a previous node in the workflow',
+            },
+            {
+              name: 'Remote URL',
+              value: 'url',
+              description:
+                'Resend fetches the file from a public URL when the email is sent',
+            },
+          ],
+        },
+        {
+          displayName: 'Binary Property',
+          name: 'binaryPropertyName',
+          type: 'string',
+          default: 'data',
+          placeholder: 'data',
+          description:
+            'The name of the binary property that holds the file data',
+          displayOptions: {
+            show: {
+              attachmentType: ['binaryData'],
+            },
+          },
+        },
+        {
+          displayName: 'Content ID',
+          name: 'content_id',
+          type: 'string',
+          default: '',
+          placeholder: 'image-1',
+          description:
+            'Content ID to embed the file inline in the HTML body with a cid: reference',
+        },
+        {
+          displayName: 'Content Type',
+          name: 'content_type',
+          type: 'string',
+          default: '',
+          placeholder: 'application/pdf',
+          description: 'The MIME type of the file',
+        },
+        {
+          displayName: 'File Name',
+          name: 'filename',
+          type: 'string',
+          default: '',
+          placeholder: 'document.pdf',
+          description:
+            'The name of the attached file. Defaults to the binary file name for binary data.',
+        },
+        {
+          displayName: 'File URL',
+          name: 'fileUrl',
+          type: 'string',
+          default: '',
+          placeholder: 'https://example.com/file.pdf',
+          description: 'The public URL of the file',
+          displayOptions: {
+            show: {
+              attachmentType: ['url'],
+            },
+          },
+        },
+      ],
+    },
+  ],
+});
+
+interface AttachmentInput {
+  attachmentType?: 'binaryData' | 'url';
+  binaryPropertyName?: string;
+  content_id?: string;
+  content_type?: string;
+  filename?: string;
+  fileUrl?: string;
+}
+
+export async function buildAttachments(
+  context: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): Promise<IDataObject[] | undefined> {
+  const inputs = (value as { attachments?: AttachmentInput[] } | undefined)
+    ?.attachments;
+  if (!Array.isArray(inputs) || inputs.length === 0) {
+    return undefined;
+  }
+
+  const attachments: IDataObject[] = [];
+  for (const input of inputs) {
+    const entry: IDataObject = {};
+    if (input.attachmentType === 'url') {
+      const fileUrl = String(input.fileUrl ?? '').trim();
+      if (!fileUrl) {
+        throw new NodeOperationError(
+          context.getNode(),
+          'File URL is required for URL attachments',
+          { itemIndex: index },
+        );
+      }
+      entry.path = fileUrl;
+      if (input.filename) {
+        entry.filename = input.filename;
+      }
+    } else {
+      const propertyName = input.binaryPropertyName || 'data';
+      const binary = context.getInputData()[index]?.binary?.[propertyName];
+      if (!binary) {
+        throw new NodeOperationError(
+          context.getNode(),
+          `Binary property "${propertyName}" not found in item ${index}`,
+          { itemIndex: index },
+        );
+      }
+      const buffer = await context.helpers.getBinaryDataBuffer(
+        index,
+        propertyName,
+      );
+      entry.content = buffer.toString('base64');
+      const filename = input.filename || binary.fileName;
+      if (filename) {
+        entry.filename = filename;
+      }
+    }
+    if (input.content_type) {
+      entry.content_type = input.content_type;
+    }
+    if (input.content_id) {
+      entry.content_id = input.content_id;
+    }
+    attachments.push(entry);
+  }
+  return attachments;
+}
+
+export const draftAttachmentsField = (
+  description: string,
+): INodeProperties => ({
+  displayName: 'Attachments',
+  name: 'attachments',
+  type: 'fixedCollection',
+  default: { attachments: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  description,
+  options: [
+    {
+      name: 'attachments',
+      displayName: 'Attachment',
+      values: [
+        {
+          displayName: 'Binary Property',
+          name: 'binaryPropertyName',
+          type: 'string',
+          default: 'data',
+          placeholder: 'data',
+          description:
+            'The name of the binary property that holds the file data',
+        },
+        {
+          displayName: 'Content Type',
+          name: 'content_type',
+          type: 'string',
+          default: '',
+          placeholder: 'application/pdf',
+          description:
+            'The MIME type of the file. Defaults to the MIME type of the binary data.',
+        },
+        {
+          displayName: 'File Name',
+          name: 'filename',
+          type: 'string',
+          default: '',
+          placeholder: 'document.pdf',
+          description:
+            'The name of the attached file. Defaults to the binary file name.',
+        },
+      ],
+    },
+  ],
+});
+
+export async function buildDraftAttachments(
+  context: IExecuteFunctions,
+  value: unknown,
+  index: number,
+): Promise<IDataObject[] | undefined> {
+  const inputs = (value as { attachments?: AttachmentInput[] } | undefined)
+    ?.attachments;
+  if (!Array.isArray(inputs) || inputs.length === 0) {
+    return undefined;
+  }
+
+  const attachments: IDataObject[] = [];
+  for (const input of inputs) {
+    const propertyName = input.binaryPropertyName || 'data';
+    const binary = context.getInputData()[index]?.binary?.[propertyName];
+    if (!binary) {
+      throw new NodeOperationError(
+        context.getNode(),
+        `Binary property "${propertyName}" not found in item ${index}`,
+        { itemIndex: index },
+      );
+    }
+    const filename = input.filename || binary.fileName;
+    const contentType = input.content_type || binary.mimeType;
+    if (!filename || !contentType) {
+      throw new NodeOperationError(
+        context.getNode(),
+        'Draft attachments need a File Name and a Content Type',
+        { itemIndex: index },
+      );
+    }
+    const buffer = await context.helpers.getBinaryDataBuffer(
+      index,
+      propertyName,
+    );
+    attachments.push({
+      content: buffer.toString('base64'),
+      filename,
+      content_type: contentType,
+    });
+  }
+  return attachments;
+}
+
+export const idempotencyKeyField = (description: string): INodeProperties => ({
+  displayName: 'Idempotency Key',
+  name: 'idempotencyKey',
+  type: 'string',
+  default: '',
+  description,
+});
+
+export function idempotencyHeaders(
+  options: IDataObject,
+): Record<string, string> | undefined {
+  const key = options.idempotencyKey;
+  return typeof key === 'string' && key
+    ? { 'Idempotency-Key': key }
+    : undefined;
+}
+
+export const customHeadersField: INodeProperties = {
+  displayName: 'Headers',
+  name: 'headers',
+  type: 'fixedCollection',
+  default: { headers: [] },
+  typeOptions: {
+    multipleValues: true,
+  },
+  options: [
+    {
+      name: 'headers',
+      displayName: 'Header',
+      values: [
+        {
+          displayName: 'Name',
+          name: 'name',
+          type: 'string',
+          required: true,
+          default: '',
+        },
+        {
+          displayName: 'Value',
+          name: 'value',
+          type: 'string',
+          default: '',
+        },
+      ],
+    },
+  ],
+  description:
+    'Custom email headers to include in the message. Useful for tracking or custom metadata. Resend sets In-Reply-To, References, and Reply-To, so they cannot be set here. Sending one of them, in any letter case, returns an error. Header names cannot be empty, and names and values cannot contain line breaks or null characters.',
+};
+
+export function buildCustomHeaders(
+  value: unknown,
+): Record<string, string> | undefined {
+  const inputs = (
+    value as { headers?: Array<{ name?: string; value?: string }> } | undefined
+  )?.headers;
+  if (!Array.isArray(inputs)) {
+    return undefined;
+  }
+  const headers: Record<string, string> = {};
+  for (const header of inputs) {
+    if (header.name) {
+      headers[header.name] = header.value ?? '';
+    }
+  }
+  return Object.keys(headers).length ? headers : undefined;
+}
+
+export const threadLabelIdsField = (
+  operation: string,
+  description: string,
+): INodeProperties => ({
+  displayName: 'Label Names or IDs',
+  name: 'inboxThreadLabelIds',
+  type: 'multiOptions',
+  default: [],
+  typeOptions: {
+    loadOptionsMethod: 'getInboxLabels',
+    loadOptionsDependsOn: ['inboxId.value'],
+  },
+  description: `${description} Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>`,
+  displayOptions: {
+    show: {
+      resource: ['inboxThreads'],
+      operation: [operation],
+    },
+  },
+});
+
+export function getThreadLabelIds(
+  context: IExecuteFunctions,
+  index: number,
+): string[] {
+  return normalizeEmailList(
+    context.getNodeParameter('inboxThreadLabelIds', index, []) as
+      | string
+      | string[],
+  );
+}
+
+export function getThreadLabelsPath(
+  context: IExecuteFunctions,
+  index: number,
+): string {
+  return `${getThreadPath(context, index)}/labels`;
+}

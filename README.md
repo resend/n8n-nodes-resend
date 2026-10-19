@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="#installation">Installation</a> |
+  <a href="#migrating-to-v300">Migrating to v3</a> |
   <a href="#credentials">Credentials</a> |
   <a href="#human-in-the-loop">Human in the Loop</a> |
   <a href="#trigger-events">Trigger Events</a> |
@@ -35,28 +36,39 @@ The table below shows which endpoints are currently implemented:
 <details>
 <summary><strong>View all endpoints</strong></summary>
 
-| API Resource           | Endpoint              | Status  | Operations                                                                                                                                                    |
-| ---------------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Account**            | `/oauth/revoke`       | ✅ Full | Disconnect (OAuth2 credential only)                                                                                                                           |
-| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, List Attachments, Get Attachment                                                                  |
-| **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                                   |
-| **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Create Tracking Domain, Get Tracking Domain, List Tracking Domains, Delete Tracking Domain, Verify Tracking Domain |
-| **Templates**          | `/templates`          | ✅ Full | Create, List, Get, Update, Delete, Publish, Duplicate                                                                                                         |
-| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics                                              |
-| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send, Cancel                                                                                                                       |
-| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Delete                                                                                                                                     |
-| **Suppressions**       | `/suppressions`       | ✅ Full | Create, List, Get, Delete, Batch Add, Batch Remove                                                                                                            |
-| **Topics**             | `/topics`             | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
-| **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
-| **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete                                                                                                                             |
-| **Events**             | `/events`             | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
-| **Inboxes** (beta)     | `/inboxes`            | ✅ Full | Create, List, Get, Update, Delete, Get Agent Settings, Update Agent Settings, Create Label, List Labels, Update Label, Delete Label                           |
-| **Inbox Threads** (beta) | `/inboxes/{id}/threads` | ✅ Full | List, Get, Update, Delete, List Emails, Get Email, Reply, Forward                                                                                             |
-| **Inbox Drafts** (beta) | `/inboxes/{id}/drafts` | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
-| **Workflows**          | `/workflows`          | ✅ Full | Create, List, Get, Update, Delete, List Runs, Get Run, List Run Steps, Get Run Step                                                                           |
-| **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                                |
+| API Resource           | Endpoint              | Status | Operations                                                                                                                                                |
+| ---------------------- | --------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Account**            | `/oauth`, `/usage`    | ✅ Full | Get Usage, Disconnect (OAuth2 credential only), List Grants, Revoke Grant                                                                                 |
+| **Email**              | `/emails`             | ✅ Full | Send, Send Batch, Send and Wait, List, Get, Update, Cancel, Share, Get Metrics, List Attachments, Get Attachment                                          |
+| **Receiving Emails**   | `/emails/receiving`   | ✅ Full | List, Get, List Attachments, Get Attachment                                                                                                               |
+| **Domains**            | `/domains`            | ✅ Full | Create, List, Get, Update, Delete, Verify, Claim, Get Claim, Verify Claim (tracking subdomain via Create/Update)                                          |
+| **Templates**          | `/templates`          | ✅ Full | Create, List, Get, Update, Delete, Publish, Duplicate                                                                                                     |
+| **Contacts**           | `/contacts`           | ✅ Full | Create, List, Get, Update, Delete, Add to Segment, List Segments, Remove from Segment, Get Topics, Update Topics, Create Import, List Imports, Get Import |
+| **Broadcasts**         | `/broadcasts`         | ✅ Full | Create, List, Get, Update, Delete, Send, Cancel, Duplicate, List Clicked Links, List Recipients                                                           |
+| **Segments**           | `/segments`           | ✅ Full | Create, List, Get, Update, Delete, List Contacts, Get Metrics                                                                                             |
+| **Suppressions**       | `/suppressions`       | ✅ Full | Create, List, Get, Delete, Batch Add, Batch Remove                                                                                                        |
+| **Topics**             | `/topics`             | ✅ Full | Create, List, Get, Update, Delete                                                                                                                         |
+| **Contact Properties** | `/contact-properties` | ✅ Full | Create, List, Get, Update, Delete                                                                                                                         |
+| **Webhooks**           | `/webhooks`           | ✅ Full | Create, List, Get, Update, Delete, Rotate Signing Secret, List Events, Get Event, Replay Event, List Event Attempts                                       |
+| **Events**             | `/events`             | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                   |
+| **Inboxes**            | `/inboxes`            | ✅ Full | Create, List, Get, Update, Delete, Get Agent Settings, Update Agent Settings, Create Label, List Labels, Update Label, Delete Label                           |
+| **Inbox Threads**      | `/inboxes/{id}/threads` | ✅ Full | List, Search, Get, Update, Delete, Add Labels, Set Labels, Remove Label, List Emails, Get Email, Reply, Forward                                                 |
+| **Inbox Drafts**       | `/inboxes/{id}/drafts` | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
+| **Automations**        | `/automations`        | ✅ Full | Create, List, Get, Update, Delete, Duplicate, Stop, List Runs, Get Run                                                                                    |
+| **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                            |
 
 </details>
+
+## Migrating to v3.0.0
+
+v3.0.0 has breaking changes. Existing Resend nodes show a notice linking here; new nodes don't.
+
+| Change | What to do |
+| --- | --- |
+| **Workflow** resource renamed to **Automation** | Select **Automation**, pick the operation again, re-enter the ID in **Automation ID**. **List Run Steps** / **Get Run Step** are gone; use **Get Run**. |
+| **Tracking Domain** operations removed | Use the **Tracking Subdomain** option on **Domain → Create / Update**. |
+| List operations (e.g. **Contact → List**) run once per execution, not once per input item | If you need one result set per input item, put the node in a **Loop Over Items**. Lists that take an ID (e.g. **Segment → List Contacts**) still run per item. |
+| **Automation → List Runs** returns up to 50 runs | Turn on **Return All** to get every run. |
 
 ## Installation
 
