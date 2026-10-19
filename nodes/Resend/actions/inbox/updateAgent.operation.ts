@@ -8,6 +8,8 @@ import { NodeOperationError } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
 import { inboxIdField, inboxPath } from './fields';
 
+const MAX_INSTRUCTIONS_LENGTH = 4000;
+
 export const description: INodeProperties[] = [
   inboxIdField('updateAgent', 'The inbox whose agent settings to update'),
   {
@@ -102,8 +104,16 @@ export async function execute(
 
   if (fields.clearInstructions) {
     body.instructions = null;
-  } else if (fields.instructions) {
-    body.instructions = fields.instructions;
+  } else if (fields.instructions?.trim()) {
+    const instructions = fields.instructions.trim();
+    if (instructions.length > MAX_INSTRUCTIONS_LENGTH) {
+      throw new NodeOperationError(
+        this.getNode(),
+        `Instructions must be at most ${MAX_INSTRUCTIONS_LENGTH} characters (got ${instructions.length})`,
+        { itemIndex: index },
+      );
+    }
+    body.instructions = instructions;
   }
   if (fields.clearTone) {
     body.tone = null;

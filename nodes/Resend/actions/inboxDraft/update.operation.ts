@@ -90,23 +90,27 @@ export async function execute(
     {},
   ) as IDataObject;
 
+  const clearFields = Array.isArray(fields.clearFields)
+    ? (fields.clearFields as string[])
+    : [];
+
   const body: IDataObject = {};
   assignRecipients(body, fields, ['to', 'cc', 'bcc']);
-  assertRecipientLimit(this, body, index);
   assignStrings(body, fields, ['subject', 'html', 'text']);
-  const attachments = await buildDraftAttachments(
-    this,
-    fields.attachments,
-    index,
-  );
-  if (attachments) {
-    body.attachments = attachments;
-  }
-  if (Array.isArray(fields.clearFields)) {
-    for (const key of fields.clearFields as string[]) {
-      body[key] = key === 'attachments' ? [] : null;
+  if (!clearFields.includes('attachments')) {
+    const attachments = await buildDraftAttachments(
+      this,
+      fields.attachments,
+      index,
+    );
+    if (attachments) {
+      body.attachments = attachments;
     }
   }
+  for (const key of clearFields) {
+    body[key] = key === 'attachments' ? [] : null;
+  }
+  assertRecipientLimit(this, body, index);
 
   if (Object.keys(body).length === 0) {
     throw new NodeOperationError(

@@ -407,6 +407,39 @@ describe('inbox thread and draft requests', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('rejects a search query over 32 words', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchQuery: Array.from({ length: 33 }, () => 'a').join(' '),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('Query must be at most 32 words (got 33)');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['list', 'inboxThreadFilters'],
+    ['search', 'inboxThreadSearchFilters'],
+  ])('rejects %s with more than 50 label filters', async (operation, name) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        [name]: {
+          labels: Array.from({ length: 51 }, (_, i) => `lbl_${i}`),
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, operation),
+    ).rejects.toThrow('Label Names or IDs accepts at most 50 values (got 51)');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('rejects more than 20 search senders', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {
@@ -616,6 +649,40 @@ describe('inbox thread and draft requests', () => {
     await inboxDrafts.execute.call(context, 0, 'update');
 
     expect(httpRequest.mock.calls[0][1].body).toEqual({ attachments: [] });
+  });
+
+  it('skips attachment input when clearing attachments', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'missing' }] },
+          clearFields: ['attachments'],
+        },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ attachments: [] });
+  });
+
+  it('does not count cleared recipients toward the limit', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          to: Array.from({ length: 51 }, (_, i) => `u${i}@example.com`).join(
+            ',',
+          ),
+          clearFields: ['to'],
+        },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ to: null });
   });
 
   it('rejects a draft attachment without a content type', async () => {

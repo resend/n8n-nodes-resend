@@ -15,6 +15,7 @@ import {
 } from './shared';
 
 const MAX_QUERY_LENGTH = 256;
+const MAX_QUERY_WORDS = 32;
 const MAX_ADDRESS_VALUES = 20;
 
 const addressOption = (
@@ -141,13 +142,21 @@ export async function execute(
       { itemIndex: index },
     );
   }
+  const wordCount = query ? query.split(/\s+/).length : 0;
+  if (wordCount > MAX_QUERY_WORDS) {
+    throw new NodeOperationError(
+      this.getNode(),
+      `Query must be at most ${MAX_QUERY_WORDS} words (got ${wordCount})`,
+      { itemIndex: index },
+    );
+  }
   const filters = this.getNodeParameter(
     'inboxThreadSearchFilters',
     index,
     {},
   ) as IDataObject;
 
-  const qs: IDataObject = buildThreadFilterQuery(filters);
+  const qs: IDataObject = buildThreadFilterQuery(this, filters, index);
   if (query) {
     qs.query = query;
   }

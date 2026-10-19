@@ -283,7 +283,13 @@ export const threadFilterOptions: INodeProperties[] = [
   },
 ];
 
-export function buildThreadFilterQuery(filters: IDataObject): IDataObject {
+const MAX_FILTER_LABELS = 50;
+
+export function buildThreadFilterQuery(
+  context: IExecuteFunctions,
+  filters: IDataObject,
+  index: number,
+): IDataObject {
   const qs: IDataObject = {};
   const folders = normalizeIdList(filters.folders as string | string[]);
   if (folders) {
@@ -291,6 +297,14 @@ export function buildThreadFilterQuery(filters: IDataObject): IDataObject {
   }
   const labels = normalizeIdList(filters.labels as string | string[]);
   if (labels) {
+    const count = labels.split(',').length;
+    if (count > MAX_FILTER_LABELS) {
+      throw new NodeOperationError(
+        context.getNode(),
+        `Label Names or IDs accepts at most ${MAX_FILTER_LABELS} values (got ${count})`,
+        { itemIndex: index },
+      );
+    }
     qs.labels = labels;
   }
   if (filters.read !== undefined && filters.read !== '') {

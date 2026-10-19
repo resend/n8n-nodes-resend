@@ -218,6 +218,22 @@ describe('inbox operation behavior', () => {
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
+  it('rejects agent instructions over 4000 characters', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxAgentUpdateFields: { instructions: 'a'.repeat(4001) },
+      },
+    });
+
+    await expect(
+      inboxes.execute.call(context, 0, 'updateAgent'),
+    ).rejects.toThrow(
+      'Instructions must be at most 4000 characters (got 4001)',
+    );
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('clears the from name with an empty string', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {

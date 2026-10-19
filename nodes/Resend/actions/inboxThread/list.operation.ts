@@ -45,7 +45,7 @@ export async function execute(
   const items = await requestList.call(
     this,
     `${getInboxPath(this, index)}/threads`,
-    buildThreadFilterQuery(filters),
+    buildThreadFilterQuery(this, filters, index),
     index,
   );
   return items.map((item) => ({ json: item, pairedItem: { item: index } }));
