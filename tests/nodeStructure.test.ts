@@ -8,6 +8,9 @@ import * as contactProperties from '../nodes/Resend/actions/contactProperty';
 import * as domains from '../nodes/Resend/actions/domain';
 import * as email from '../nodes/Resend/actions/email';
 import * as events from '../nodes/Resend/actions/event';
+import * as inboxes from '../nodes/Resend/actions/inbox';
+import * as inboxDrafts from '../nodes/Resend/actions/inboxDraft';
+import * as inboxThreads from '../nodes/Resend/actions/inboxThread';
 import * as logs from '../nodes/Resend/actions/log';
 import * as receivingEmails from '../nodes/Resend/actions/receivingEmail';
 import { router } from '../nodes/Resend/actions/router';
@@ -37,6 +40,9 @@ const resourceModules: Record<string, ResourceModule> = {
   domains: domains as unknown as ResourceModule,
   email: email as unknown as ResourceModule,
   events: events as unknown as ResourceModule,
+  inboxes: inboxes as unknown as ResourceModule,
+  inboxDrafts: inboxDrafts as unknown as ResourceModule,
+  inboxThreads: inboxThreads as unknown as ResourceModule,
   logs: logs as unknown as ResourceModule,
   receivingEmails: receivingEmails as unknown as ResourceModule,
   segments: segments as unknown as ResourceModule,

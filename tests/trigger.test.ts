@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import type { ICredentialsDecrypted } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 import { describe, expect, it } from 'vitest';
+import { webhookEventOptions } from '../nodes/Resend/actions/webhook';
 import { ResendTrigger } from '../nodes/Resend/ResendTrigger.node';
 import { createHookMock, createWebhookMock } from './helpers/context';
 
@@ -87,6 +88,33 @@ describe('ResendTrigger description', () => {
         /^[a-z]+(\.[a-z_]+)+$/,
       );
     }
+  });
+
+  it('offers the same events as webhook create and update, including inbox events', () => {
+    const events = trigger.description.properties.find(
+      (property) => property.name === 'events',
+    );
+    const values = (events?.options ?? []).map(
+      (option) => (option as { value: string }).value,
+    );
+
+    expect(values).toEqual(webhookEventOptions.map((option) => option.value));
+    expect(values.filter((value) => value.startsWith('inbox.'))).toEqual([
+      'inbox.created',
+      'inbox.deleted',
+      'inbox.draft.created',
+      'inbox.draft.deleted',
+      'inbox.draft.sent',
+      'inbox.draft.updated',
+      'inbox.email.received',
+      'inbox.email.sent',
+      'inbox.thread.assigned',
+      'inbox.thread.created',
+      'inbox.thread.folder.updated',
+      'inbox.thread.labels.updated',
+      'inbox.thread.unassigned',
+      'inbox.updated',
+    ]);
   });
 });
 

@@ -1,0 +1,140 @@
+import type {
+  IDataObject,
+  IExecuteFunctions,
+  INodeExecutionData,
+  INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+import { apiRequest } from '../../transport';
+import {
+  assertRecipientLimit,
+  assignRecipients,
+  assignStrings,
+  bccField,
+  buildDraftAttachments,
+  ccField,
+  createInboxField,
+  draftAttachmentsField,
+  getInboxPath,
+  htmlField,
+  idempotencyHeaders,
+  idempotencyKeyField,
+  textField,
+} from '../inboxThread/shared';
+
+export const description: INodeProperties[] = [
+  createInboxField('inboxDrafts', ['create']),
+  {
+    displayName: 'Draft Fields',
+    name: 'inboxDraftFields',
+    type: 'collection',
+    placeholder: 'Add Field',
+    default: {},
+    displayOptions: {
+      show: {
+        resource: ['inboxDrafts'],
+        operation: ['create'],
+      },
+    },
+    options: [
+      draftAttachmentsField(
+        'Files to store on the draft, from binary data. Each one needs a file name and a content type. The files of a draft can total at most 25 MB. An empty file or a blocked file type returns an error.',
+      ),
+      bccField,
+      ccField,
+      htmlField,
+      idempotencyKeyField(
+        'A unique key to ensure the draft is created only once. Useful for retries to prevent duplicate drafts. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
+      {
+        displayName: 'Reply To Email ID',
+        name: 'replyToEmailId',
+        type: 'string',
+        default: '',
+        description:
+          'The ID of the thread email this draft replies to. Must be set together with Thread ID. When the email already has an unsent reply draft, the API returns that draft and ignores every other field except Attachments, which replace its attachments.',
+      },
+      {
+        displayName: 'Subject',
+        name: 'subject',
+        type: 'string',
+        default: '',
+        description: 'The subject of the draft. Max 2000 characters.',
+      },
+      textField,
+      {
+        displayName: 'Thread ID',
+        name: 'threadId',
+        type: 'string',
+        default: '',
+        description:
+          'The ID of the thread to reply in. Must be set together with Reply To Email ID. Omit to start a new conversation.',
+      },
+      {
+        displayName: 'To',
+        name: 'to',
+        type: 'string',
+        default: '',
+        description:
+          'Recipient email addresses. Comma-separated for multiple addresses.',
+      },
+    ],
+  },
+];
+
+export async function execute(
+  this: IExecuteFunctions,
+  index: number,
+): Promise<INodeExecutionData[]> {
+  const fields = this.getNodeParameter(
+    'inboxDraftFields',
+    index,
+    {},
+  ) as IDataObject;
+
+  const body: IDataObject = {};
+  assignRecipients(body, fields, ['to', 'cc', 'bcc']);
+  assertRecipientLimit(this, body, index);
+  assignStrings(body, fields, ['subject', 'html', 'text']);
+  const attachments = await buildDraftAttachments(
+    this,
+    fields.attachments,
+    index,
+  );
+  if (attachments) {
+    body.attachments = attachments;
+  }
+
+  if (Object.keys(body).length === 0) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'At least one of To, CC, BCC, Subject, HTML, Text, or Attachments must be set',
+      { itemIndex: index },
+    );
+  }
+
+  const threadId = String(fields.threadId ?? '').trim();
+  const replyToEmailId = String(fields.replyToEmailId ?? '').trim();
+  if (Boolean(threadId) !== Boolean(replyToEmailId)) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'Thread ID and Reply To Email ID must be set together',
+      { itemIndex: index },
+    );
+  }
+  if (threadId) {
+    body.thread_id = threadId;
+    body.reply_to_email_id = replyToEmailId;
+  }
+
+  const response = await apiRequest.call(
+    this,
+    'POST',
+    `${getInboxPath(this, index)}/drafts`,
+    body,
+    undefined,
+    idempotencyHeaders(fields),
+  );
+
+  return [{ json: response, pairedItem: { item: index } }];
+}

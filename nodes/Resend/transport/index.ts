@@ -254,6 +254,7 @@ export async function apiRequest(
   endpoint: string,
   body?: IDataObject | IDataObject[],
   qs?: IDataObject,
+  headers?: Record<string, string>,
 ): Promise<IDataObject> {
   const options: IHttpRequestOptions = {
     url: `${RESEND_API_BASE}${endpoint}`,
@@ -261,6 +262,7 @@ export async function apiRequest(
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'n8n-nodes-resend',
+      ...headers,
     },
     json: true,
   };

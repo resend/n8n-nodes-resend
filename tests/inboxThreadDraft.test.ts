@@ -1,0 +1,953 @@
+import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { describe, expect, it } from 'vitest';
+import * as inboxDrafts from '../nodes/Resend/actions/inboxDraft';
+import * as inboxThreads from '../nodes/Resend/actions/inboxThread';
+import { createExecuteMock, type ParameterMap } from './helpers/context';
+
+type ResourceExecute = (
+  this: IExecuteFunctions,
+  index: number,
+  operation: string,
+) => Promise<INodeExecutionData[]>;
+
+interface RequestCase {
+  name: string;
+  execute: ResourceExecute;
+  operation: string;
+  parameters: ParameterMap;
+  response?: unknown;
+  method: string;
+  endpoint: string;
+  body?: unknown;
+  qs?: unknown;
+}
+
+const locator = (value: string) => ({ mode: 'id', value });
+const base = 'https://api.resend.com/inboxes/inbox%201';
+const inbox = { inboxId: locator('inbox 1') };
+const thread = { ...inbox, inboxThreadId: 'thr/1' };
+const threadEmail = { ...thread, inboxEmailId: 'em 1' };
+const draft = { ...inbox, inboxDraftId: 'dr 1' };
+const list = { returnAll: false, limit: 10 };
+
+const cases: RequestCase[] = [
+  {
+    name: 'thread list with filters',
+    execute: inboxThreads.execute,
+    operation: 'list',
+    parameters: {
+      ...inbox,
+      ...list,
+      inboxThreadFilters: {
+        folders: ['inbox', 'archive'],
+        labels: ['lbl_1', 'lbl_2'],
+        read: 'false',
+      },
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads`,
+    qs: {
+      limit: 10,
+      folders: 'inbox,archive',
+      labels: 'lbl_1,lbl_2',
+      read: 'false',
+    },
+  },
+  {
+    name: 'thread search',
+    execute: inboxThreads.execute,
+    operation: 'search',
+    parameters: {
+      ...inbox,
+      ...list,
+      inboxThreadSearchQuery: ' invoice -draft ',
+      inboxThreadSearchFilters: {
+        from: 'isabella@example.com, carolina@example.com',
+        to: 'support@example.com',
+        cc: 'cc@example.com',
+        bcc: 'bcc@example.com',
+        hasAttachment: 'true',
+        startDate: '2026-09-01',
+        endDate: ' 2026-09-30 ',
+        folders: ['inbox', 'sent'],
+        labels: ['lbl_1'],
+        read: 'true',
+      },
+    },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads/search`,
+    qs: {
+      limit: 10,
+      query: 'invoice -draft',
+      from: 'isabella@example.com,carolina@example.com',
+      to: 'support@example.com',
+      cc: 'cc@example.com',
+      bcc: 'bcc@example.com',
+      has_attachment: 'true',
+      start_date: '2026-09-01',
+      end_date: '2026-09-30',
+      folders: 'inbox,sent',
+      labels: 'lbl_1',
+      read: 'true',
+    },
+  },
+  {
+    name: 'thread search without filters',
+    execute: inboxThreads.execute,
+    operation: 'search',
+    parameters: { ...inbox, ...list },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads/search`,
+    qs: { limit: 10 },
+  },
+  {
+    name: 'thread get',
+    execute: inboxThreads.execute,
+    operation: 'get',
+    parameters: thread,
+    method: 'GET',
+    endpoint: `${base}/threads/thr%2F1`,
+  },
+  {
+    name: 'thread update',
+    execute: inboxThreads.execute,
+    operation: 'update',
+    parameters: {
+      ...thread,
+      inboxThreadUpdateFields: {
+        read: false,
+        folder: 'spam',
+      },
+    },
+    method: 'PATCH',
+    endpoint: `${base}/threads/thr%2F1`,
+    body: {
+      read: false,
+      folder: 'spam',
+    },
+  },
+  {
+    name: 'thread add labels',
+    execute: inboxThreads.execute,
+    operation: 'addLabels',
+    parameters: { ...thread, inboxThreadLabelIds: ['lbl_1', 'lbl_2'] },
+    method: 'POST',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: ['lbl_1', 'lbl_2'] },
+  },
+  {
+    name: 'thread set labels from a comma-separated expression',
+    execute: inboxThreads.execute,
+    operation: 'setLabels',
+    parameters: { ...thread, inboxThreadLabelIds: 'lbl_3, lbl_4' },
+    method: 'PUT',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: ['lbl_3', 'lbl_4'] },
+  },
+  {
+    name: 'thread set labels to none',
+    execute: inboxThreads.execute,
+    operation: 'setLabels',
+    parameters: { ...thread, inboxThreadLabelIds: [] },
+    method: 'PUT',
+    endpoint: `${base}/threads/thr%2F1/labels`,
+    body: { labels: [] },
+  },
+  {
+    name: 'thread remove label',
+    execute: inboxThreads.execute,
+    operation: 'removeLabel',
+    parameters: { ...thread, inboxThreadLabelId: 'lbl 5' },
+    method: 'DELETE',
+    endpoint: `${base}/threads/thr%2F1/labels/lbl%205`,
+  },
+  {
+    name: 'thread delete',
+    execute: inboxThreads.execute,
+    operation: 'delete',
+    parameters: thread,
+    method: 'DELETE',
+    endpoint: `${base}/threads/thr%2F1`,
+  },
+  {
+    name: 'thread list emails',
+    execute: inboxThreads.execute,
+    operation: 'listEmails',
+    parameters: { ...thread, ...list },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/threads/thr%2F1/emails`,
+    qs: { limit: 10 },
+  },
+  {
+    name: 'thread get email',
+    execute: inboxThreads.execute,
+    operation: 'getEmail',
+    parameters: threadEmail,
+    method: 'GET',
+    endpoint: `${base}/threads/thr%2F1/emails/em%201`,
+  },
+  {
+    name: 'thread reply',
+    execute: inboxThreads.execute,
+    operation: 'reply',
+    parameters: {
+      ...threadEmail,
+      html: '<p>Hi</p>',
+      text: '',
+      inboxReplyOptions: {
+        cc: 'a@example.com, b@example.com',
+        bcc: 'c@example.com',
+        subject: 'Re: hi',
+      },
+    },
+    method: 'POST',
+    endpoint: `${base}/threads/thr%2F1/emails/em%201/reply`,
+    body: {
+      html: '<p>Hi</p>',
+      cc: ['a@example.com', 'b@example.com'],
+      bcc: ['c@example.com'],
+      subject: 'Re: hi',
+    },
+  },
+  {
+    name: 'thread forward',
+    execute: inboxThreads.execute,
+    operation: 'forward',
+    parameters: {
+      ...threadEmail,
+      to: 'x@example.com,y@example.com',
+      inboxForwardOptions: { text: 'FYI' },
+    },
+    method: 'POST',
+    endpoint: `${base}/threads/thr%2F1/emails/em%201/forward`,
+    body: { to: ['x@example.com', 'y@example.com'], text: 'FYI' },
+  },
+  {
+    name: 'draft create reply',
+    execute: inboxDrafts.execute,
+    operation: 'create',
+    parameters: {
+      ...inbox,
+      inboxDraftFields: {
+        to: 'ada@example.org',
+        subject: 'Refund',
+        html: '<p>Done</p>',
+        threadId: 'thr_1',
+        replyToEmailId: 'em_1',
+      },
+    },
+    method: 'POST',
+    endpoint: `${base}/drafts`,
+    body: {
+      to: ['ada@example.org'],
+      subject: 'Refund',
+      html: '<p>Done</p>',
+      thread_id: 'thr_1',
+      reply_to_email_id: 'em_1',
+    },
+  },
+  {
+    name: 'draft get',
+    execute: inboxDrafts.execute,
+    operation: 'get',
+    parameters: draft,
+    method: 'GET',
+    endpoint: `${base}/drafts/dr%201`,
+  },
+  {
+    name: 'draft list',
+    execute: inboxDrafts.execute,
+    operation: 'list',
+    parameters: { ...inbox, ...list },
+    response: { data: [] },
+    method: 'GET',
+    endpoint: `${base}/drafts`,
+    qs: { limit: 10 },
+  },
+  {
+    name: 'draft update',
+    execute: inboxDrafts.execute,
+    operation: 'update',
+    parameters: {
+      ...draft,
+      inboxDraftUpdateFields: { subject: 'New subject', cc: 'a@example.com' },
+    },
+    method: 'PATCH',
+    endpoint: `${base}/drafts/dr%201`,
+    body: { cc: ['a@example.com'], subject: 'New subject' },
+  },
+  {
+    name: 'draft delete',
+    execute: inboxDrafts.execute,
+    operation: 'delete',
+    parameters: draft,
+    method: 'DELETE',
+    endpoint: `${base}/drafts/dr%201`,
+  },
+  {
+    name: 'draft send',
+    execute: inboxDrafts.execute,
+    operation: 'send',
+    parameters: draft,
+    method: 'POST',
+    endpoint: `${base}/drafts/dr%201/send`,
+  },
+];
+
+describe('inbox thread and draft requests', () => {
+  it.each(cases)('$name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+      response: testCase.response ?? { id: 'ok' },
+    });
+
+    await testCase.execute.call(context, 0, testCase.operation);
+
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+    const options = httpRequest.mock.calls[0][1] as Record<string, unknown>;
+    expect(options.method).toBe(testCase.method);
+    expect(options.url).toBe(testCase.endpoint);
+    if (testCase.body === undefined) {
+      expect(options.body).toBeUndefined();
+    } else {
+      expect(options.body).toEqual(testCase.body);
+    }
+    if (testCase.qs !== undefined) {
+      expect(options.qs).toEqual(testCase.qs);
+    }
+  });
+
+  it('requires html or text when replying', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { ...threadEmail, html: '', text: '' },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'reply'),
+    ).rejects.toThrow('At least one of HTML Content or Text Content');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['threads', inboxThreads.execute, 'get', { ...thread }],
+    ['drafts', inboxDrafts.execute, 'get', { ...draft }],
+  ] as const)(
+    'requires an inbox for %s',
+    async (_name, execute, operation, parameters) => {
+      const { context, httpRequest } = createExecuteMock({
+        parameters: { ...parameters, inboxId: locator(' ') },
+      });
+      await expect(execute.call(context, 0, operation)).rejects.toThrow(
+        'Inbox is required',
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
+
+  it('requires at least one thread update field', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { ...thread, inboxThreadUpdateFields: {} },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'update'),
+    ).rejects.toThrow('At least one of Folder or Read');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects adding no labels', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { ...thread, inboxThreadLabelIds: [] },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'addLabels'),
+    ).rejects.toThrow('between 1 and 10 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects adding more than 10 labels', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...thread,
+        inboxThreadLabelIds: Array.from({ length: 11 }, (_, i) => `lbl_${i}`),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'addLabels'),
+    ).rejects.toThrow('between 1 and 10 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects setting more than 100 labels', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...thread,
+        inboxThreadLabelIds: Array.from({ length: 101 }, (_, i) => `lbl_${i}`),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'setLabels'),
+    ).rejects.toThrow('at most 100 label IDs');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a search query over 256 characters', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchQuery: 'a'.repeat(257),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('Query must be at most 256 characters');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a search query over 32 words', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchQuery: Array.from({ length: 33 }, () => 'a').join(' '),
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('Query must be at most 32 words (got 33)');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['list', 'inboxThreadFilters'],
+    ['search', 'inboxThreadSearchFilters'],
+  ])('rejects %s with more than 50 label filters', async (operation, name) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        [name]: {
+          labels: Array.from({ length: 51 }, (_, i) => `lbl_${i}`),
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, operation),
+    ).rejects.toThrow('Label Names or IDs accepts at most 50 values (got 51)');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects more than 20 search senders', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        ...list,
+        inboxThreadSearchFilters: {
+          from: Array.from({ length: 21 }, (_, i) => `s${i}`).join(','),
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'search'),
+    ).rejects.toThrow('From accepts at most 20 values');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('sends reply all and attachments on a reply', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        text: 'See attached',
+        inboxReplyOptions: {
+          replyAll: true,
+          attachments: {
+            attachments: [
+              { attachmentType: 'binaryData', binaryPropertyName: 'file' },
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://example.com/a.pdf',
+                filename: 'a.pdf',
+                content_type: 'application/pdf',
+              },
+            ],
+          },
+        },
+      },
+      inputData: [
+        {
+          json: {},
+          binary: {
+            file: {
+              data: Buffer.from('hello').toString('base64'),
+              mimeType: 'text/plain',
+              fileName: 'note.txt',
+            },
+          },
+        },
+      ],
+      response: { id: 'em_2' },
+    });
+
+    await inboxThreads.execute.call(context, 0, 'reply');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      text: 'See attached',
+      reply_all: true,
+      attachments: [
+        { content: 'aGVsbG8=', filename: 'note.txt' },
+        {
+          path: 'https://example.com/a.pdf',
+          filename: 'a.pdf',
+          content_type: 'application/pdf',
+        },
+      ],
+    });
+  });
+
+  it('sends attachments on a forward', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: {
+          attachments: {
+            attachments: [
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://example.com/b.csv',
+              },
+            ],
+          },
+        },
+      },
+      response: { id: 'em_3' },
+    });
+
+    await inboxThreads.execute.call(context, 0, 'forward');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      to: ['x@example.com'],
+      attachments: [{ path: 'https://example.com/b.csv' }],
+    });
+  });
+
+  it('rejects a binary attachment that is missing from the item', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: {
+          attachments: { attachments: [{ attachmentType: 'binaryData' }] },
+        },
+      },
+    });
+    await expect(
+      inboxThreads.execute.call(context, 0, 'reply'),
+    ).rejects.toThrow('Binary property "data" not found');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('clears draft fields with null', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          subject: 'Kept?',
+          clearFields: ['subject', 'cc'],
+        },
+      },
+    });
+    await inboxDrafts.execute.call(context, 0, 'update');
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      subject: null,
+      cc: null,
+    });
+  });
+
+  const textBinary = {
+    file: {
+      data: Buffer.from('hello').toString('base64'),
+      mimeType: 'text/plain',
+      fileName: 'note.txt',
+    },
+  };
+
+  it('stores binary attachments on a new draft', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: {
+            attachments: [
+              { binaryPropertyName: 'file' },
+              {
+                binaryPropertyName: 'file',
+                filename: 'renamed.csv',
+                content_type: 'text/csv',
+              },
+            ],
+          },
+        },
+      },
+      inputData: [{ json: {}, binary: textBinary }],
+      response: { object: 'inbox_draft', id: 'dr_1' },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'create');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          content: 'aGVsbG8=',
+          filename: 'note.txt',
+          content_type: 'text/plain',
+        },
+        {
+          content: 'aGVsbG8=',
+          filename: 'renamed.csv',
+          content_type: 'text/csv',
+        },
+      ],
+    });
+  });
+
+  it('replaces draft attachments on update', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'file' }] },
+        },
+      },
+      inputData: [{ json: {}, binary: textBinary }],
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          content: 'aGVsbG8=',
+          filename: 'note.txt',
+          content_type: 'text/plain',
+        },
+      ],
+    });
+  });
+
+  it('removes every draft attachment with an empty array', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: { clearFields: ['attachments'] },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ attachments: [] });
+  });
+
+  it('skips attachment input when clearing attachments', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'missing' }] },
+          clearFields: ['attachments'],
+        },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ attachments: [] });
+  });
+
+  it('does not count cleared recipients toward the limit', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          to: Array.from({ length: 51 }, (_, i) => `u${i}@example.com`).join(
+            ',',
+          ),
+          clearFields: ['to'],
+        },
+      },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({ to: null });
+  });
+
+  it('rejects a draft attachment without a content type', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: { attachments: [{ binaryPropertyName: 'file' }] },
+        },
+      },
+      inputData: [
+        {
+          json: {},
+          binary: {
+            file: { data: 'aGVsbG8=', mimeType: '', fileName: 'note' },
+          },
+        },
+      ],
+    });
+
+    await expect(
+      inboxDrafts.execute.call(context, 0, 'create'),
+    ).rejects.toThrow('need a File Name and a Content Type');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'draft create',
+      execute: inboxDrafts.execute,
+      operation: 'create',
+      parameters: {
+        ...inbox,
+        inboxDraftFields: { subject: 'Hi', idempotencyKey: 'key-1' },
+      },
+    },
+    {
+      name: 'draft send',
+      execute: inboxDrafts.execute,
+      operation: 'send',
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { idempotencyKey: 'key-1' },
+      },
+    },
+  ])('sends the Idempotency-Key header on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+      response: { id: 'ok' },
+    });
+    await testCase.execute.call(context, 0, testCase.operation);
+    const options = httpRequest.mock.calls[0][1];
+    expect(options.headers['Idempotency-Key']).toBe('key-1');
+    expect(options.body?.idempotencyKey).toBeUndefined();
+  });
+
+  const customHeaders = {
+    headers: [
+      { name: 'X-Ticket-Id', value: '4821' },
+      { name: '', value: 'skipped' },
+    ],
+  };
+
+  it.each([
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { headers: customHeaders },
+      },
+    },
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: 'x@example.com',
+        inboxForwardOptions: { headers: customHeaders },
+      },
+    },
+    {
+      name: 'draft send',
+      execute: inboxDrafts.execute,
+      operation: 'send',
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { headers: customHeaders },
+      },
+    },
+  ])('sends custom headers in the body on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+      response: { id: 'ok' },
+    });
+    await testCase.execute.call(context, 0, testCase.operation);
+    expect(httpRequest.mock.calls[0][1].body.headers).toEqual({
+      'X-Ticket-Id': '4821',
+    });
+  });
+
+  it('sends no body on draft send without headers', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftSendOptions: { headers: { headers: [] } },
+      },
+      response: { id: 'ok' },
+    });
+    await inboxDrafts.execute.call(context, 0, 'send');
+    expect(httpRequest.mock.calls[0][1].body).toBeUndefined();
+  });
+
+  it('sends no Idempotency-Key header without a key', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: draft,
+      response: { id: 'ok' },
+    });
+    await inboxDrafts.execute.call(context, 0, 'send');
+    expect(httpRequest.mock.calls[0][1].headers).not.toHaveProperty(
+      'Idempotency-Key',
+    );
+  });
+
+  it('runs inbox-scoped lists once per item', () => {
+    expect([...inboxThreads.execute.listOperations]).toEqual([]);
+    expect([...inboxDrafts.execute.listOperations]).toEqual([]);
+  });
+
+  it('pairs listed threads with the item that scoped them', async () => {
+    const { context } = createExecuteMock({
+      parameters: { ...inbox, ...list },
+      response: { data: [{ id: 't1' }], has_more: false },
+    });
+    const result = await inboxThreads.execute.call(context, 3, 'list');
+    expect(result).toEqual([{ json: { id: 't1' }, pairedItem: { item: 3 } }]);
+  });
+
+  it('requires thread ID and reply email ID together for drafts', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: { subject: 'Hi', threadId: 'thr_1' },
+      },
+    });
+    await expect(
+      inboxDrafts.execute.call(context, 0, 'create'),
+    ).rejects.toThrow('must be set together');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('requires content when creating a draft', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: { ...inbox, inboxDraftFields: {} },
+    });
+    await expect(
+      inboxDrafts.execute.call(context, 0, 'create'),
+    ).rejects.toThrow('At least one of To');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  const emails = (count: number, prefix: string) =>
+    Array.from({ length: count }, (_, i) => `${prefix}${i}@example.com`).join(
+      ',',
+    );
+
+  it('allows exactly 50 combined recipients when forwarding', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...threadEmail,
+        to: emails(25, 'to'),
+        inboxForwardOptions: { cc: emails(25, 'cc') },
+      },
+      response: { id: 'ok' },
+    });
+    await inboxThreads.execute.call(context, 0, 'forward');
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    {
+      name: 'thread forward',
+      execute: inboxThreads.execute,
+      operation: 'forward',
+      parameters: {
+        ...threadEmail,
+        to: emails(30, 'to'),
+        inboxForwardOptions: { cc: emails(20, 'cc'), bcc: emails(1, 'bcc') },
+      },
+    },
+    {
+      name: 'thread reply',
+      execute: inboxThreads.execute,
+      operation: 'reply',
+      parameters: {
+        ...threadEmail,
+        text: 'Hi',
+        inboxReplyOptions: { cc: emails(26, 'cc'), bcc: emails(25, 'bcc') },
+      },
+    },
+    {
+      name: 'draft create',
+      execute: inboxDrafts.execute,
+      operation: 'create',
+      parameters: {
+        ...inbox,
+        inboxDraftFields: { to: emails(51, 'to') },
+      },
+    },
+    {
+      name: 'draft update',
+      execute: inboxDrafts.execute,
+      operation: 'update',
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: { to: emails(40, 'to'), bcc: emails(11, 'b') },
+      },
+    },
+  ])('rejects more than 50 recipients on $name', async (testCase) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: testCase.parameters,
+    });
+    await expect(
+      testCase.execute.call(context, 0, testCase.operation),
+    ).rejects.toThrow('cannot exceed 50 recipients');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it('marks operation options as sorted and scoped to the resource', () => {
+    for (const [resource, module] of [
+      ['inboxThreads', inboxThreads],
+      ['inboxDrafts', inboxDrafts],
+    ] as const) {
+      const operation = module.operations[0];
+      expect(operation.displayOptions?.show?.resource).toEqual([resource]);
+      const names = (operation.options ?? []).map(
+        (option) => (option as { name: string }).name,
+      );
+      expect(names).toEqual([...names].sort());
+      for (const property of module.descriptions.slice(1)) {
+        expect(property.displayOptions?.show?.resource).toEqual([resource]);
+      }
+    }
+  });
+});

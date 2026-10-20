@@ -1,0 +1,142 @@
+import type {
+  IDataObject,
+  IExecuteFunctions,
+  INodeExecutionData,
+  INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+import { apiRequest, normalizeEmailList } from '../../transport';
+import {
+  assertRecipientLimit,
+  assignRecipients,
+  assignStrings,
+  attachmentsField,
+  bccField,
+  buildAttachments,
+  buildCustomHeaders,
+  ccField,
+  createInboxField,
+  customHeadersField,
+  getThreadEmailPath,
+  idempotencyHeaders,
+  idempotencyKeyField,
+  threadEmailIdField,
+  threadIdField,
+} from './shared';
+
+const show = {
+  resource: ['inboxThreads'],
+  operation: ['forward'],
+};
+
+export const description: INodeProperties[] = [
+  createInboxField('inboxThreads', ['forward']),
+  threadIdField(['forward']),
+  threadEmailIdField(
+    ['forward'],
+    'The ID of the email to forward, as returned by the List Emails operation',
+  ),
+  {
+    displayName: 'To',
+    name: 'to',
+    type: 'string',
+    required: true,
+    default: '',
+    placeholder: 'colleague@example.com',
+    displayOptions: { show },
+    description:
+      'Recipient email addresses. Comma-separated for multiple addresses. To, CC, and BCC combined cannot exceed 50 recipients.',
+  },
+  {
+    displayName: 'Additional Options',
+    name: 'inboxForwardOptions',
+    type: 'collection',
+    placeholder: 'Add Option',
+    default: {},
+    displayOptions: { show },
+    options: [
+      attachmentsField(
+        'Files to attach, as on Email → Send. The forward also sends the attachments of the original email. Together they can have at most 25 MB of content. A URL file does not count toward the 25 MB. The request returns an error for an original attachment that was sent from a URL, an empty file, a blocked file type, or a URL that is not http or https or points to localhost.',
+      ),
+      bccField,
+      ccField,
+      customHeadersField,
+      {
+        displayName: 'HTML Note',
+        name: 'html',
+        type: 'string',
+        default: '',
+        typeOptions: {
+          rows: 4,
+        },
+        description: 'An HTML note sent above the quoted original',
+      },
+      idempotencyKeyField(
+        'A unique key to ensure the forward is sent only once. Useful for retries to prevent duplicate sends. A retry with the same key within 24 hours returns the first successful response. A failed request is not stored, so you can retry it with the same key. Reusing the key with a different body, or while the first request is still running, returns a 409.',
+      ),
+      {
+        displayName: 'Subject',
+        name: 'subject',
+        type: 'string',
+        default: '',
+        description:
+          'The subject of the forward. Defaults to the thread subject prefixed with "Fwd:".',
+      },
+      {
+        displayName: 'Text Note',
+        name: 'text',
+        type: 'string',
+        default: '',
+        typeOptions: {
+          rows: 4,
+        },
+        description: 'A plain-text note sent above the quoted original',
+      },
+    ],
+  },
+];
+
+export async function execute(
+  this: IExecuteFunctions,
+  index: number,
+): Promise<INodeExecutionData[]> {
+  const to = normalizeEmailList(
+    this.getNodeParameter('to', index, '') as string | string[],
+  );
+  if (!to.length) {
+    throw new NodeOperationError(
+      this.getNode(),
+      'At least one recipient is required in To',
+      { itemIndex: index },
+    );
+  }
+  const options = this.getNodeParameter(
+    'inboxForwardOptions',
+    index,
+    {},
+  ) as IDataObject;
+
+  const body: IDataObject = { to };
+  assignRecipients(body, options, ['cc', 'bcc']);
+  assertRecipientLimit(this, body, index);
+  assignStrings(body, options, ['html', 'text', 'subject']);
+  const attachments = await buildAttachments(this, options.attachments, index);
+  if (attachments) {
+    body.attachments = attachments;
+  }
+  const headers = buildCustomHeaders(options.headers);
+  if (headers) {
+    body.headers = headers;
+  }
+
+  const response = await apiRequest.call(
+    this,
+    'POST',
+    `${getThreadEmailPath(this, index)}/forward`,
+    body,
+    undefined,
+    idempotencyHeaders(options),
+  );
+
+  return [{ json: response, pairedItem: { item: index } }];
+}
