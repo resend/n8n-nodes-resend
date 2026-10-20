@@ -422,7 +422,8 @@ function getCurrentInboxId(
     try {
       value = loadOptionsFunctions.getCurrentNodeParameter('inboxId');
     } catch {
-      // getCurrentNodeParameter may throw when the parameter is not yet set in the UI; returning undefined signals no inbox is available.
+      // getCurrentNodeParameter may throw when the parameter is not yet set in
+      // the UI; returning undefined signals no inbox is available.
       return undefined;
     }
   }
