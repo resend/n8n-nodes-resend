@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "~2.5.13",
-    "@n8n/node-cli": "^0.48.2",
+    "@n8n/node-cli": "^0.54.2",
     "@types/node": "^26.5.1",
     "auto-changelog": "^2.6.1",
     "eslint": "9.29.0",
