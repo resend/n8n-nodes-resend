@@ -61,7 +61,7 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "~2.5.13",
+    "@biomejs/biome": "~2.6.3",
     "@n8n/node-cli": "^0.48.2",
     "@types/node": "^26.5.1",
     "auto-changelog": "^2.6.1",
