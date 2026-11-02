@@ -529,6 +529,26 @@ export const draftAttachmentsField = (
       displayName: 'Attachment',
       values: [
         {
+          displayName: 'Attachment Type',
+          name: 'attachmentType',
+          type: 'options',
+          default: 'binaryData',
+          options: [
+            {
+              name: 'Binary Data',
+              value: 'binaryData',
+              description:
+                'Use binary file data from a previous node in the workflow',
+            },
+            {
+              name: 'Remote URL',
+              value: 'url',
+              description:
+                'Resend downloads the file from a public URL when the draft is saved, not when it is sent',
+            },
+          ],
+        },
+        {
           displayName: 'Binary Property',
           name: 'binaryPropertyName',
           type: 'string',
@@ -536,6 +556,11 @@ export const draftAttachmentsField = (
           placeholder: 'data',
           description:
             'The name of the binary property that holds the file data',
+          displayOptions: {
+            show: {
+              attachmentType: ['binaryData'],
+            },
+          },
         },
         {
           displayName: 'Content Type',
@@ -544,7 +569,7 @@ export const draftAttachmentsField = (
           default: '',
           placeholder: 'application/pdf',
           description:
-            'The MIME type of the file. Defaults to the MIME type of the binary data.',
+            'The MIME type of the file. Defaults to the MIME type of the binary data, or of the downloaded file for a URL.',
         },
         {
           displayName: 'File Name',
@@ -553,7 +578,21 @@ export const draftAttachmentsField = (
           default: '',
           placeholder: 'document.pdf',
           description:
-            'The name of the attached file. Defaults to the binary file name.',
+            'The name of the attached file. Defaults to the binary file name. Required for a URL.',
+        },
+        {
+          displayName: 'File URL',
+          name: 'fileUrl',
+          type: 'string',
+          default: '',
+          placeholder: 'https://example.com/file.pdf',
+          description:
+            'The public http or https URL of the file. It is downloaded when the request is made.',
+          displayOptions: {
+            show: {
+              attachmentType: ['url'],
+            },
+          },
         },
       ],
     },
@@ -573,6 +612,30 @@ export async function buildDraftAttachments(
 
   const attachments: IDataObject[] = [];
   for (const input of inputs) {
+    if (input.attachmentType === 'url') {
+      const fileUrl = String(input.fileUrl ?? '').trim();
+      if (!fileUrl) {
+        throw new NodeOperationError(
+          context.getNode(),
+          'File URL is required for URL attachments',
+          { itemIndex: index },
+        );
+      }
+      if (!input.filename) {
+        throw new NodeOperationError(
+          context.getNode(),
+          'Draft attachments from a URL need a File Name',
+          { itemIndex: index },
+        );
+      }
+      const entry: IDataObject = { path: fileUrl, filename: input.filename };
+      if (input.content_type) {
+        entry.content_type = input.content_type;
+      }
+      attachments.push(entry);
+      continue;
+    }
+
     const propertyName = input.binaryPropertyName || 'data';
     const binary = context.getInputData()[index]?.binary?.[propertyName];
     if (!binary) {

@@ -638,6 +638,112 @@ describe('inbox thread and draft requests', () => {
     });
   });
 
+  it('stores URL attachments on a new draft', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: {
+            attachments: [
+              {
+                attachmentType: 'url',
+                fileUrl: ' https://resend.com/static/sample/invoice.pdf ',
+                filename: 'invoice.pdf',
+              },
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://example.com/report',
+                filename: 'report.csv',
+                content_type: 'text/csv',
+              },
+            ],
+          },
+        },
+      },
+      response: { object: 'inbox_draft', id: 'dr_1' },
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'create');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          path: 'https://resend.com/static/sample/invoice.pdf',
+          filename: 'invoice.pdf',
+        },
+        {
+          path: 'https://example.com/report',
+          filename: 'report.csv',
+          content_type: 'text/csv',
+        },
+      ],
+    });
+  });
+
+  it('mixes binary and URL attachments on update', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...draft,
+        inboxDraftUpdateFields: {
+          attachments: {
+            attachments: [
+              { binaryPropertyName: 'file' },
+              {
+                attachmentType: 'url',
+                fileUrl: 'https://resend.com/static/sample/invoice.pdf',
+                filename: 'invoice.pdf',
+              },
+            ],
+          },
+        },
+      },
+      inputData: [{ json: {}, binary: textBinary }],
+    });
+
+    await inboxDrafts.execute.call(context, 0, 'update');
+
+    expect(httpRequest.mock.calls[0][1].body).toEqual({
+      attachments: [
+        {
+          content: 'aGVsbG8=',
+          filename: 'note.txt',
+          content_type: 'text/plain',
+        },
+        {
+          path: 'https://resend.com/static/sample/invoice.pdf',
+          filename: 'invoice.pdf',
+        },
+      ],
+    });
+  });
+
+  it.each([
+    [
+      { fileUrl: '', filename: 'a.pdf' },
+      'File URL is required for URL attachments',
+    ],
+    [
+      { fileUrl: 'https://example.com/a.pdf', filename: '' },
+      'Draft attachments from a URL need a File Name',
+    ],
+  ])('rejects an incomplete URL draft attachment', async (input, message) => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        ...inbox,
+        inboxDraftFields: {
+          attachments: {
+            attachments: [{ attachmentType: 'url', ...input }],
+          },
+        },
+      },
+    });
+
+    await expect(
+      inboxDrafts.execute.call(context, 0, 'create'),
+    ).rejects.toThrow(message);
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('removes every draft attachment with an empty array', async () => {
     const { context, httpRequest } = createExecuteMock({
       parameters: {

@@ -38,7 +38,7 @@ export const description: INodeProperties[] = [
     },
     options: [
       draftAttachmentsField(
-        'Files to store on the draft, from binary data. They replace every attachment on the draft. Each one needs a file name and a content type. The files of a draft can total at most 25 MB. An empty file or a blocked file type returns an error.',
+        'Files to store on the draft, from binary data or a URL. They replace every attachment on the draft. Each one needs a file name. Binary data also needs a content type. A URL file is downloaded when the request is made. The files of a draft, downloaded ones included, can total at most 25 MB. An empty file, a blocked file type, or a URL that is not http or https or cannot be downloaded returns an error, and so do downloads that take more than 20 seconds together.',
       ),
       bccField,
       ccField,
