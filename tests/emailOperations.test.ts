@@ -1,5 +1,5 @@
 import { NodeApiError } from 'n8n-workflow';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { execute as cancel } from '../nodes/Resend/actions/email/cancel.operation';
 import { execute as listAttachments } from '../nodes/Resend/actions/email/listAttachments.operation';
 import { execute as retrieve } from '../nodes/Resend/actions/email/retrieve.operation';
@@ -196,6 +196,39 @@ describe('email send', () => {
         content: 'YmFzZTY0',
         content_id: 'cid-1',
         content_type: 'application/pdf',
+      },
+    ]);
+  });
+
+  it('reads binary attachments stored outside memory through the binary helper', async () => {
+    const { context, httpRequest } = sendMock(
+      {
+        additionalOptions: {
+          attachments: {
+            attachments: [
+              { attachmentType: 'binaryData', binaryPropertyName: 'data' },
+            ],
+          },
+        },
+      },
+      {
+        data: {
+          data: 'filesystem-v2',
+          id: 'filesystem-v2:workflows/1/executions/1/binary_data/abc',
+          fileName: 'invoice.pdf',
+        },
+      },
+    );
+    const getBinaryDataBuffer = vi.fn(async () => Buffer.from('%PDF-1.7'));
+    context.helpers.getBinaryDataBuffer = getBinaryDataBuffer;
+
+    await send.call(context, 0);
+
+    expect(getBinaryDataBuffer).toHaveBeenCalledWith(0, 'data');
+    expect(httpRequest.mock.calls[0][1].body.attachments).toEqual([
+      {
+        filename: 'invoice.pdf',
+        content: Buffer.from('%PDF-1.7').toString('base64'),
       },
     ]);
   });
