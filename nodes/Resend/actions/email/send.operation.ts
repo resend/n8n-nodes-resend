@@ -635,76 +635,75 @@ export async function execute(
   }
 
   if (additionalOptions.attachments?.attachments?.length) {
-    requestBody.attachments = additionalOptions.attachments.attachments
-      .map((attachment) => {
-        const contentId = attachment.content_id ?? attachment.contentId;
-        const contentType = attachment.content_type ?? attachment.contentType;
+    const attachments: Array<Record<string, unknown>> = [];
+    for (const attachment of additionalOptions.attachments.attachments) {
+      const contentId = attachment.content_id ?? attachment.contentId;
+      const contentType = attachment.content_type ?? attachment.contentType;
 
-        if (attachment.attachmentType === 'binaryData') {
-          const binaryPropertyName = attachment.binaryPropertyName || 'data';
-          const binaryData = items[index].binary?.[binaryPropertyName];
-          if (!binaryData) {
-            throw new NodeOperationError(
-              this.getNode(),
-              `Binary property "${binaryPropertyName}" not found in item ${index}`,
-              { itemIndex: index },
-            );
-          }
-
-          const filename = attachment.filename || binaryData.fileName;
-          if (!filename) {
-            throw new NodeOperationError(
-              this.getNode(),
-              'File Name is required for binary attachments.',
-              { itemIndex: index },
-            );
-          }
-
-          const attachmentEntry: Record<string, unknown> = {
-            filename,
-            content: binaryData.data,
-          };
-          if (contentId) {
-            attachmentEntry.content_id = contentId;
-          }
-          if (contentType) {
-            attachmentEntry.content_type = contentType;
-          }
-          return attachmentEntry;
+      if (attachment.attachmentType === 'binaryData') {
+        const binaryPropertyName = attachment.binaryPropertyName || 'data';
+        const binaryData = items[index].binary?.[binaryPropertyName];
+        if (!binaryData) {
+          throw new NodeOperationError(
+            this.getNode(),
+            `Binary property "${binaryPropertyName}" not found in item ${index}`,
+            { itemIndex: index },
+          );
         }
-        if (attachment.attachmentType === 'url') {
-          if (!attachment.filename) {
-            throw new NodeOperationError(
-              this.getNode(),
-              'File Name is required for URL attachments.',
-              { itemIndex: index },
-            );
-          }
-          if (!attachment.fileUrl) {
-            throw new NodeOperationError(
-              this.getNode(),
-              'File URL is required for URL attachments.',
-              { itemIndex: index },
-            );
-          }
-          const attachmentEntry: Record<string, unknown> = {
-            filename: attachment.filename,
-            path: attachment.fileUrl,
-          };
-          if (contentId) {
-            attachmentEntry.content_id = contentId;
-          }
-          if (contentType) {
-            attachmentEntry.content_type = contentType;
-          }
-          return attachmentEntry;
+
+        const filename = attachment.filename || binaryData.fileName;
+        if (!filename) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'File Name is required for binary attachments.',
+            { itemIndex: index },
+          );
         }
-        return null;
-      })
-      .filter(
-        (attachment): attachment is Record<string, unknown> =>
-          attachment !== null,
-      );
+
+        const buffer = await this.helpers.getBinaryDataBuffer(
+          index,
+          binaryPropertyName,
+        );
+        const attachmentEntry: Record<string, unknown> = {
+          filename,
+          content: buffer.toString('base64'),
+        };
+        if (contentId) {
+          attachmentEntry.content_id = contentId;
+        }
+        if (contentType) {
+          attachmentEntry.content_type = contentType;
+        }
+        attachments.push(attachmentEntry);
+      } else if (attachment.attachmentType === 'url') {
+        if (!attachment.filename) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'File Name is required for URL attachments.',
+            { itemIndex: index },
+          );
+        }
+        if (!attachment.fileUrl) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'File URL is required for URL attachments.',
+            { itemIndex: index },
+          );
+        }
+        const attachmentEntry: Record<string, unknown> = {
+          filename: attachment.filename,
+          path: attachment.fileUrl,
+        };
+        if (contentId) {
+          attachmentEntry.content_id = contentId;
+        }
+        if (contentType) {
+          attachmentEntry.content_type = contentType;
+        }
+        attachments.push(attachmentEntry);
+      }
+    }
+    requestBody.attachments = attachments;
   }
 
   const requestHeaders: Record<string, string> = {
