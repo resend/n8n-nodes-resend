@@ -54,7 +54,7 @@ The table below shows which endpoints are currently implemented:
 | **Inboxes**            | `/inboxes`            | ✅ Full | Create, List, Get, Update, Delete, Get Agent Settings, Update Agent Settings, Create Label, List Labels, Update Label, Delete Label                           |
 | **Inbox Threads**      | `/inboxes/{id}/threads` | ✅ Full | List, Search, Get, Update, Delete, Add Labels, Set Labels, Remove Label, List Emails, Get Email, Reply, Forward                                                 |
 | **Inbox Drafts**       | `/inboxes/{id}/drafts` | ✅ Full | Create, List, Get, Update, Delete, Send                                                                                                                       |
-| **Automations**        | `/automations`        | ✅ Full | Create, List, Get, Update, Delete, Duplicate, Stop, List Runs, Get Run                                                                                    |
+| **Automations**        | `/automations`        | ✅ Full | Create, List, Get, Update, Delete, Duplicate, Stop, List Runs, Get Run, Cancel Run                                                                        |
 | **Logs**               | `/logs`               | ✅ Full | List, Retrieve                                                                                                                                            |
 
 </details>

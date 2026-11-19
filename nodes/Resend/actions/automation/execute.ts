@@ -1,5 +1,6 @@
 import { createOperationRouter } from '../../transport';
 
+import * as cancelRun from './cancelRun.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as duplicate from './duplicate.operation';
@@ -20,6 +21,7 @@ export const execute = createOperationRouter(
     stop,
     listRuns,
     getRun,
+    cancelRun,
   },
   { list },
 );

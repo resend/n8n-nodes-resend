@@ -1183,6 +1183,14 @@ const cases: RequestCase[] = [
     method: 'POST',
     endpoint: '/automations/auto_1/stop',
   },
+  {
+    resource: 'automations',
+    execute: automations.execute,
+    operation: 'cancelRun',
+    parameters: { automationId: 'auto_1', runId: 'run_1' },
+    method: 'POST',
+    endpoint: '/automations/auto_1/runs/run_1/cancel',
+  },
 ];
 
 describe.each(cases)(
