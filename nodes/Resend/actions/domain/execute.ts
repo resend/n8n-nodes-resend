@@ -3,6 +3,7 @@ import { createOperationRouter } from '../../transport';
 import * as claim from './claim.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
+import * as enableForge from './enableForge.operation';
 import * as get from './get.operation';
 import * as getClaim from './getClaim.operation';
 import * as list from './list.operation';
@@ -14,6 +15,7 @@ export const execute = createOperationRouter(
   {
     claim,
     create,
+    enableForge,
     get,
     getClaim,
     update,
