@@ -2,6 +2,7 @@ import type { INodeProperties } from 'n8n-workflow';
 import * as claim from './claim.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
+import * as enableForge from './enableForge.operation';
 import * as get from './get.operation';
 import * as getClaim from './getClaim.operation';
 import * as list from './list.operation';
@@ -41,6 +42,13 @@ export const operations: INodeProperties[] = [
         description:
           'Remove a sending domain from your account. Emails can no longer be sent from this domain after deletion.',
         action: 'Delete a domain',
+      },
+      {
+        name: 'Enable Forge',
+        value: 'enableForge',
+        description:
+          "Put a domain's sending on Resend Forge. Returns the DNS records to add, then verify with the Forge scope.",
+        action: 'Enable forge for a domain',
       },
       {
         name: 'Get',
@@ -98,6 +106,7 @@ export const descriptions: INodeProperties[] = [
   ...list.description,
   ...update.description,
   ...del.description,
+  ...enableForge.description,
   ...verify.description,
   ...verifyClaim.description,
 ];
@@ -107,6 +116,7 @@ export {
   claim,
   create,
   del as delete,
+  enableForge,
   get,
   getClaim,
   list,
