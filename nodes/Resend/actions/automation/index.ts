@@ -1,5 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 
+import * as cancelRun from './cancelRun.operation';
 import * as create from './create.operation';
 import * as del from './delete.operation';
 import * as duplicate from './duplicate.operation';
@@ -12,6 +13,7 @@ import * as update from './update.operation';
 
 export { execute } from './execute';
 export {
+  cancelRun,
   create,
   del as delete,
   duplicate,
@@ -35,6 +37,13 @@ export const operations: INodeProperties[] = [
       },
     },
     options: [
+      {
+        name: 'Cancel Run',
+        value: 'cancelRun',
+        description:
+          'Cancel a running automation run and skip its remaining steps',
+        action: 'Cancel an automation run',
+      },
       {
         name: 'Create',
         value: 'create',
@@ -106,4 +115,5 @@ export const descriptions: INodeProperties[] = [
   ...stop.description,
   ...listRuns.description,
   ...getRun.description,
+  ...cancelRun.description,
 ];
