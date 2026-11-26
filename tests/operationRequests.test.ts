@@ -1749,3 +1749,60 @@ describe('contact imports', () => {
     expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 50 });
   });
 });
+
+describe('received email list filters', () => {
+  it('sends to as one comma-separated value with the date range', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        returnAll: false,
+        limit: 25,
+        receivingEmailListFilters: {
+          to: ' support@acme.com, billing@acme.com ',
+          startDate: ' 2026-11-01 ',
+          endDate: '2026-11-15T12:00:00Z',
+        },
+      },
+      response: { data: [] },
+    });
+
+    await receivingEmails.execute.call(context, 0, 'list');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({
+      limit: 25,
+      to: 'support@acme.com,billing@acme.com',
+      start_date: '2026-11-01',
+      end_date: '2026-11-15T12:00:00Z',
+    });
+  });
+
+  it('omits filters that are not set', async () => {
+    const { context, httpRequest } = createExecuteMock({
+      parameters: {
+        returnAll: false,
+        limit: 50,
+        receivingEmailListFilters: { to: '', startDate: ' ' },
+      },
+      response: { data: [] },
+    });
+
+    await receivingEmails.execute.call(context, 0, 'list');
+
+    expect(httpRequest.mock.calls[0][1].qs).toEqual({ limit: 50 });
+  });
+
+  it('rejects more than 20 recipients', async () => {
+    const { context } = createExecuteMock({
+      parameters: {
+        returnAll: false,
+        limit: 50,
+        receivingEmailListFilters: {
+          to: Array.from({ length: 21 }, (_, i) => `u${i}@acme.com`).join(','),
+        },
+      },
+    });
+
+    await expect(
+      receivingEmails.execute.call(context, 0, 'list'),
+    ).rejects.toThrow('To accepts at most 20 values (got 21)');
+  });
+});
