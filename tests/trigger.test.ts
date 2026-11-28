@@ -346,7 +346,7 @@ describe('webhook', () => {
     );
   });
 
-  it('ignores events the workflow is not subscribed to', async () => {
+  it('acknowledges events the workflow is not subscribed to without running it', async () => {
     const { context } = signedWebhook(
       { type: 'email.bounced' },
       {
@@ -354,17 +354,13 @@ describe('webhook', () => {
       },
     );
 
-    await expect(trigger.webhook.call(context)).resolves.toEqual({
-      noWebhookResponse: true,
-    });
+    await expect(trigger.webhook.call(context)).resolves.toEqual({});
   });
 
-  it('ignores payloads without an event type', async () => {
+  it('acknowledges payloads without an event type without running it', async () => {
     const { context } = signedWebhook({ data: {} });
 
-    await expect(trigger.webhook.call(context)).resolves.toEqual({
-      noWebhookResponse: true,
-    });
+    await expect(trigger.webhook.call(context)).resolves.toEqual({});
   });
 
   it('answers 401 when no signing secret is configured', async () => {

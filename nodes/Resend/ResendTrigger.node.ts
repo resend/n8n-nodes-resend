@@ -393,9 +393,7 @@ export class ResendTrigger implements INodeType {
     }
 
     if (!bodyData || typeof bodyData !== 'object' || !('type' in bodyData)) {
-      return {
-        noWebhookResponse: true,
-      };
+      return {};
     }
 
     const eventType = (bodyData as { type: string }).type;
@@ -405,8 +403,6 @@ export class ResendTrigger implements INodeType {
         workflowData: [this.helpers.returnJsonArray([bodyData])],
       };
     }
-    return {
-      noWebhookResponse: true,
-    };
+    return {};
   }
 }
